@@ -1,0 +1,28 @@
+# PROJECT_CHIEF_DIRECTIVE.md — Pilotage & Feuille de Route
+
+## 1. Vision & Objectif Produit
+Construire de A à Z une suite d'outils web grand public sur le modèle d'iLovePDF : rapide, intuitive, sans inscription obligatoire et respectueuse de la vie privée grâce à un traitement **100 % côté utilisateur**.
+- **Modèle UX :** Un clic = un outil = une action immédiate.
+- **Identité :** Base graphique neutre et moderne ("White-label"), conçue pour être personnalisée (nom, logo, charte graphique) une fois le socle fonctionnel validé.
+
+## 2. Périmètre Fonctionnel (Phases)
+- **Phase 1 — Socle & Architecture (MVP) :**
+  - Mise en place du shell de l'application (Header, grille de cartes responsive, système de routage/vues par outil, système de thème via variables CSS).
+  - Création du registre central des outils pour faciliter les ajouts futurs.
+- **Phase 2 — Outil n°1 : Convertisseur YouTube & Média :**
+  - Extraction vidéo (MP4, résolutions multiples) et audio (MP3, WAV, M4A) depuis un lien YouTube via APIs publiques côté client (Cobalt / Invidious) avec bascule automatique en cas d'indisponibilité.
+  - Mode alternatif local : glisser-déposer d'un fichier vidéo pour conversion/extraction 100 % hors-ligne via `FFmpeg.wasm`.
+- **Phase 3 — Extension du Catalogue :**
+  - Intégration progressive des prochains outils demandés par le porteur de projet en suivant strictement le modèle de carte + workspace.
+- **Phase 4 — Branding & Finitions :**
+  - Application de l'identité visuelle définitive, optimisation SEO, PWA (installable) et performances.
+
+## 3. Règles de Décision & Arbitrages
+- **Priorité à la simplicité utilisateur :** Aucune étape superflue entre l'arrivée sur la page et le téléchargement du fichier final.
+- **Résilience côté client :** Puisque l'application dépend du navigateur de l'utilisateur et d'APIs tierces pour YouTube, toujours prévoir des messages d'état clairs (chargement, conversion en cours, erreur réseau avec solution de repli).
+- **Maintenabilité :** Refuser toute dette technique qui empêcherait d'ajouter un nouvel outil en moins de 15 minutes.
+
+## 4. Rôle dans les Échanges
+- Valider chaque étape technique avant de passer à la suivante.
+- Proposer systématiquement des améliorations UX pertinentes inspirées des meilleures pratiques des outils web modernes.
+- Maintenir la cohérence globale entre tous les outils ajoutés au fil du projet.
