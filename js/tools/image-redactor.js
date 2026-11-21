@@ -56,6 +56,12 @@ export function mount(container, ctx) {
     </div>
     <div class="ir2-editor ir2-hidden" data-ref="editor">
       <div class="ir2-bar">
+        <div class="ir2-field">Forme de sélection
+          <div class="ir2-modes" data-ref="shapes">
+            <button type="button" class="ir2-chip on" data-s="rect">Rectangle</button>
+            <button type="button" class="ir2-chip" data-s="poly">Polygone (point par point)</button>
+          </div>
+        </div>
         <div class="ir2-field">Mode de masque
           <div class="ir2-modes" data-ref="modes">
             ${MODES.map((m, i) => `<button type="button" class="ir2-chip${i === 0 ? ' on' : ''}" data-m="${m.id}">${m.label}</button>`).join('')}
@@ -66,6 +72,7 @@ export function mount(container, ctx) {
         </label>
         <button class="ir2-btn ir2-sec" data-ref="undo" disabled>Annuler la dernière zone</button>
         <button class="ir2-btn ir2-sec" data-ref="clear" disabled>Effacer toutes les zones</button>
+        <button class="ir2-btn ir2-sec" data-ref="cancel" disabled>Annuler tracé</button>
       </div>
       <div class="ir2-stage"><canvas class="ir2-canvas" data-ref="cv"></canvas></div>
       <div class="ir2-bar">
@@ -88,28 +95,43 @@ export function mount(container, ctx) {
   const el = {
     drop: $('drop'), file: $('file'), editor: $('editor'), modes: $('modes'), intensity: $('intensity'),
     intVal: $('intVal'), undo: $('undo'), clear: $('clear'), cv: $('cv'), fmt: $('fmt'), dl: $('dl'),
-    del: $('del'), status: $('status'),
+    del: $('del'), status: $('status'), shapes: $('shapes'), cancel: $('cancel'),
   };
   const g = el.cv.getContext('2d');
 
   const S = {
     file: null, srcUrl: null, img: null, W: 0, H: 0,
-    zones: [], mode: 'redact', draft: null, drawing: null, timers: new Set(),
+    zones: [], mode: 'redact', shape: 'rect', poly: null, draft: null, drawing: null, timers: new Set(),
   };
   state = { container, S };
 
   const setStatus = (t, err) => { el.status.textContent = t || ''; el.status.classList.toggle('err', !!err); };
-  const refreshBtns = () => { el.undo.disabled = !S.zones.length; el.clear.disabled = !S.zones.length; };
+  const refreshBtns = () => { el.undo.disabled = !S.zones.length; el.clear.disabled = !S.zones.length; el.cancel.disabled = !S.poly; };
 
   /** Facteur d'échelle : l'intensité (px) s'adapte à la résolution de l'image. */
   const factor = () => Math.max(1, Math.max(S.W, S.H) / 1000);
+
+  /** Construit le chemin de la zone (polygone si z.pts, sinon rectangle). */
+  const zonePath = (c, z) => {
+    c.beginPath();
+    if (z.pts) {
+      c.moveTo(z.pts[0].x, z.pts[0].y);
+      for (let i = 1; i < z.pts.length; i++) c.lineTo(z.pts[i].x, z.pts[i].y);
+      c.closePath();
+    } else {
+      c.rect(z.x, z.y, z.w, z.h);
+    }
+  };
 
   /** Applique une zone sur le contexte c (source = image originale). */
   const applyZone = (c, z) => {
     const { x, y, w, h } = z;
     if (z.mode === 'redact') {
+      c.save();
       c.fillStyle = '#000';
-      c.fillRect(x, y, w, h);
+      zonePath(c, z);
+      c.fill();
+      c.restore();
     } else if (z.mode === 'pixelate') {
       const size = Math.max(2, z.v);
       const sw = Math.max(1, Math.ceil(w / size)), sh = Math.max(1, Math.ceil(h / size));
@@ -119,12 +141,13 @@ export function mount(container, ctx) {
       tc.imageSmoothingEnabled = true;
       tc.drawImage(S.img, x, y, w, h, 0, 0, sw, sh);
       c.save();
+      zonePath(c, z); c.clip();
       c.imageSmoothingEnabled = false;
       c.drawImage(t, 0, 0, sw, sh, x, y, w, h);
       c.restore();
     } else if (z.mode === 'blur') {
       c.save();
-      c.beginPath(); c.rect(x, y, w, h); c.clip();
+      zonePath(c, z); c.clip();
       if ('filter' in c) {
         c.filter = `blur(${z.v}px)`;
         c.drawImage(S.img, 0, 0);
@@ -159,6 +182,29 @@ export function mount(container, ctx) {
       c.strokeRect(d.x, d.y, d.w, d.h);
       c.restore();
     }
+    if (preview && S.poly && S.poly.pts.length) {
+      const { pts, cur } = S.poly;
+      const lw = Math.max(2, factor() * 2);
+      c.save();
+      c.lineWidth = lw; c.lineJoin = 'round';
+      c.strokeStyle = '#e5322d';
+      c.fillStyle = 'rgba(229,50,45,.18)';
+      c.beginPath();
+      c.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) c.lineTo(pts[i].x, pts[i].y);
+      if (cur) c.lineTo(cur.x, cur.y);
+      c.fill();
+      c.setLineDash([lw * 3, lw * 2]);
+      c.stroke();
+      c.setLineDash([]);
+      pts.forEach((p, i) => {
+        c.beginPath();
+        c.arc(p.x, p.y, i === 0 ? lw * 3 : lw * 1.6, 0, Math.PI * 2);
+        c.fillStyle = i === 0 ? '#e5322d' : '#fff';
+        c.fill(); c.stroke();
+      });
+      c.restore();
+    }
   };
   const render = () => { if (S.img) paint(g, { preview: true }); };
 
@@ -172,14 +218,54 @@ export function mount(container, ctx) {
   };
   const rectOf = (a, b) => ({ x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(a.x - b.x), h: Math.abs(a.y - b.y) });
 
+  /* ---- Polygone point par point ---- */
+  /** Rayon de fermeture (≈10 px écran) converti en px image. */
+  const closeR = () => 10 * (S.W / (el.cv.getBoundingClientRect().width || S.W));
+  const polyHint = () => setStatus(`Polygone : ${S.poly.pts.length} sommet(s) — double-clic ou clic sur le 1er point pour fermer, Échap pour annuler`);
+  const cancelPoly = (msg) => {
+    if (!S.poly) return;
+    S.poly = null; refreshBtns(); setStatus(msg ?? 'Tracé annulé'); render();
+  };
+  const closePoly = () => {
+    const p = S.poly;
+    if (!p || p.pts.length < 3) return;
+    const pts = p.pts.map((q) => ({ x: Math.round(q.x), y: Math.round(q.y) }));
+    const xs = pts.map((q) => q.x), ys = pts.map((q) => q.y);
+    const x = Math.min(...xs), y = Math.min(...ys);
+    const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+    S.poly = null;
+    const min = 4 * factor();
+    if (w >= min && h >= min) {
+      S.zones.push({ x, y, w, h, pts, mode: S.mode, v: Math.round(Number(el.intensity.value) * factor()) });
+      setStatus(`${S.zones.length} zone(s)`);
+    } else setStatus('Polygone trop petit', true);
+    refreshBtns(); render();
+  };
+  const addVertex = (p) => {
+    if (!S.poly) S.poly = { pts: [], cur: null };
+    const { pts } = S.poly, r = closeR();
+    if (pts.length >= 3 && Math.hypot(p.x - pts[0].x, p.y - pts[0].y) <= r) { closePoly(); return; }
+    const last = pts[pts.length - 1];
+    if (!last || Math.hypot(p.x - last.x, p.y - last.y) > r / 2) pts.push(p); // anti-doublon (double-clic)
+    S.poly.cur = p;
+    refreshBtns(); polyHint(); render();
+  };
+  const onDbl = (e) => { if (S.shape === 'poly' && S.poly) { e.preventDefault(); closePoly(); } };
+  const onKey = (e) => { if (e.key === 'Escape' && S.poly) { e.preventDefault(); cancelPoly(); } };
+
   const onDown = (e) => {
     if (!S.img) return;
     e.preventDefault();
+    if (S.shape === 'poly') { addVertex(pos(e)); return; }
     el.cv.setPointerCapture?.(e.pointerId);
     S.drawing = pos(e);
     S.draft = null;
   };
   const onMove = (e) => {
+    if (S.shape === 'poly') {
+      if (S.poly) { S.poly.cur = pos(e); render(); }
+      return;
+    }
     if (!S.drawing) return;
     S.draft = rectOf(S.drawing, pos(e));
     render();
@@ -205,7 +291,7 @@ export function mount(container, ctx) {
   const releaseImage = () => {
     if (S.img) { S.img.onload = S.img.onerror = null; S.img.removeAttribute('src'); }
     if (S.srcUrl) { URL.revokeObjectURL(S.srcUrl); S.srcUrl = null; }
-    S.img = null; S.file = null; S.zones = []; S.draft = S.drawing = null;
+    S.img = null; S.file = null; S.zones = []; S.draft = S.drawing = S.poly = null;
     el.cv.width = el.cv.height = 0; // libère le buffer canvas
   };
 
@@ -275,6 +361,14 @@ export function mount(container, ctx) {
       el.modes.querySelectorAll('.ir2-chip').forEach((c) => c.classList.toggle('on', c === b));
     },
     intensity: () => { el.intVal.textContent = el.intensity.value; },
+    shape: (e) => {
+      const b = e.target.closest('[data-s]');
+      if (!b || b.dataset.s === S.shape) return;
+      cancelPoly('');
+      S.shape = b.dataset.s;
+      el.shapes.querySelectorAll('.ir2-chip').forEach((c) => c.classList.toggle('on', c === b));
+    },
+    cancel: () => cancelPoly(),
     undo: () => { S.zones.pop(); refreshBtns(); setStatus(`${S.zones.length} zone(s)`); render(); },
     clear: () => { S.zones = []; refreshBtns(); setStatus(''); render(); },
   };
@@ -285,6 +379,10 @@ export function mount(container, ctx) {
   el.drop.addEventListener('dragleave', H.leave);
   el.drop.addEventListener('drop', H.drop);
   el.modes.addEventListener('click', H.mode);
+  el.shapes.addEventListener('click', H.shape);
+  el.cancel.addEventListener('click', H.cancel);
+  el.cv.addEventListener('dblclick', onDbl);
+  document.addEventListener('keydown', onKey);
   el.intensity.addEventListener('input', H.intensity);
   el.undo.addEventListener('click', H.undo);
   el.clear.addEventListener('click', H.clear);
@@ -303,6 +401,10 @@ export function mount(container, ctx) {
     el.drop.removeEventListener('dragleave', H.leave);
     el.drop.removeEventListener('drop', H.drop);
     el.modes.removeEventListener('click', H.mode);
+    el.shapes.removeEventListener('click', H.shape);
+    el.cancel.removeEventListener('click', H.cancel);
+    el.cv.removeEventListener('dblclick', onDbl);
+    document.removeEventListener('keydown', onKey);
     el.intensity.removeEventListener('input', H.intensity);
     el.undo.removeEventListener('click', H.undo);
     el.clear.removeEventListener('click', H.clear);
