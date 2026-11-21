@@ -156,4 +156,12 @@ export const tools = [
     description: "Convertissez les pages de vos documents PDF en images PNG, JPG ou WebP 100 % localement.",
     module: () => import('./tools/pdf-to-img.js'),
   },
+  {
+    id: 'img-to-pdf',
+    name: "Images vers PDF",
+    category: 'pdf',
+    icon: 'file-up',
+    description: "Convertissez et combinez vos images PNG, JPG ou WebP en un document PDF unique 100 % localement.",
+    module: () => import('./tools/img-to-pdf.js'),
+  },
 ];
