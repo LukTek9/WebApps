@@ -99,4 +99,12 @@ export const tools = [
     description: "Ajoutez un texte ou un logo en filigrane (opacité, position, motif répétitif) 100 % localement sur vos images.",
     module: () => import('./tools/image-watermark.js'),
   },
+  {
+    id: 'image-rotator',
+    name: "Rotateur & Inverseur d'images",
+    category: 'image',
+    icon: 'rotate-cw',
+    description: "Pivotez vos images (+90°, -90°, angle libre) et inversez-les en miroir horizontal/vertical 100 % localement.",
+    module: () => import('./tools/image-rotator.js'),
+  },
 ];
