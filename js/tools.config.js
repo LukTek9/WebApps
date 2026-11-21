@@ -188,4 +188,12 @@ export const tools = [
     description: "Chiffrez vos PDF par mot de passe et limitez l'impression, la copie ou la modification, 100 % localement.",
     module: () => import('./tools/pdf-protector.js'),
   },
+  {
+    id: 'pdf-unlocker',
+    name: "Suppresseur de mots de passe PDF",
+    category: 'pdf',
+    icon: 'unlock',
+    description: "Retirez le mot de passe et les restrictions de vos PDF (avec le bon mot de passe), 100 % localement.",
+    module: () => import('./tools/pdf-unlocker.js'),
+  },
 ];

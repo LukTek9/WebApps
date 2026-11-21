@@ -1144,3 +1144,36 @@ select option {
 .pdfprot-status.is-ok { color: var(--color-success); }
 .pdfprot-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .pdfprot-actions .btn-primary { flex: 1 1 220px; }
+
+/* ===== Outil : Suppresseur de mots de passe PDF (.pdfunl-*) ===== */
+.pdfunl { display: flex; flex-direction: column; gap: var(--space-4); max-width: 760px; margin: 0 auto; width: 100%; color: var(--color-text); }
+.pdfunl-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); min-height: 200px; padding: var(--space-8) var(--space-4); text-align: center; cursor: pointer; border: 2px dashed var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); transition: border-color var(--transition), background var(--transition); }
+.pdfunl-drop:hover, .pdfunl-drop.is-over, .pdfunl-drop:focus-visible { border-color: var(--cat-pdf); background: color-mix(in srgb, var(--cat-pdf) 6%, transparent); outline: none; }
+.pdfunl-drop svg { width: 44px; height: 44px; color: var(--cat-pdf); }
+.pdfunl-drop strong { font-size: var(--font-size-lg); }
+.pdfunl-drop small { color: var(--color-text-muted); }
+.pdfunl-file { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.pdfunl-file > svg { width: 28px; height: 28px; flex: none; color: var(--cat-pdf); }
+.pdfunl-file-txt { flex: 1; min-width: 0; }
+.pdfunl-name { font-weight: var(--font-weight-bold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pdfunl-meta { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.pdfunl-badge { display: inline-flex; align-items: center; gap: var(--space-1); align-self: flex-start; padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); background: color-mix(in srgb, var(--color-text-muted) 15%, transparent); color: var(--color-text-muted); }
+.pdfunl-badge svg { width: 14px; height: 14px; }
+.pdfunl-badge.is-locked { background: color-mix(in srgb, var(--color-error) 12%, transparent); color: var(--color-error); }
+.pdfunl-badge.is-restricted { background: color-mix(in srgb, var(--cat-pdf) 12%, transparent); color: var(--cat-pdf); }
+.pdfunl-badge.is-open { background: color-mix(in srgb, var(--color-success) 14%, transparent); color: var(--color-success); }
+.pdfunl-panel { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.pdfunl-field { display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-muted); }
+.pdfunl-input { display: flex; align-items: stretch; gap: var(--space-2); }
+.pdfunl-input input { flex: 1; min-width: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); color: var(--color-text); font: inherit; }
+.pdfunl-input input:focus-visible { outline: 2px solid var(--cat-pdf); outline-offset: 1px; }
+.pdfunl-input input.is-invalid { border-color: var(--color-error); }
+.pdfunl-hint { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.pdfunl-bar { height: 8px; border-radius: var(--radius-pill); background: var(--color-border); overflow: hidden; visibility: hidden; }
+.pdfunl-bar.is-on { visibility: visible; }
+.pdfunl-bar > i { display: block; height: 100%; width: 0; background: var(--cat-pdf); transition: width var(--transition); }
+.pdfunl-status { min-height: 1.3em; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.pdfunl-status.is-error { color: var(--color-error); }
+.pdfunl-status.is-ok { color: var(--color-success); }
+.pdfunl-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.pdfunl-actions .btn-primary { flex: 1 1 220px; }
