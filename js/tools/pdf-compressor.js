@@ -41,6 +41,11 @@ const CSS = `
 .pdfc-meta{display:flex;gap:16px;flex-wrap:wrap;align-items:baseline}
 .pdfc-meta strong{word-break:break-all}
 .pdfc-meta span{opacity:.7;font-size:.9em}
+.pdfc .btn-primary{background:var(--cat-color,var(--cat-pdf,#ef4444));color:#fff;border:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:var(--radius,8px);font-weight:600;font-size:14px;cursor:pointer;height:auto;width:auto}
+.pdfc .btn-primary:hover:not(:disabled){opacity:.9;filter:brightness(1.05)}
+.pdfc .btn-primary:disabled{opacity:.5;cursor:not-allowed;filter:none}
+.pdfc .btn-secondary{background:transparent;color:var(--text-color,#e0e0e0);border:1px solid var(--border-color,#333);padding:8px 14px;border-radius:var(--radius,8px);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.pdfc .btn-primary svg,.pdfc .btn-secondary svg{width:16px;height:16px;flex:none}
 .compressor-preview-box{height:440px;flex:none;overflow-y:auto;contain:size layout paint;background:var(--bg-preview,#1e1e2e);border-radius:var(--radius,12px);padding:16px;box-sizing:border-box;display:flex;gap:16px;flex-wrap:wrap;align-content:flex-start;justify-content:center}
 .pdfc-thumb{flex:none;width:260px;display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff}
 .pdfc-thumb canvas{max-width:100%;height:auto;background:#fff;border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,.4)}
