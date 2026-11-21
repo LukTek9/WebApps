@@ -51,4 +51,12 @@ export const tools = [
     description: 'Redimensionnez vos images en pixels ou en pourcentage tout en conservant leur qualité, 100 % localement.',
     module: () => import('./tools/image-resizer.js'),
   },
+  {
+    id: 'image-cropper',
+    name: "Rognage d'images",
+    category: 'image',
+    icon: 'crop',
+    description: 'Rognez vos images facilement selon des ratios prédéfinis (1:1, 16:9, 4:3) ou librement, 100 % localement.',
+    module: () => import('./tools/image-cropper.js'),
+  },
 ];
