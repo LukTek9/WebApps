@@ -611,38 +611,6 @@ async function runFfmpegJob(src, signal) {
 /* ==========================================================================
    UI
    ========================================================================== */
-const STYLE_ID = 'ytc-style';
-const CSS = `
-.ytc{display:flex;flex-direction:column;gap:var(--space-6);max-width:760px;margin-inline:auto}
-.ytc-row{display:flex;gap:var(--space-3);flex-wrap:wrap}
-.ytc-input,.ytc-select{flex:1;min-width:0;padding:var(--space-3) var(--space-4);border:1px solid var(--color-border);
- border-radius:var(--radius-md);background:var(--color-surface-alt);color:var(--color-text);font:inherit}
-.ytc-input:focus,.ytc-select:focus{outline:2px solid var(--color-primary);outline-offset:1px}
-.ytc-select:disabled{opacity:.5}
-.ytc-label{display:flex;flex-direction:column;gap:var(--space-1);flex:1;min-width:180px;font-size:var(--font-size-sm);color:var(--color-text-muted)}
-.ytc-btn-ghost{padding:var(--space-3) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);
- background:var(--color-surface);color:var(--color-text);font-weight:var(--font-weight-medium)}
-.ytc-btn-ghost:hover{border-color:var(--color-primary);color:var(--color-primary)}
-.ytc-info{display:flex;gap:var(--space-4);align-items:center;padding:var(--space-4);border:1px solid var(--color-border);
- border-radius:var(--radius-md);background:var(--color-surface-alt)}
-.ytc-info img{width:128px;aspect-ratio:16/9;object-fit:cover;border-radius:var(--radius-sm)}
-.ytc-info b{display:block}.ytc-info small{color:var(--color-text-muted)}
-.ytc-bar{height:10px;border-radius:var(--radius-pill);background:var(--color-border);overflow:hidden}
-.ytc-bar>i{display:block;height:100%;width:0;background:var(--color-primary);transition:width var(--transition)}
-.ytc-bar.is-indeterminate>i{width:40%;animation:ytc-slide 1.1s infinite ease-in-out}
-@keyframes ytc-slide{0%{margin-left:-40%}100%{margin-left:100%}}
-.ytc-status{margin:var(--space-2) 0 0;font-size:var(--font-size-sm);color:var(--color-text-muted)}
-.ytc-status.is-error{color:var(--color-error)}
-.ytc-result{padding:var(--space-4);border:1px dashed var(--color-success);border-radius:var(--radius-md);text-align:center}
-.ytc-result a{color:var(--color-success);font-weight:var(--font-weight-bold)}
-.ytc-actions{display:flex;gap:var(--space-3);flex-wrap:wrap}
-.ytc-actions .btn{flex:1}
-.ytc-adv{padding:var(--space-3) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);display:flex;flex-direction:column;gap:var(--space-3)}
-.ytc-adv summary{cursor:pointer;font-weight:var(--font-weight-medium)}
-.ytc-adv small{display:block;margin-top:var(--space-2);color:var(--color-text-muted)}
-@media (max-width:520px){.ytc-info{flex-direction:column;align-items:flex-start}}
-`;
-
 const TEMPLATE = `
 <div class="ytc">
   <div class="ytc-row">
@@ -922,13 +890,6 @@ function syncQuality() {
 export function mount(container, ctx) {
   unmount(); // sécurité : évite un double montage
 
-  // Styles scopés (injectés une seule fois, retirés au démontage)
-  if (!document.getElementById(STYLE_ID)) {
-    const st = document.createElement('style');
-    st.id = STYLE_ID; st.textContent = CSS;
-    document.head.appendChild(st);
-  }
-
   const fmtHtml = FORMATS.map((g) =>
     `<optgroup label="${g.group}">${g.items.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</optgroup>`).join('');
   const qHtml = QUALITIES.map(([v, l]) => `<option value="${v}"${v === 1080 ? ' selected' : ''}>${l}</option>`).join('');
@@ -967,6 +928,5 @@ export function unmount() {
   releaseUrl();              // URL.revokeObjectURL
   s.listeners.abort();       // retire tous les écouteurs
   s.root.innerHTML = '';
-  document.getElementById(STYLE_ID)?.remove();
   s = null;
 }
