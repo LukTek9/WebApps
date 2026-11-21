@@ -140,4 +140,12 @@ export const tools = [
     description: "Réorganisez l'ordre des pages, pivotez leur orientation et supprimez des pages de vos PDF 100 % localement.",
     module: () => import('./tools/pdf-organizer.js'),
   },
+  {
+    id: 'pdf-compressor',
+    name: "Compresseur de PDF",
+    category: 'pdf',
+    icon: 'file-archive',
+    description: "Réduisez le poids de vos fichiers PDF 100 % localement avec visionneuse comparative.",
+    module: () => import('./tools/pdf-compressor.js'),
+  },
 ];
