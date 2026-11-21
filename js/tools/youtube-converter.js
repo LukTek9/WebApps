@@ -3,8 +3,8 @@
  * Contrat : export mount(container, ctx) / unmount().
  *
  * Flux :
- *  1. Analyse  : métadonnées + flux via instances Invidious (bascule auto).
- *  2. Résolution : Cobalt (bascule auto) puis, en repli, flux Invidious.
+ *  1. Analyse  : cascade Cobalt → Piped → Invidious (bascule auto, 403 ignorés), métadonnées normalisées.
+ *  2. Résolution : Cobalt (bascule auto) puis, en repli, flux Piped/Invidious.
  *  3. Téléchargement en Blob (progression) → transcodage local si besoin :
  *     FFmpeg.wasm (lazy, CDN épinglé, Worker) pour MP3 / WAV / M4A / fusion vidéo+audio ;
  *     repli WebAudio (WAV) ou téléchargement direct si WebAssembly indisponible.
@@ -18,9 +18,22 @@
    ========================================================================== */
 export const COBALT_INSTANCES = [
   'https://api.cobalt.tools',
+  'https://co.wuk.sh',
   'https://cobalt-api.kwiatekmiki.com',
   'https://cobalt-api.meowing.de',
 ];
+
+/** Instances Piped (API /streams/:id, CORS ouvert en général). Ordre = priorité. */
+export const PIPED_INSTANCES = [
+  'https://pipedapi.kavin.rocks',
+  'https://pipedapi.tokhmi.xyz',
+  'https://pipedapi.adminforge.de',
+  'https://pipedapi.leptons.xyz',
+];
+
+/** Proxy CORS de repli (Piped / Invidious / oEmbed) : 403 ou échec réseau/CORS en appel direct. */
+const CORS_PROXY = 'https://corsproxy.io/?';
+const ANALYZE_ERROR = "Impossible d'analyser la vidéo. Vérifiez l'URL et réessayez.";
 
 export const INVIDIOUS_INSTANCES = [
   'https://inv.nadeko.net',
@@ -116,52 +129,153 @@ async function tryInstances(list, fn, signal, onTry) {
    Accès API
    ========================================================================== */
 
-/** Analyse : métadonnées + flux via Invidious (urls proxifiées local=true). */
-function fetchInfo(id, signal, onTry) {
-  return tryInstances(INVIDIOUS_INSTANCES, async (inst) => {
-    const base = inst.replace(/\/$/, '');
-    const res = await fetchT(
-      `${base}/api/v1/videos/${id}?local=true&fields=title,author,lengthSeconds,formatStreams,adaptiveFormats`,
+/**
+ * Format info normalisé (commun Cobalt / Piped / Invidious) :
+ * { id, title, author, duration, via, formatStreams[], adaptiveFormats[] }
+ * Flux : { url, type (mime), qualityLabel, bitrate, contentLength } — consommé par pickInvidious().
+ */
+
+/** GET JSON avec repli automatique via proxy CORS si 403 ou échec réseau/CORS en direct. */
+async function fetchApi(url, init, signal) {
+  try {
+    const res = await fetchT(url, init, signal);
+    if (res.status !== 403) return res;
+  } catch (e) {
+    if (signal?.aborted) throw e;
+  }
+  return fetchT(CORS_PROXY + encodeURIComponent(url), init, signal);
+}
+
+/** oEmbed YouTube : titre + auteur, indépendant des instances (null si indisponible). */
+async function fetchOembed(id, signal) {
+  try {
+    const res = await fetchApi(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`,
       { headers: { Accept: 'application/json' } }, signal);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (!res.ok) return null;
     const d = await res.json();
-    if (!d?.title) throw new Error('réponse invalide');
-    const abs = (f) => ({ ...f, url: new URL(f.url, base).href });
-    return {
-      id, title: d.title, author: d.author, duration: d.lengthSeconds,
-      formatStreams: (d.formatStreams ?? []).map(abs),
-      adaptiveFormats: (d.adaptiveFormats ?? []).map(abs),
-    };
-  }, signal, onTry);
+    return d?.title ? { title: d.title, author: d.author_name ?? '' } : null;
+  } catch {
+    if (signal?.aborted) throw new DOMException('Annulé', 'AbortError');
+    return null;
+  }
+}
+
+/** Étape A — Cobalt v10 : pas de métadonnées natives → simple sonde de disponibilité (titre via oEmbed). */
+async function infoFromCobalt(inst, id, signal) {
+  await resolveCobalt(inst, `https://www.youtube.com/watch?v=${id}`, 'video', 'mp4', 1080, signal); // lève si 403/auth/erreur
+  return { id, title: `YouTube ${id}`, author: '', duration: 0, via: 'cobalt', formatStreams: [], adaptiveFormats: [] };
+}
+
+/** Étape B — Piped : /streams/:id → normalisation vers le schéma Invidious. */
+async function infoFromPiped(inst, id, signal) {
+  const base = inst.replace(/\/$/, '');
+  const res = await fetchApi(`${base}/streams/${id}`, { headers: { Accept: 'application/json' } }, signal);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const d = await res.json();
+  if (d?.error || !d?.title) throw new Error(d?.message ?? d?.error ?? 'réponse invalide');
+  const norm = (f) => ({
+    url: new URL(f.url, base).href, type: f.mimeType, qualityLabel: f.quality,
+    bitrate: f.bitrate, contentLength: f.contentLength,
+  });
+  const ok = (f) => f?.url && f.mimeType;
+  const vs = (d.videoStreams ?? []).filter(ok);
+  return {
+    id, title: d.title, author: d.uploader, duration: d.duration, via: 'piped',
+    formatStreams: vs.filter((f) => !f.videoOnly).map(norm),                                   // muxé (a+v)
+    adaptiveFormats: [...vs.filter((f) => f.videoOnly), ...(d.audioStreams ?? []).filter(ok)].map(norm), // vidéo seule + audio
+  };
+}
+
+/** Étape C — Invidious (urls proxifiées local=true). */
+async function infoFromInvidious(inst, id, signal) {
+  const base = inst.replace(/\/$/, '');
+  const res = await fetchApi(
+    `${base}/api/v1/videos/${id}?local=true&fields=title,author,lengthSeconds,formatStreams,adaptiveFormats`,
+    { headers: { Accept: 'application/json' } }, signal);
+  if (!res.ok) throw new Error('HTTP ' + res.status); // 403 → instance suivante (tryInstances)
+  const d = await res.json();
+  if (!d?.title) throw new Error('réponse invalide');
+  const abs = (f) => ({ ...f, url: new URL(f.url, base).href });
+  return {
+    id, title: d.title, author: d.author, duration: d.lengthSeconds, via: 'invidious',
+    formatStreams: (d.formatStreams ?? []).map(abs),
+    adaptiveFormats: (d.adaptiveFormats ?? []).map(abs),
+  };
+}
+
+/**
+ * Flux Piped → Invidious (normalisés). Chaque étape bascule d'instance en instance
+ * (403/CORS/timeout ignorés, proxy CORS en repli via fetchApi), puis passe à la suivante.
+ */
+async function fetchStreams(id, signal, onTry) {
+  const steps = [
+    [PIPED_INSTANCES, infoFromPiped],
+    [INVIDIOUS_INSTANCES, infoFromInvidious],
+  ];
+  for (const [list, fn] of steps) {
+    try {
+      return await tryInstances(list, (inst) => fn(inst, id, signal), signal, onTry);
+    } catch (e) {
+      if (isAbort(e) && signal?.aborted) throw e;
+    }
+  }
+  throw new Error('Aucun flux Piped/Invidious disponible.');
+}
+
+/**
+ * Analyse : oEmbed (titre/auteur) + sonde Cobalt → repli flux Piped/Invidious → repli oEmbed seul
+ * (les flux sont alors résolus au lancement par run()).
+ */
+async function fetchInfo(id, signal, onTry) {
+  const meta = await fetchOembed(id, signal);
+  try {
+    const info = await tryInstances(COBALT_INSTANCES, (inst) => infoFromCobalt(inst, id, signal), signal, onTry);
+    if (meta) Object.assign(info, meta);
+    return info;
+  } catch (e) {
+    if (isAbort(e) && signal?.aborted) throw e;
+  }
+  try {
+    return await fetchStreams(id, signal, onTry);
+  } catch (e) {
+    if (isAbort(e) && signal?.aborted) throw e;
+  }
+  if (meta) return { id, ...meta, duration: 0, via: 'oembed', formatStreams: [], adaptiveFormats: [] };
+  throw new Error(ANALYZE_ERROR);
 }
 
 /** Résolution via une instance Cobalt (POST JSON). */
 async function resolveCobalt(inst, watchUrl, kind, fmt, quality, signal) {
-  const body = {
-    url: watchUrl,
-    downloadMode: kind === 'audio' ? 'audio' : 'auto',
-    videoQuality: String(quality),
-    youtubeVideoCodec: fmt === 'webm' ? 'vp9' : 'h264',
-    audioFormat: fmt === 'wav' ? 'wav' : 'mp3',
-    filenameStyle: 'basic',
-  };
+  // v10 : body minimal { url, videoQuality } ; options ajoutées seulement pour audio / webm
+  const body = { url: watchUrl, videoQuality: String(quality) };
+  if (kind === 'audio') Object.assign(body, { downloadMode: 'audio', audioFormat: fmt === 'wav' ? 'wav' : 'mp3' });
+  else if (fmt === 'webm') body.youtubeVideoCodec = 'vp9';
   const res = await fetchT(inst.replace(/\/$/, '') + '/', {
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   }, signal);
+  const ext = kind === 'audio' ? (fmt === 'wav' ? 'wav' : 'mp3') : (fmt === 'webm' ? 'webm' : 'mp4');
+  const host = new URL(inst).hostname;
   const d = await res.json().catch(() => null);
   if (!d?.status) throw new Error('HTTP ' + res.status);
-  if (d.status === 'error') throw new Error(d.error?.code ?? 'erreur Cobalt');
-  if (d.status === 'picker') {
-    const it = d.picker?.find((p) => p.type === 'video') ?? d.picker?.[0];
-    if (!it?.url) throw new Error('picker vide');
-    return { url: it.url, filename: null, via: 'cobalt' };
+  switch (d.status) {
+    case 'tunnel':   // flux proxifié par Cobalt
+    case 'redirect': // lien direct vers la source
+      if (!d.url) throw new Error('URL Cobalt absente');
+      return { url: d.url, filename: d.filename ?? null, ext, transcode: null, via: 'cobalt', host };
+    case 'picker': {
+      const it = d.picker?.find((p) => p.type === 'video') ?? d.picker?.[0];
+      if (!it?.url) throw new Error('picker vide');
+      return { url: it.url, filename: null, ext, transcode: null, via: 'cobalt', host };
+    }
+    case 'local-processing':
+      throw new Error('traitement local Cobalt non pris en charge');
+    case 'error':
+      throw new Error(d.error?.code ?? 'erreur Cobalt');
+    default:
+      throw new Error('réponse inattendue');
   }
-  if (d.status === 'tunnel' || d.status === 'redirect') {
-    return { url: d.url, filename: d.filename ?? null, via: 'cobalt' };
-  }
-  throw new Error('réponse inattendue');
 }
 
 /**
@@ -539,14 +653,15 @@ function showBlobLink(blob, name) {
   setStatus('Prêt : cliquez sur le lien pour enregistrer le fichier.');
 }
 
-/** Repli CORS : lien direct (le navigateur télécharge sans passer par fetch). */
-function showDirectLink(url, name) {
+/** Repli CORS : lien direct (le navigateur télécharge sans passer par fetch). `auto` : tente de déclencher le clic. */
+function showDirectLink(url, name, auto = false) {
   const link = q('link');
   link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
   link.textContent = `⬇ ${name} (lien direct)`;
   q('result').hidden = false;
   setProgress(1);
-  setStatus('Fichier local impossible (restriction CORS) : utilisez le lien direct.');
+  setStatus('Restriction CORS : téléchargement direct par le navigateur (sinon cliquez sur le lien).');
+  if (auto) { try { link.click(); } catch { /* bloqué : le lien reste cliquable */ } }
 }
 
 /* ---------- Actions ---------- */
@@ -562,7 +677,7 @@ async function analyze() {
     if (!s) return;
     q('thumb').src = `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
     q('title').textContent = s.info.title;
-    q('meta').textContent = `${s.info.author ?? ''} · ${fmtDur(s.info.duration)}`;
+    q('meta').textContent = [s.info.author, s.info.duration ? fmtDur(s.info.duration) : ''].filter(Boolean).join(' · ');
     q('info').hidden = false;
     setProgress(0);
     setStatus('Analyse OK. Choisissez format/qualité puis lancez la conversion.');
@@ -570,7 +685,7 @@ async function analyze() {
     if (!s) return;
     setProgress(0);
     if (isAbort(e)) setStatus('Analyse annulée.');
-    else setStatus(e.message, true);
+    else setStatus(ANALYZE_ERROR, true);
   } finally {
     setBusy(false);
   }
@@ -578,7 +693,8 @@ async function analyze() {
 
 async function run() {
   if (!s?.info || s.running) return;
-  const st = s, info = s.info;
+  const st = s;
+  let info = s.info;
   clearResult();
   st.abort = new AbortController();
   const { signal } = st.abort;
@@ -588,31 +704,48 @@ async function run() {
   const quality = Number(q('quality').value);
   const watchUrl = `https://www.youtube.com/watch?v=${info.id}`;
 
+  /** Flux Piped/Invidious préchargés ? (info oEmbed/Cobalt = non). */
+  const hasStreams = () => info.formatStreams.length > 0 || info.adaptiveFormats.length > 0;
+  /** Sinon : récupère les flux à la demande (Piped → Invidious). */
+  const withStreams = async () => {
+    if (hasStreams()) return info;
+    setStatus('Récupération des flux (Piped/Invidious)…');
+    info = st.info = await fetchStreams(info.id, signal, (i) => setStatus(`Flux : ${new URL(i).hostname}…`));
+    return info;
+  };
+  const target = kind === 'audio' ? fmt.toUpperCase() : `${fmt.toUpperCase()} ${quality}p`;
+
   try {
-    // M4A : natif Invidious uniquement ; sinon Cobalt puis repli Invidious
-    const order = fmt === 'm4a' ? ['invidious'] : ['cobalt', 'invidious'];
+    // Cobalt prioritaire si analyse oEmbed/Cobalt ou aucun flux préchargé ; M4A : flux natifs uniquement (Cobalt v10 sans m4a)
+    const cobaltFirst = fmt !== 'm4a' && (info.via === 'oembed' || info.via === 'cobalt' || !hasStreams());
+    const order = fmt === 'm4a' ? ['invidious'] : cobaltFirst ? ['cobalt', 'invidious'] : ['invidious', 'cobalt'];
     const errors = [];
     let src = null;
     for (const via of order) {
       try {
-        setStatus(`Résolution (${via})…`);
+        setStatus(via === 'cobalt' ? `Résolution Cobalt (${target})…` : 'Sélection des flux Piped/Invidious…');
         src = via === 'cobalt'
           ? await tryInstances(COBALT_INSTANCES, (i) => resolveCobalt(i, watchUrl, kind, fmt, quality, signal),
-              signal, (i) => setStatus(`Cobalt : ${new URL(i).hostname}…`))
-          : pickInvidious(info, kind, fmt, quality);
+              signal, (i) => setStatus(`Cobalt ${new URL(i).hostname} : génération du lien ${target}…`))
+          : pickInvidious(await withStreams(), kind, fmt, quality);
         break;
       } catch (e) {
         if (isAbort(e)) throw e;
         errors.push(`${via}: ${e.message}`);
       }
     }
-    if (!src) throw new Error(errors.join(' | '));
+    if (!src) {
+      console.warn('[youtube-converter] sources échouées :', errors);
+      throw new Error('Téléchargement indisponible pour le moment. Réessayez dans quelques instants.');
+    }
 
     let blob = null;
+    if (src.via === 'cobalt') setStatus(`Lien Cobalt obtenu (${src.host}) — téléchargement…`);
 
     // Transcodage local FFmpeg.wasm (chargé à la demande) ; bascule propre si indisponible
     if (FFMPEG_JOBS.includes(src.transcode)) {
       try {
+        setStatus(`Transcodage local requis (${src.transcode.toUpperCase()}) — préparation…`);
         if (!wasmSupported()) throw new Error('WebAssembly non pris en charge');
         blob = await runFfmpegJob(src, signal);
       } catch (e) {
@@ -627,11 +760,11 @@ async function run() {
       try {
         blob = await downloadBlob(src.url, signal, (p, got, total) => {
           setProgress(p);
-          setStatus(`Téléchargement… ${fmtMB(got)}${total ? ' / ' + fmtMB(total) : ''}`);
+          setStatus(`Téléchargement ${src.via === 'cobalt' ? 'Cobalt' : 'du flux'}… ${fmtMB(got)}${total ? ' / ' + fmtMB(total) : ''}`);
         });
       } catch (e) {
         if (isAbort(e)) throw e;
-        if (s === st) showDirectLink(src.url, name);
+        if (s === st) showDirectLink(src.url, name, true);
         return;
       }
       if (src.transcode === 'wav-webaudio') {
