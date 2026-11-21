@@ -12,6 +12,48 @@ const STYLE_ID = 'cex-style';
 
 let state = null;
 
+/**
+ * Badge de valeur éditable : clic → <input type=number> (bornes/pas du curseur).
+ * Enter/blur valide (slider.value + événement `input` → état + aperçu), Échap annule.
+ */
+function editable(badge, slider, fmt, cls) {
+  if (!badge || !slider) return;
+  badge.classList.add(cls);
+  badge.tabIndex = 0;
+  badge.setAttribute('role', 'button');
+  badge.title = 'Cliquer pour saisir une valeur';
+  const open = () => {
+    if (badge.querySelector('input')) return;
+    const min = parseFloat(slider.min), max = parseFloat(slider.max), step = parseFloat(slider.step) || 1;
+    const inp = document.createElement('input');
+    inp.type = 'number'; inp.className = cls + '-input';
+    inp.min = min; inp.max = max; inp.step = step; inp.value = slider.value;
+    badge.textContent = '';
+    badge.appendChild(inp);
+    inp.focus(); inp.select();
+    let done = false;
+    const close = (commit, refocus) => {
+      if (done) return;
+      done = true;
+      const raw = parseFloat(inp.value);
+      inp.remove();
+      if (commit && Number.isFinite(raw)) {
+        slider.value = String(Math.min(Math.max(raw, min), max)); // le curseur applique le pas
+        slider.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      badge.textContent = fmt(slider.value);
+      if (refocus) badge.focus();
+    };
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); close(true, true); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(false, true); }
+    });
+    inp.addEventListener('blur', () => close(true, false));
+  };
+  badge.addEventListener('click', (e) => { if (e.target !== badge) return; e.preventDefault(); open(); }); // preventDefault : évite l'activation du <label>
+  badge.addEventListener('keydown', (e) => { if (e.target === badge && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(); } });
+}
+
 /* ------------------------------------------------------------------ */
 /* Conversions de couleurs                                            */
 /* ------------------------------------------------------------------ */
@@ -192,6 +234,9 @@ const CSS = `
 .cex-shades i{flex:1;cursor:pointer}
 .cex-ctrl{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;font-size:.9rem}
 .cex-ctrl select{padding:.4rem;border-radius:var(--radius-sm,8px);border:1px solid var(--color-border,#cbd5e1)}
+.cex-ev{cursor:pointer;border-bottom:1px dashed currentColor;border-radius:3px;padding:0 .2em;transition:background .15s}
+.cex-ev:hover,.cex-ev:focus-visible{background:rgba(128,128,128,.18);border-bottom-style:solid;outline:0}
+.cex-ev-input{width:4.5em;padding:0 .25em;font:inherit;color:inherit;background:transparent;border:1px solid var(--color-primary,#4f46e5);border-radius:4px}
 .cex-pal{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.75rem}
 .cex-card{border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-md,12px);overflow:hidden;background:var(--color-surface,#fff);display:flex;flex-direction:column}
 .cex-card .sw{height:70px;cursor:pointer;display:flex;align-items:flex-end;padding:.3rem .5rem;font-size:.75rem;font-weight:700}
@@ -434,6 +479,7 @@ export function mount(container, ctx) {
     clearTimeout(s.timer);
     s.timer = setTimeout(buildPalette, 150);
   });
+  editable($('[data-nv]'), nInput, (v) => v, 'cex-ev');
 
   function buildPalette() {
     if (!s.imageData || state !== s) return;

@@ -8,6 +8,48 @@ const EXT = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
 
 let s = null; // état du module (null = démonté)
 
+/**
+ * Badge de valeur éditable : clic → <input type=number> (bornes/pas du curseur).
+ * Enter/blur valide (slider.value + événement `input` → état + aperçu), Échap annule.
+ */
+function editable(badge, slider, fmt, cls) {
+  if (!badge || !slider) return;
+  badge.classList.add(cls);
+  badge.tabIndex = 0;
+  badge.setAttribute('role', 'button');
+  badge.title = 'Cliquer pour saisir une valeur';
+  const open = () => {
+    if (badge.querySelector('input')) return;
+    const min = parseFloat(slider.min), max = parseFloat(slider.max), step = parseFloat(slider.step) || 1;
+    const inp = document.createElement('input');
+    inp.type = 'number'; inp.className = cls + '-input';
+    inp.min = min; inp.max = max; inp.step = step; inp.value = slider.value;
+    badge.textContent = '';
+    badge.appendChild(inp);
+    inp.focus(); inp.select();
+    let done = false;
+    const close = (commit, refocus) => {
+      if (done) return;
+      done = true;
+      const raw = parseFloat(inp.value);
+      inp.remove();
+      if (commit && Number.isFinite(raw)) {
+        slider.value = String(Math.min(Math.max(raw, min), max)); // le curseur applique le pas
+        slider.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      badge.textContent = fmt(slider.value);
+      if (refocus) badge.focus();
+    };
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); close(true, true); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(false, true); }
+    });
+    inp.addEventListener('blur', () => close(true, false));
+  };
+  badge.addEventListener('click', (e) => { if (e.target !== badge) return; e.preventDefault(); open(); }); // preventDefault : évite l'activation du <label>
+  badge.addEventListener('keydown', (e) => { if (e.target === badge && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(); } });
+}
+
 const q = (id) => s?.root.querySelector('#rot-' + id);
 const refreshIcons = () => window.lucide?.createIcons();
 const baseName = (n) => n.replace(/\.[^.]+$/, '') || 'image';
@@ -184,6 +226,9 @@ export function mount(container, ctx) {
     .rot-btn[aria-pressed=true]{background:var(--primary,#4f46e5);border-color:var(--primary,#4f46e5);color:#fff}
     .rot-btn.rot-primary{background:var(--primary,#4f46e5);border-color:var(--primary,#4f46e5);color:#fff}
     .rot-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+    .rot-ev{cursor:pointer;border-bottom:1px dashed currentColor;border-radius:3px;padding:0 .2em;transition:background .15s}
+    .rot-ev:hover,.rot-ev:focus-visible{background:rgba(128,128,128,.18);border-bottom-style:solid;outline:0}
+    .rot-ev-input{width:4.5em;padding:0 .25em;font:inherit;color:inherit;background:transparent;border:1px solid var(--primary,#4f46e5);border-radius:4px}
   </style>
   <div class="rot">
     <label class="rot-drop" id="rot-drop">
@@ -266,6 +311,7 @@ export function mount(container, ctx) {
   const onSlider = () => { if (!s.syncing) setAngle(q('angle').value); };
   on(q('angle'), 'input', onSlider);
   on(q('angle'), 'change', onSlider);
+  editable(q('angle-v'), q('angle'), (v) => fmtAngle(Number(v)), 'rot-ev');
   on(q('zero'), 'click', () => setAngle(0));
   on(q('fliph'), 'click', () => { s.flipH = !s.flipH; syncFlipButtons(); schedule(); });
   on(q('flipv'), 'click', () => { s.flipV = !s.flipV; syncFlipButtons(); schedule(); });

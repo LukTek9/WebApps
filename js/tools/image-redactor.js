@@ -25,6 +25,9 @@ const CSS = `
 .ir2-btn.ir2-sec{background:transparent;color:inherit;border:1px solid var(--color-border,#cbd5e1)}
 .ir2-btn:disabled{opacity:.5;cursor:not-allowed}
 .ir2-status{font-size:.85rem;font-weight:600}.ir2-status.err{color:#dc2626}
+.ir2-ev{cursor:pointer;border-bottom:1px dashed currentColor;border-radius:3px;padding:0 .2em;transition:background .15s}
+.ir2-ev:hover,.ir2-ev:focus-visible{background:rgba(128,128,128,.18);border-bottom-style:solid;outline:0}
+.ir2-ev-input{width:4.5em;padding:0 .25em;font:inherit;color:inherit;background:transparent;border:1px solid var(--color-primary,#e5322d);border-radius:4px}
 `;
 
 const MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
@@ -36,6 +39,48 @@ const MODES = [
 ];
 
 let state = null;
+
+/**
+ * Badge de valeur éditable : clic → <input type=number> (bornes/pas du curseur).
+ * Enter/blur valide (slider.value + événement `input` → état + aperçu), Échap annule.
+ */
+function editable(badge, slider, fmt, cls) {
+  if (!badge || !slider) return;
+  badge.classList.add(cls);
+  badge.tabIndex = 0;
+  badge.setAttribute('role', 'button');
+  badge.title = 'Cliquer pour saisir une valeur';
+  const open = () => {
+    if (badge.querySelector('input')) return;
+    const min = parseFloat(slider.min), max = parseFloat(slider.max), step = parseFloat(slider.step) || 1;
+    const inp = document.createElement('input');
+    inp.type = 'number'; inp.className = cls + '-input';
+    inp.min = min; inp.max = max; inp.step = step; inp.value = slider.value;
+    badge.textContent = '';
+    badge.appendChild(inp);
+    inp.focus(); inp.select();
+    let done = false;
+    const close = (commit, refocus) => {
+      if (done) return;
+      done = true;
+      const raw = parseFloat(inp.value);
+      inp.remove();
+      if (commit && Number.isFinite(raw)) {
+        slider.value = String(Math.min(Math.max(raw, min), max)); // le curseur applique le pas
+        slider.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      badge.textContent = fmt(slider.value);
+      if (refocus) badge.focus();
+    };
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); close(true, true); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(false, true); }
+    });
+    inp.addEventListener('blur', () => close(true, false));
+  };
+  badge.addEventListener('click', (e) => { if (e.target !== badge) return; e.preventDefault(); open(); }); // preventDefault : évite l'activation du <label>
+  badge.addEventListener('keydown', (e) => { if (e.target === badge && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(); } });
+}
 
 export function mount(container, ctx) {
   unmount();
@@ -384,6 +429,7 @@ export function mount(container, ctx) {
   el.cv.addEventListener('dblclick', onDbl);
   document.addEventListener('keydown', onKey);
   el.intensity.addEventListener('input', H.intensity);
+  editable(el.intVal, el.intensity, (v) => v, 'ir2-ev');
   el.undo.addEventListener('click', H.undo);
   el.clear.addEventListener('click', H.clear);
   el.dl.addEventListener('click', download);

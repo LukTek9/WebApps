@@ -11,6 +11,48 @@ const STYLE_ID = 'i2s-style';
 
 let state = null;           // état du module monté (null si démonté)
 
+/**
+ * Badge de valeur éditable : clic → <input type=number> (bornes/pas du curseur).
+ * Enter/blur valide (slider.value + événement `input` → état + aperçu), Échap annule.
+ */
+function editable(badge, slider, fmt, cls) {
+  if (!badge || !slider) return;
+  badge.classList.add(cls);
+  badge.tabIndex = 0;
+  badge.setAttribute('role', 'button');
+  badge.title = 'Cliquer pour saisir une valeur';
+  const open = () => {
+    if (badge.querySelector('input')) return;
+    const min = parseFloat(slider.min), max = parseFloat(slider.max), step = parseFloat(slider.step) || 1;
+    const inp = document.createElement('input');
+    inp.type = 'number'; inp.className = cls + '-input';
+    inp.min = min; inp.max = max; inp.step = step; inp.value = slider.value;
+    badge.textContent = '';
+    badge.appendChild(inp);
+    inp.focus(); inp.select();
+    let done = false;
+    const close = (commit, refocus) => {
+      if (done) return;
+      done = true;
+      const raw = parseFloat(inp.value);
+      inp.remove();
+      if (commit && Number.isFinite(raw)) {
+        slider.value = String(Math.min(Math.max(raw, min), max)); // le curseur applique le pas
+        slider.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      badge.textContent = fmt(slider.value);
+      if (refocus) badge.focus();
+    };
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); close(true, true); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(false, true); }
+    });
+    inp.addEventListener('blur', () => close(true, false));
+  };
+  badge.addEventListener('click', (e) => { if (e.target !== badge) return; e.preventDefault(); open(); }); // preventDefault : évite l'activation du <label>
+  badge.addEventListener('keydown', (e) => { if (e.target === badge && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(); } });
+}
+
 /* ------------------------------------------------------------------ */
 /* Moteur de vectorisation                                            */
 /* ------------------------------------------------------------------ */
@@ -232,6 +274,9 @@ const CSS = `
 .i2s-panel select,.i2s-panel input[type=range]{width:100%}
 .i2s-panel select{padding:.45rem;border-radius:var(--radius-sm,8px);border:1px solid var(--color-border,#cbd5e1)}
 .i2s-val{font-weight:400;color:var(--color-muted,#64748b)}
+.i2s-ev{cursor:pointer;border-bottom:1px dashed currentColor;border-radius:3px;padding:0 .2em;transition:background .15s}
+.i2s-ev:hover,.i2s-ev:focus-visible{background:rgba(128,128,128,.18);border-bottom-style:solid;outline:0}
+.i2s-ev-input{width:4.5em;padding:0 .25em;font:inherit;color:inherit;background:transparent;border:1px solid var(--color-primary,#4f46e5);border-radius:4px}
 .i2s-view{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
 .i2s-box{border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-md,12px);padding:.5rem;background:#fff;display:flex;flex-direction:column;gap:.35rem;min-height:200px}
 .i2s-box h4{margin:0;font-size:.8rem;color:var(--color-muted,#64748b);text-transform:uppercase;letter-spacing:.04em}
@@ -336,6 +381,8 @@ export function mount(container, ctx) {
       schedule();
     });
   });
+  container.querySelectorAll('input[type=range][data-k]').forEach((el) =>
+    editable(container.querySelector(`[data-v="${el.dataset.k}"]`), el, (v) => v, 'i2s-ev'));
 
   /* Téléchargement */
   on(s.dl, 'click', () => {
