@@ -1063,3 +1063,44 @@ select option {
 .pdfnum-status { min-height: 1.3em; font-size: var(--font-size-sm); color: var(--color-text-muted); }
 .pdfnum-status.is-error { color: var(--color-error); }
 .pdfnum-status.is-ok { color: var(--color-success); }
+
+/* ===== Outil : Rotation de pages PDF (.pdfrot-*) ===== */
+.pdfrot { display: flex; flex-direction: column; gap: var(--space-4); max-width: 960px; margin: 0 auto; width: 100%; color: var(--color-text); }
+.pdfrot-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); min-height: 200px; padding: var(--space-8) var(--space-4); text-align: center; cursor: pointer; border: 2px dashed var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); transition: border-color var(--transition), background var(--transition); }
+.pdfrot-drop:hover, .pdfrot-drop.is-over, .pdfrot-drop:focus-visible { border-color: var(--cat-pdf); background: color-mix(in srgb, var(--cat-pdf) 6%, transparent); outline: none; }
+.pdfrot-drop svg { width: 44px; height: 44px; color: var(--cat-pdf); }
+.pdfrot-drop strong { font-size: var(--font-size-lg); }
+.pdfrot-drop small { color: var(--color-text-muted); }
+.pdfrot-file { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.pdfrot-file > svg { width: 28px; height: 28px; flex: none; color: var(--cat-pdf); }
+.pdfrot-file-txt { flex: 1; min-width: 0; }
+.pdfrot-name { font-weight: var(--font-weight-bold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pdfrot-meta { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.pdfrot-tools { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.pdfrot-field { display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-muted); }
+.pdfrot-field select { padding: var(--space-2) var(--space-3); }
+.pdfrot-btn { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); font-weight: var(--font-weight-medium); transition: background var(--transition), color var(--transition), border-color var(--transition); }
+.pdfrot-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--cat-pdf) 8%, transparent); border-color: var(--cat-pdf); color: var(--cat-pdf); }
+.pdfrot-btn:disabled { opacity: .45; cursor: not-allowed; }
+.pdfrot-btn svg { width: 16px; height: 16px; flex: none; }
+.pdfrot-preview-box { height: 480px; flex: none; overflow-y: auto; contain: size layout paint; background: var(--color-surface-alt); border-radius: var(--radius-md); padding: var(--space-4); box-sizing: border-box; }
+.pdfrot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: var(--space-4); align-content: start; }
+.pdfrot-card { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); transition: border-color var(--transition); }
+.pdfrot-card.is-rotated { border-color: var(--cat-pdf); }
+.pdfrot-thumb { position: relative; height: 200px; /* = THUMB_H (JS) */ display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--color-text) 8%, transparent); }
+.pdfrot-thumb canvas { background: var(--color-surface); box-shadow: var(--shadow-md); }
+.pdfrot-badge { position: absolute; top: var(--space-2); right: var(--space-2); padding: 1px var(--space-2); border-radius: var(--radius-pill); font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); background: var(--color-text-muted); color: var(--color-text-on-primary); box-shadow: var(--shadow-sm); }
+.pdfrot-card.is-rotated .pdfrot-badge { background: var(--cat-pdf); }
+.pdfrot-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-1); }
+.pdfrot-num { flex: 1; text-align: center; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.pdfrot-ibtn { width: 32px; height: 32px; flex: none; display: inline-grid; place-items: center; padding: 0; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); transition: background var(--transition), color var(--transition), border-color var(--transition); }
+.pdfrot-ibtn:hover:not(:disabled) { background: color-mix(in srgb, var(--cat-pdf) 8%, transparent); border-color: var(--cat-pdf); color: var(--cat-pdf); }
+.pdfrot-ibtn:disabled { opacity: .35; cursor: not-allowed; }
+.pdfrot-ibtn svg { width: 16px; height: 16px; }
+.pdfrot-foot { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+.pdfrot-progress { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.pdfrot-barline { height: 8px; border-radius: var(--radius-pill); background: var(--color-border); overflow: hidden; }
+.pdfrot-barline > i { display: block; height: 100%; width: 0; background: var(--cat-pdf); transition: width var(--transition); }
+.pdfrot-status { min-height: 1.3em; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.pdfrot-status.is-error { color: var(--color-error); }
+.pdfrot-status.is-ok { color: var(--color-success); }

@@ -172,4 +172,12 @@ export const tools = [
     description: "Ajoutez une numérotation de pages à vos PDF (position, format, police, couleur) 100 % localement.",
     module: () => import('./tools/pdf-page-numbers.js'),
   },
+  {
+    id: 'pdf-rotator',
+    name: "Rotation de pages PDF",
+    category: 'pdf',
+    icon: 'rotate-cw-square',
+    description: "Pivotez les pages de vos PDF une par une ou en lot (toutes, paires, impaires) avec aperçu, 100 % localement.",
+    module: () => import('./tools/pdf-rotator.js'),
+  },
 ];
