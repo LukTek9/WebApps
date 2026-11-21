@@ -7,7 +7,6 @@
 
 const MAX_SIDE = 1024;      // côté max de travail (perf)
 const MIN_AREA = 4;         // aire min (px²) d'un contour conservé (anti-bruit)
-const STYLE_ID = 'i2s-style';
 
 let state = null;           // état du module monté (null si démonté)
 
@@ -264,42 +263,8 @@ function vectorize(imageData, o) {
 /* UI                                                                 */
 /* ------------------------------------------------------------------ */
 
-const CSS = `
-.i2s{display:flex;flex-direction:column;gap:1rem;font-family:var(--font-family,inherit);color:var(--color-text,#1f2937)}
-.i2s-drop{border:2px dashed var(--color-border,#cbd5e1);border-radius:var(--radius-lg,16px);padding:3rem 1rem;text-align:center;cursor:pointer;background:var(--color-surface,#f8fafc);transition:border-color .2s,background .2s}
-.i2s-drop:hover,.i2s-drop.over{border-color:var(--color-primary,#4f46e5);background:var(--color-primary-soft,#eef2ff)}
-.i2s-drop strong{display:block;font-size:1.1rem;margin-bottom:.25rem}
-.i2s-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;padding:1rem;border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-md,12px);background:var(--color-surface,#fff)}
-.i2s-panel label{display:flex;flex-direction:column;gap:.35rem;font-size:.9rem;font-weight:600}
-.i2s-panel select,.i2s-panel input[type=range]{width:100%}
-.i2s-panel select{padding:.45rem;border-radius:var(--radius-sm,8px);border:1px solid var(--color-border,#cbd5e1)}
-.i2s-val{font-weight:400;color:var(--color-muted,#64748b)}
-.i2s-ev{cursor:pointer;border-bottom:1px dashed currentColor;border-radius:3px;padding:0 .2em;transition:background .15s}
-.i2s-ev:hover,.i2s-ev:focus-visible{background:rgba(128,128,128,.18);border-bottom-style:solid;outline:0}
-.i2s-ev-input{width:4.5em;padding:0 .25em;font:inherit;color:inherit;background:transparent;border:1px solid var(--color-primary,#4f46e5);border-radius:4px}
-.i2s-view{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
-.i2s-box{border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-md,12px);padding:.5rem;background:#fff;display:flex;flex-direction:column;gap:.35rem;min-height:200px}
-.i2s-box h4{margin:0;font-size:.8rem;color:var(--color-muted,#64748b);text-transform:uppercase;letter-spacing:.04em}
-.i2s-box .i2s-img{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.i2s-box img,.i2s-box svg{max-width:100%;max-height:420px;height:auto}
-.i2s-bar{height:6px;border-radius:3px;background:var(--color-border,#e2e8f0);overflow:hidden}
-.i2s-bar>i{display:block;height:100%;width:0;background:var(--color-primary,#4f46e5);transition:width .2s}
-.i2s-actions{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
-.i2s-btn{padding:.7rem 1.4rem;border:0;border-radius:var(--radius-md,12px);background:var(--color-primary,#4f46e5);color:#fff;font-weight:700;cursor:pointer}
-.i2s-btn:disabled{opacity:.45;cursor:not-allowed}
-.i2s-info{font-size:.85rem;color:var(--color-muted,#64748b)}
-.i2s [hidden]{display:none!important}
-`;
-
 export function mount(container, ctx) {
   unmount(); // sécurité : un seul montage actif
-
-  if (!document.getElementById(STYLE_ID)) {
-    const st = document.createElement('style');
-    st.id = STYLE_ID;
-    st.textContent = CSS;
-    document.head.appendChild(st);
-  }
 
   container.innerHTML = `
     <div class="i2s">
@@ -488,7 +453,5 @@ export function unmount() {
   if (state.imgUrl) URL.revokeObjectURL(state.imgUrl);
   if (state.dlUrl) URL.revokeObjectURL(state.dlUrl);
   state.container.innerHTML = '';
-  const st = document.getElementById(STYLE_ID);
-  if (st) st.remove();
   state = null;
 }

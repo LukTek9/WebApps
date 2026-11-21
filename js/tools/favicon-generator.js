@@ -13,7 +13,6 @@ const PNG_EXPORTS = [
   { size: 192, name: 'icon-192.png',         label: 'PWA 192' },
   { size: 512, name: 'icon-512.png',         label: 'PWA 512' },
 ];
-const STYLE_ID = 'fav-style';
 const HTML_SNIPPET = `<!-- Favicon -->
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -132,40 +131,8 @@ async function encodeIco(img, sizes, o) {
 /* UI                                                                 */
 /* ------------------------------------------------------------------ */
 
-const CSS = `
-.fav{display:flex;flex-direction:column;gap:1rem;font-family:var(--font-family,inherit);color:var(--color-text,#1f2937)}
-.fav-drop{border:2px dashed var(--color-border,#cbd5e1);border-radius:var(--radius-lg,16px);padding:3rem 1rem;text-align:center;cursor:pointer;background:var(--color-surface,#f8fafc);transition:border-color .2s,background .2s}
-.fav-drop:hover,.fav-drop.over{border-color:var(--color-primary,#4f46e5);background:var(--color-primary-soft,#eef2ff)}
-.fav-drop strong{display:block;font-size:1.1rem;margin-bottom:.25rem}
-.fav-info{font-size:.85rem;color:var(--color-muted,#64748b)}
-.fav-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;padding:1rem;border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-md,12px);background:var(--color-surface,#fff)}
-.fav-panel label{display:flex;flex-direction:column;gap:.35rem;font-size:.9rem;font-weight:600}
-.fav-panel select{padding:.45rem;border-radius:var(--radius-sm,8px);border:1px solid var(--color-border,#cbd5e1)}
-.fav-panel input[type=color]{width:100%;height:2.2rem;padding:0;border:1px solid var(--color-border,#cbd5e1);border-radius:var(--radius-sm,8px);background:none}
-.fav-panel .fav-chk{flex-direction:row;align-items:center;gap:.5rem;font-weight:400}
-.fav-grid{display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;padding:1rem;border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-md,12px);background-color:#fff;background-image:linear-gradient(45deg,#e5e7eb 25%,transparent 25%,transparent 75%,#e5e7eb 75%),linear-gradient(45deg,#e5e7eb 25%,transparent 25%,transparent 75%,#e5e7eb 75%);background-size:16px 16px;background-position:0 0,8px 8px}
-.fav-cell{display:flex;flex-direction:column;align-items:center;gap:.35rem;font-size:.75rem;color:var(--color-muted,#475569);background:rgba(255,255,255,.85);padding:.4rem .5rem;border-radius:8px}
-.fav-cell canvas{display:block;max-width:160px;max-height:160px}
-.fav-export{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
-.fav-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.1rem;border:0;border-radius:var(--radius-md,12px);background:var(--color-primary,#4f46e5);color:#fff;font-weight:700;cursor:pointer}
-.fav-btn.alt{background:var(--color-surface,#f1f5f9);color:var(--color-text,#1f2937);border:1px solid var(--color-border,#cbd5e1)}
-.fav-btn:disabled{opacity:.45;cursor:not-allowed}
-.fav-btn svg{width:16px;height:16px}
-.fav-code{position:relative}
-.fav-code pre{margin:0;padding:1rem;border-radius:var(--radius-md,12px);background:#0f172a;color:#e2e8f0;font-size:.8rem;overflow:auto;white-space:pre}
-.fav-code .fav-btn{position:absolute;top:.5rem;right:.5rem;padding:.35rem .7rem;font-size:.8rem}
-.fav [hidden]{display:none!important}
-`;
-
 export function mount(container, ctx) {
   unmount();
-
-  if (!document.getElementById(STYLE_ID)) {
-    const st = document.createElement('style');
-    st.id = STYLE_ID;
-    st.textContent = CSS;
-    document.head.appendChild(st);
-  }
 
   container.innerHTML = `
     <div class="fav">
@@ -193,10 +160,10 @@ export function mount(container, ctx) {
         </label>
         <label class="fav-chk"><input type="checkbox" data-k="transparent"> Fond transparent</label>
       </div>
-      <div class="fav-grid" hidden></div>
+      <div class="fav-grid checkerboard-bg" hidden></div>
       <div class="fav-export" hidden>
         <button class="fav-btn" data-ico><i data-lucide="download"></i>favicon.ico</button>
-        <span data-png class="fav-export" style="display:contents"></span>
+        <span data-png class="fav-export"></span>
       </div>
       <div class="fav-code" hidden>
         <pre><code data-code></code></pre>
@@ -383,7 +350,5 @@ export function unmount() {
   if (state.dlUrl) URL.revokeObjectURL(state.dlUrl);
   state.img = null;
   state.container.innerHTML = '';
-  const st = document.getElementById(STYLE_ID);
-  if (st) st.remove();
   state = null;
 }

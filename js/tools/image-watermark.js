@@ -65,7 +65,7 @@ function setStatus(msg = '', isError = false) {
   const el = q('status');
   if (!el) return;
   el.textContent = msg;
-  el.style.color = isError ? '#dc2626' : 'inherit';
+  el.classList.toggle('status-error', isError);
 }
 
 /** Charge un File en HTMLImageElement ; retourne { img, url }. */
@@ -289,34 +289,6 @@ export function mount(container, ctx) {
         logo: null, logoUrl: null, baseW: 0, raf: 0, dlUrl: null, cleanups: [] };
 
   container.innerHTML = `
-  <style>
-    .wmk{display:grid;gap:1rem;font-family:var(--font-family,inherit)}
-    .wmk-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;min-height:220px;
-      border:2px dashed rgba(128,128,128,.5);border-radius:var(--radius,12px);cursor:pointer;text-align:center;padding:1rem}
-    .wmk-drop.wmk-over{border-color:var(--primary,#4f46e5);background:rgba(79,70,229,.08)}
-    .wmk-drop.wmk-mini{min-height:64px;flex-direction:row;padding:.5rem}
-    .wmk-drop input{display:none}
-    .wmk-main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:1rem;align-items:start}
-    @media(max-width:820px){.wmk-main{grid-template-columns:1fr}}
-    .wmk-preview{border:1px solid rgba(128,128,128,.35);border-radius:var(--radius,12px);padding:.5rem;text-align:center;
-      background:repeating-conic-gradient(rgba(128,128,128,.15) 0 25%,transparent 0 50%) 0 0/16px 16px}
-    .wmk-preview canvas{max-width:100%;max-height:70vh;height:auto}
-    .wmk-panel{display:grid;gap:.75rem;border:1px solid rgba(128,128,128,.35);border-radius:var(--radius,12px);padding:1rem}
-    .wmk-panel fieldset{border:0;padding:0;margin:0;display:grid;gap:.5rem}
-    .wmk-row{display:grid;gap:.25rem;font-size:.9rem}
-    .wmk-row input[type=text],.wmk-row select{padding:.4rem;border-radius:8px;border:1px solid rgba(128,128,128,.5);background:transparent;color:inherit}
-    .wmk-seg{display:flex;gap:1rem}
-    .wmk-grid{display:grid;grid-template-columns:repeat(3,36px);gap:4px}
-    .wmk-cell{width:36px;height:36px;border-radius:8px;border:1px solid rgba(128,128,128,.5);background:transparent;cursor:pointer}
-    .wmk-cell[aria-pressed=true]{background:var(--primary,#4f46e5);border-color:var(--primary,#4f46e5)}
-    .wmk-btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.7rem 1rem;border:0;border-radius:var(--radius,12px);
-      background:var(--primary,#4f46e5);color:#fff;font-weight:600;cursor:pointer}
-    .wmk-btn.wmk-ghost{background:transparent;color:inherit;border:1px solid rgba(128,128,128,.5)}
-    .wmk-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
-    .wmk-ev{cursor:pointer;border-bottom:1px dashed currentColor;border-radius:3px;padding:0 .2em;transition:background .15s}
-    .wmk-ev:hover,.wmk-ev:focus-visible{background:rgba(128,128,128,.18);border-bottom-style:solid;outline:0}
-    .wmk-ev-input{width:4.5em;padding:0 .25em;font:inherit;color:inherit;background:transparent;border:1px solid var(--primary,#4f46e5);border-radius:4px}
-  </style>
   <div class="wmk">
     <label class="wmk-drop" id="wmk-drop-main">
       <i data-lucide="image-plus"></i>
@@ -330,7 +302,7 @@ export function mount(container, ctx) {
         <button class="wmk-btn wmk-ghost" id="wmk-remove" type="button"><i data-lucide="trash-2"></i>Supprimer</button>
       </div>
       <div class="wmk-main">
-        <div class="wmk-preview"><canvas id="wmk-canvas"></canvas></div>
+        <div class="wmk-preview checkerboard-bg"><canvas id="wmk-canvas"></canvas></div>
 
         <div class="wmk-panel">
           <fieldset>

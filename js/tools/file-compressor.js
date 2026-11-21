@@ -13,8 +13,6 @@
  * Mémoire : objectURL révoqués (retrait d'un fichier, relance, unmount).
  */
 
-const STYLE_ID = 'fcmp-style';
-
 /** Niveaux : q = qualité canvas (0-1) pour JPEG / WebP. */
 const LEVELS = {
   moderate: { label: 'Modéré', q: 0.85 },
@@ -34,56 +32,10 @@ const STATUS = {
   error: 'Erreur',
 };
 
-const CSS = `
-.fcmp{display:flex;flex-direction:column;gap:16px;font-family:var(--font-base,inherit);color:var(--text,inherit)}
-.fcmp-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:44px 16px;text-align:center;cursor:pointer;
-  border:2px dashed var(--border,#cbd5e1);border-radius:var(--radius-lg,16px);background:var(--surface,#f8fafc);transition:border-color .15s,background .15s}
-.fcmp-drop:hover,.fcmp-drop.is-over{border-color:var(--cat-utility,#4f46e5);background:var(--surface-hover,#eef2ff)}
-.fcmp-drop input{display:none}
-.fcmp-drop strong{font-size:1.05rem}
-.fcmp-drop small{opacity:.7}
-.fcmp-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
-.fcmp-opt{display:flex;flex-direction:column;gap:6px;font-size:.9rem}
-.fcmp-opt select{padding:9px 10px;border:1px solid var(--border,#cbd5e1);border-radius:var(--radius-sm,8px);background:var(--bg,#fff);color:inherit;font:inherit}
-.fcmp-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1px solid var(--border,#cbd5e1);border-radius:var(--radius-sm,8px);
-  background:var(--bg,#fff);color:inherit;font:inherit;cursor:pointer;text-decoration:none}
-.fcmp-btn:hover:not(:disabled){filter:brightness(.96)}
-.fcmp-btn:disabled{opacity:.45;cursor:not-allowed}
-.fcmp-btn.primary{background:var(--cat-utility,#4f46e5);border-color:transparent;color:#fff}
-.fcmp-progress{height:8px;border-radius:99px;background:var(--border,#e2e8f0);overflow:hidden}
-.fcmp-progress>div{height:100%;width:0;background:var(--cat-utility,#4f46e5);transition:width .2s}
-.fcmp-status{min-height:1.2em;font-size:.9rem}
-.fcmp-status.err{color:var(--danger,#dc2626)}
-.fcmp-wrap{overflow-x:auto}
-.fcmp table{width:100%;border-collapse:collapse;font-size:.9rem}
-.fcmp th,.fcmp td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border,#e2e8f0);white-space:nowrap}
-.fcmp td.name{max-width:260px;overflow:hidden;text-overflow:ellipsis}
-.fcmp .gain{font-weight:600;color:var(--success,#16a34a)}
-.fcmp .gain.none{color:inherit;opacity:.6}
-.fcmp .st-error{color:var(--danger,#dc2626)}
-.fcmp .icon-btn{padding:4px 8px}
-.fcmp-total{font-size:.9rem;opacity:.85}
-.fcmp-row{cursor:pointer}
-.fcmp-row.sel{background:color-mix(in srgb,var(--cat-utility,#4f46e5) 8%,transparent)}
-.fcmp-viewer{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--border,#e2e8f0);border-radius:var(--radius-lg,16px);background:var(--surface,#f8fafc)}
-.fcmp-viewer[hidden]{display:none}
-.fcmp-vhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.fcmp-vhead strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fcmp-badge{padding:3px 10px;border-radius:99px;font-weight:700;font-size:.85rem;background:var(--success,#16a34a);color:#fff}
-.fcmp-badge.none{background:var(--border,#cbd5e1);color:inherit}
-.fcmp-cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
-.fcmp-pane{margin:0;display:flex;flex-direction:column;gap:6px}
-.fcmp-pane figcaption{font-size:.85rem;opacity:.85}
-.fcmp-prev{height:240px;display:grid;place-items:center;overflow:hidden;border-radius:var(--radius-sm,8px);border:1px solid var(--border,#e2e8f0);background:repeating-conic-gradient(#e5e7eb 0% 25%,#fff 0% 50%) 50%/16px 16px}
-.fcmp-prev img{max-width:100%;max-height:100%;object-fit:contain}
-.fcmp-ph{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.7;font-size:.85rem}
-.fcmp-pre{margin:0;width:100%;height:100%;overflow:auto;padding:8px;box-sizing:border-box;font-size:.75rem;white-space:pre-wrap;word-break:break-all;background:var(--bg,#fff);text-align:left}
-`;
-
 const TEMPLATE = `
 <div class="fcmp">
   <label class="fcmp-drop" id="fcmp-drop">
-    <i data-lucide="archive" style="width:42px;height:42px"></i>
+    <i data-lucide="archive" class="fcmp-drop-icon"></i>
     <strong>Glissez vos fichiers ici ou cliquez pour parcourir</strong>
     <small>Tous types de fichiers · format d'origine conservé · traitement 100 % local</small>
     <input type="file" id="fcmp-input" accept="*/*" multiple>
@@ -125,7 +77,7 @@ function setStatus(msg = '', isError = false) {
   const el = q('msg');
   if (!el) return;
   el.textContent = msg;
-  el.classList.toggle('err', isError);
+  el.classList.toggle('status-error', isError);
 }
 
 /* ------------------------------ Routage ------------------------------ */
@@ -226,7 +178,7 @@ function render() {
       <td>${fmtSize(it.file.size)}</td>
       <td>${it.out ? fmtSize(it.out.size) : '—'}</td>
       <td class="gain${gain > 0 ? '' : ' none'}">${gainTxt}</td>
-      <td class="st-${it.status}" title="${esc(it.error)}">${STATUS[it.status]}${it.error ? ' : ' + esc(it.error) : ''}</td>
+      <td class="st-${it.status}${it.status === 'error' ? ' status-error' : ''}" title="${esc(it.error)}">${STATUS[it.status]}${it.error ? ' : ' + esc(it.error) : ''}</td>
       <td>${it.url ? `<a class="fcmp-btn icon-btn" href="${it.url}" download="${esc(it.file.name)}" title="Télécharger"><i data-lucide="download"></i></a>` : ''}
           <button class="fcmp-btn icon-btn" data-remove="${it.id}" title="Retirer" ${s.busy ? 'disabled' : ''}><i data-lucide="trash-2"></i></button></td>
     </tr>`;
@@ -265,7 +217,7 @@ function renderViewer() {
     : kind === 'json' ? `<pre class="fcmp-pre" data-k="${k}"></pre>`
     : `<div class="fcmp-ph"><i data-lucide="file"></i><span>${esc(extOf(it.file))}</span></div>`;
   const pane = (title, size, inner) =>
-    `<figure class="fcmp-pane"><figcaption>${title} · <b>${size}</b></figcaption><div class="fcmp-prev">${inner}</div></figure>`;
+    `<figure class="fcmp-pane"><figcaption>${title} · <b>${size}</b></figcaption><div class="fcmp-prev checkerboard-bg">${inner}</div></figure>`;
   box.innerHTML = `
     <div class="fcmp-vhead">
       <strong title="${esc(it.file.name)}">${esc(it.file.name)}</strong>
@@ -340,12 +292,6 @@ async function runAll() {
 
 export function mount(container, ctx) {
   if (s) unmount();
-  if (!document.getElementById(STYLE_ID)) {
-    const st = document.createElement('style');
-    st.id = STYLE_ID;
-    st.textContent = CSS;
-    document.head.appendChild(st);
-  }
   container.innerHTML = TEMPLATE;
   s = { root: container, ctx, items: [], busy: false };
 
@@ -370,6 +316,5 @@ export function unmount() {
   if (!s) return;
   releaseAll();
   s.root.innerHTML = '';
-  document.getElementById(STYLE_ID)?.remove();
   s = null;
 }

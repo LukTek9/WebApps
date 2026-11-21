@@ -8,7 +8,6 @@
 const MAX_SIDE = 1024;       // côté max du canvas de travail
 const MAX_SAMPLES = 12000;   // pixels échantillonnés pour k-means
 const KMEANS_ITERS = 12;
-const STYLE_ID = 'cex-style';
 
 let state = null;
 
@@ -211,48 +210,8 @@ function extractPalette(imageData, k) {
 /* UI                                                                 */
 /* ------------------------------------------------------------------ */
 
-const CSS = `
-.cex{display:flex;flex-direction:column;gap:1rem;font-family:var(--font-family,inherit);color:var(--color-text,#1f2937)}
-.cex-drop{border:2px dashed var(--color-border,#cbd5e1);border-radius:var(--radius-lg,16px);padding:3rem 1rem;text-align:center;cursor:pointer;background:var(--color-surface,#f8fafc);transition:border-color .2s,background .2s}
-.cex-drop:hover,.cex-drop.over{border-color:var(--color-primary,#4f46e5);background:var(--color-primary-soft,#eef2ff)}
-.cex-drop strong{display:block;font-size:1.1rem;margin-bottom:.25rem}
-.cex-info{font-size:.85rem;color:var(--color-muted,#64748b)}
-.cex-main{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}
-.cex-box{border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-md,12px);padding:.75rem;background:var(--color-surface,#fff);display:flex;flex-direction:column;gap:.6rem}
-.cex-box h4{margin:0;font-size:.8rem;color:var(--color-muted,#64748b);text-transform:uppercase;letter-spacing:.04em}
-.cex-canvas{display:block;max-width:100%;height:auto;border-radius:8px;cursor:crosshair;touch-action:none;background:#fff}
-.cex-btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.6rem 1.1rem;border:0;border-radius:var(--radius-md,12px);background:var(--color-primary,#4f46e5);color:#fff;font-weight:700;cursor:pointer}
-.cex-btn.alt{background:var(--color-surface,#f1f5f9);color:var(--color-text,#1f2937);border:1px solid var(--color-border,#cbd5e1)}
-.cex-btn.sm{padding:.3rem .65rem;font-size:.78rem}
-.cex-btn:disabled{opacity:.45;cursor:not-allowed}
-.cex-btn svg{width:15px;height:15px}
-.cex-big{height:120px;border-radius:12px;border:1px solid var(--color-border,#e2e8f0);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.3rem;font-family:ui-monospace,monospace;background:#e5e7eb}
-.cex-fmt{display:flex;align-items:center;gap:.5rem}
-.cex-fmt span{flex:1;font-family:ui-monospace,monospace;font-size:.9rem;overflow:hidden;text-overflow:ellipsis}
-.cex-fmt b{width:3.2rem;font-size:.75rem;color:var(--color-muted,#64748b)}
-.cex-shades{display:flex;border-radius:8px;overflow:hidden;height:36px}
-.cex-shades i{flex:1;cursor:pointer}
-.cex-ctrl{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;font-size:.9rem}
-.cex-ctrl select{padding:.4rem;border-radius:var(--radius-sm,8px);border:1px solid var(--color-border,#cbd5e1)}
-.cex-ev{cursor:pointer;border-bottom:1px dashed currentColor;border-radius:3px;padding:0 .2em;transition:background .15s}
-.cex-ev:hover,.cex-ev:focus-visible{background:rgba(128,128,128,.18);border-bottom-style:solid;outline:0}
-.cex-ev-input{width:4.5em;padding:0 .25em;font:inherit;color:inherit;background:transparent;border:1px solid var(--color-primary,#4f46e5);border-radius:4px}
-.cex-pal{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.75rem}
-.cex-card{border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-md,12px);overflow:hidden;background:var(--color-surface,#fff);display:flex;flex-direction:column}
-.cex-card .sw{height:70px;cursor:pointer;display:flex;align-items:flex-end;padding:.3rem .5rem;font-size:.75rem;font-weight:700}
-.cex-card .bd{padding:.4rem .5rem;display:flex;align-items:center;justify-content:space-between;gap:.3rem;font-family:ui-monospace,monospace;font-size:.8rem}
-.cex [hidden]{display:none!important}
-`;
-
 export function mount(container, ctx) {
   unmount();
-
-  if (!document.getElementById(STYLE_ID)) {
-    const st = document.createElement('style');
-    st.id = STYLE_ID;
-    st.textContent = CSS;
-    document.head.appendChild(st);
-  }
 
   container.innerHTML = `
     <div class="cex">
@@ -534,7 +493,5 @@ export function unmount() {
   state.canvas.width = state.canvas.height = 0;
   state.imageData = null;
   state.container.innerHTML = '';
-  const st = document.getElementById(STYLE_ID);
-  if (st) st.remove();
   state = null;
 }
