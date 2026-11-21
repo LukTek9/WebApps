@@ -83,4 +83,12 @@ export const tools = [
     description: "Générez vos fichiers favicon.ico multi-tailles et icônes PWA/Apple 100 % localement.",
     module: () => import('./tools/favicon-generator.js'),
   },
+  {
+    id: 'color-extractor',
+    name: "Pipette & Extracteur de couleurs",
+    category: 'image',
+    icon: 'pipette',
+    description: "Prélevez des couleurs à la pipette et extrayez la palette dominante de vos images 100 % localement.",
+    module: () => import('./tools/color-extractor.js'),
+  },
 ];
