@@ -91,4 +91,12 @@ export const tools = [
     description: "Prélevez des couleurs à la pipette et extrayez la palette dominante de vos images 100 % localement.",
     module: () => import('./tools/color-extractor.js'),
   },
+  {
+    id: 'image-watermark',
+    name: "Ajout de filigrane (Watermark)",
+    category: 'image',
+    icon: 'stamp',
+    description: "Ajoutez un texte ou un logo en filigrane (opacité, position, motif répétitif) 100 % localement sur vos images.",
+    module: () => import('./tools/image-watermark.js'),
+  },
 ];
