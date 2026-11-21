@@ -82,7 +82,9 @@ const CSS = `
   border-radius:var(--radius,12px);background:var(--surface,transparent);color:var(--text,inherit);font:inherit;cursor:pointer;transition:background .15s,opacity .15s}
 .po-btn:hover:not(:disabled){background:rgba(127,127,127,.15)}
 .po-btn:disabled{opacity:.45;cursor:not-allowed}
-.po-btn.primary{background:var(--primary,#ef4444);border-color:var(--primary,#ef4444);color:#fff;font-weight:600}
+.po-btn.primary,.btn-primary{background:var(--primary,#ef4444);border-color:var(--primary,#ef4444);color:#fff;font-weight:600;padding:10px 20px;font-size:14px;display:inline-flex;align-items:center;gap:8px;height:auto;max-width:max-content;flex:none;white-space:nowrap}
+.po-remove{flex:none;padding:6px 12px;font-size:13px;gap:6px}
+.po-btn svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .po-btn.primary:hover:not(:disabled){filter:brightness(1.1);background:var(--primary,#ef4444)}
 .organizer-preview-box{height:480px;flex:none;overflow-y:auto;contain:size layout paint;background:var(--bg-preview,#1e1e2e);
   border-radius:var(--radius,12px);padding:16px;width:100%;box-sizing:border-box}
@@ -153,12 +155,13 @@ export function mount(container, ctx) {
     <div class="po-drop" tabindex="0" role="button" aria-label="Choisir un fichier PDF">
       ${svg('upload').replace('<svg', '<svg style="width:32px;height:32px;fill:none;stroke:currentColor;stroke-width:2"')}
       <strong>Glissez-déposez un PDF ici</strong>
-      <span>ou cliquez pour parcourir</span>
+      <span class="po-drop-hint">ou cliquez pour parcourir</span>
       <input type="file" accept="application/pdf" hidden>
     </div>
     <div class="po-meta">
       <span class="po-meta-name">Aucun fichier</span>
       <span class="po-meta-info">—</span>
+      <button type="button" class="po-btn po-remove" data-act="remove" title="Retirer le fichier" aria-label="Retirer le fichier">${svg('trash')} Retirer le fichier</button>
     </div>
     <div class="po-actions">
       <button type="button" class="po-btn" data-act="rot-all-cw" disabled>${svg('rotate')} Pivoter tout +90°</button>
@@ -171,7 +174,7 @@ export function mount(container, ctx) {
         <div class="po-bar"><div></div></div>
         <div class="po-status"></div>
       </div>
-      <button type="button" class="po-btn primary" data-act="download" disabled>${svg('download')} Télécharger le PDF réorganisé</button>
+      <button type="button" class="po-btn primary btn-primary" data-act="download" disabled>${svg('download')} Télécharger le PDF réorganisé</button>
     </div>`;
   container.appendChild(root);
 
@@ -192,6 +195,11 @@ export function mount(container, ctx) {
     busy: false,
     el: {
       drop: root.querySelector('.po-drop'),
+      hint: root.querySelector('.po-drop-hint'),
+      meta: root.querySelector('.po-meta'),
+      actions: root.querySelector('.po-actions'),
+      foot: root.querySelector('.po-foot'),
+      remove: root.querySelector('[data-act=remove]'),
       input: root.querySelector('input[type=file]'),
       name: root.querySelector('.po-meta-name'),
       info: root.querySelector('.po-meta-info'),
@@ -231,6 +239,9 @@ export function mount(container, ctx) {
   el.btns.ccw.addEventListener('click', () => rotateAll(-90));
   el.btns.reset.addEventListener('click', resetAll);
   el.btns.dl.addEventListener('click', exportPdf);
+  el.remove.addEventListener('click', removeFile);
+
+  setView(false); // état initial : seule la zone de dépôt est visible
 }
 
 export function unmount() {
@@ -289,9 +300,10 @@ function updateMeta() {
 async function loadFile(file) {
   if (!S) return;
   const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
-  if (!isPdf) { setStatus('Fichier non valide : PDF attendu.', true); return; }
+  if (!isPdf) { showDropError('Fichier non valide : PDF attendu.'); return; }
 
   const token = ++S.token;
+  setView(true);
   S.busy = true;
   clearDownloadUrl();
   if (S.pdfDoc) { try { S.pdfDoc.destroy(); } catch (_) { /* noop */ } S.pdfDoc = null; }
@@ -344,7 +356,9 @@ async function loadFile(file) {
     updateMeta();
     setControls();
     setProgress(0);
-    setStatus('Erreur : ' + (err && err.message ? err.message : 'PDF illisible ou protégé.'), true);
+    setStatus('');
+    setView(false);
+    showDropError('Erreur : ' + (err && err.message ? err.message : 'PDF illisible ou protégé.'));
   }
 }
 
@@ -502,7 +516,8 @@ function resetAll() {
 /* ───────────────────────── Export (pdf-lib) ───────────────────────── */
 
 async function exportPdf() {
-  if (!S || !S.pages.length || !S.bytes) return;
+  if (!S || S.busy || !S.bytes) return;
+  if (S.pages.length < 1) { setStatus('Aucune page à exporter.', true); return; }
   const token = S.token;
   S.busy = true;
   setControls();
@@ -547,4 +562,45 @@ async function exportPdf() {
   } finally {
     if (S && token === S.token) { S.busy = false; setControls(); }
   }
+}
+
+/* ───────────────────────── Vue (dépôt ↔ espace de travail) & retrait du fichier ───────────────────────── */
+
+const DROP_HINT = 'ou cliquez pour parcourir';
+
+/** hasFile=true → espace de travail visible, dropzone masquée ; false → l'inverse. */
+function setView(hasFile) {
+  if (!S) return;
+  const { drop, meta, actions, box, foot, hint } = S.el;
+  drop.style.display = hasFile ? 'none' : '';
+  [meta, actions, box, foot].forEach((n) => { n.style.display = hasFile ? '' : 'none'; });
+  if (hasFile) { hint.textContent = DROP_HINT; hint.style.color = ''; }
+}
+
+/** Message d'erreur affiché dans la dropzone (statut du pied masqué hors fichier). */
+function showDropError(msg) {
+  if (!S) return;
+  S.el.hint.textContent = msg;
+  S.el.hint.style.color = '#ef4444';
+}
+
+/** Retire le fichier : libère la mémoire, réinitialise l'état, réaffiche la dropzone. */
+function removeFile() {
+  if (!S) return;
+  S.token++; // invalide chargements / rendus / exports en cours
+  clearDownloadUrl();
+  if (S.pdfDoc) { try { S.pdfDoc.destroy(); } catch (_) { /* noop */ } S.pdfDoc = null; }
+  S.file = null;
+  S.bytes = null;
+  S.original = [];
+  S.pages = [];       // rotations perdues avec les entrées
+  S.dragFrom = null;
+  S.busy = false;
+  S.renderChain = Promise.resolve();
+  renderGrid();
+  updateMeta();
+  setControls();
+  setProgress(0);
+  setStatus('');
+  setView(false);
 }
