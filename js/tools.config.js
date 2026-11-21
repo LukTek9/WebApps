@@ -132,4 +132,12 @@ export const tools = [
     description: "Découpez, séparez ou extrayez les pages de vos fichiers PDF 100 % localement avec aperçu visuel.",
     module: () => import('./tools/pdf-splitter.js'),
   },
+  {
+    id: 'pdf-organizer',
+    name: "Rotateur & Réorganisateur de PDF",
+    category: 'pdf',
+    icon: 'move',
+    description: "Réorganisez l'ordre des pages, pivotez leur orientation et supprimez des pages de vos PDF 100 % localement.",
+    module: () => import('./tools/pdf-organizer.js'),
+  },
 ];
