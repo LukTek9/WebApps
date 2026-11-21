@@ -25,6 +25,8 @@
   /* --- Couleurs par catégorie (icônes de cartes) --- */
   --cat-video: #e5322d;
   --cat-audio: #3b82f6;
+  --cat-image: #10b981;
+  --cat-utility: #3b82f6;
   --cat-default: #7a736f;
 
   /* --- Typographie --- */

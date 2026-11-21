@@ -17,10 +17,25 @@
    instance auto-hébergée avec CORS activé). Ordre = priorité.
    ========================================================================== */
 export const COBALT_INSTANCES = [
+  'https://c.blahaj.ca',
+  'https://cobalt.api.timelessnesses.me',
+  'https://cobalt-api.kwiatekmiki.com',
+  'https://cobalt-us.kwiatekmiki.com',
+  'https://api.co.rooot.gay',
+  'https://cobalt-backend.canine.tools',
+  'https://dl.khyernet.xyz',
   'https://api.cobalt.tools',
   'https://co.wuk.sh',
-  'https://cobalt-api.kwiatekmiki.com',
   'https://cobalt-api.meowing.de',
+  'https://nuko-c.meowing.de',
+  'https://subito-c.meowing.de',
+  'https://kityune.imput.net',
+  'https://nachos.imput.net',
+  'https://sunny.imput.net',
+  'https://blossom.imput.net',
+  'https://cobalt-api.ayo.tf',
+  'https://api.dl.woof.monster',
+  'https://cobalt.canine.tools',
 ];
 
 /** Instances Piped (API /streams/:id, CORS ouvert en général). Ordre = priorité. */
@@ -31,9 +46,17 @@ export const PIPED_INSTANCES = [
   'https://pipedapi.leptons.xyz',
 ];
 
-/** Proxy CORS de repli (Piped / Invidious / oEmbed) : 403 ou échec réseau/CORS en appel direct. */
-const CORS_PROXY = 'https://corsproxy.io/?';
-const ANALYZE_ERROR = "Impossible d'analyser la vidéo. Vérifiez l'URL et réessayez.";
+/* Instance Cobalt personnelle (URL + clé API) saisie dans l'UI, mémorisée en localStorage.
+   Les instances publiques exigent presque toutes clé API/Turnstile et YouTube les bloque. */
+const LS_KEY = 'ytc-cobalt';
+const custom = { url: '', key: '' };
+const lsGet = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) ?? '{}'); } catch { return {}; } };
+const lsSet = (v) => { try { localStorage.setItem(LS_KEY, JSON.stringify(v)); } catch { /* ignoré */ } };
+const cobaltList = () => (custom.url ? [custom.url, ...COBALT_INSTANCES.filter((u) => u !== custom.url)] : COBALT_INSTANCES);
+
+/** Proxies CORS de repli (API Piped / Invidious / oEmbed) : essayés dans l'ordre après échec/403 en appel direct. */
+const CORS_PROXIES = ['https://corsproxy.io/?', 'https://api.allorigins.win/raw?url='];
+const ANALYZE_ERROR = "Analyse impossible : aucun service (Cobalt, Piped, Invidious, oEmbed) n'a répondu pour cette vidéo. Vérifiez l'URL ou votre connexion, puis réessayez.";
 
 export const INVIDIOUS_INSTANCES = [
   'https://inv.nadeko.net',
@@ -143,7 +166,19 @@ async function fetchApi(url, init, signal) {
   } catch (e) {
     if (signal?.aborted) throw e;
   }
-  return fetchT(CORS_PROXY + encodeURIComponent(url), init, signal);
+  let lastRes = null, lastErr = new Error('proxies CORS indisponibles');
+  for (const proxy of CORS_PROXIES) {
+    try {
+      const res = await fetchT(proxy + encodeURIComponent(url), init, signal);
+      if (res.ok) return res;
+      lastRes = res; // proxy suivant
+    } catch (e) {
+      if (signal?.aborted) throw e;
+      lastErr = e;
+    }
+  }
+  if (lastRes) return lastRes;
+  throw lastErr;
 }
 
 /** oEmbed YouTube : titre + auteur, indépendant des instances (null si indisponible). */
@@ -164,6 +199,42 @@ async function fetchOembed(id, signal) {
 async function infoFromCobalt(inst, id, signal) {
   await resolveCobalt(inst, `https://www.youtube.com/watch?v=${id}`, 'video', 'mp4', 1080, signal); // lève si 403/auth/erreur
   return { id, title: `YouTube ${id}`, author: '', duration: 0, via: 'cobalt', formatStreams: [], adaptiveFormats: [] };
+}
+
+/** googlevideo.com n'envoie pas d'en-têtes CORS : fetch() en Blob impossible → lien direct. */
+const isGoogleVideo = (u) => { try { return new URL(u).hostname.endsWith('googlevideo.com'); } catch { return false; } };
+
+/** Étape 0 — InnerTube (client ANDROID) : métadonnées + flux googlevideo natifs, normalisés (schéma Invidious). */
+async function infoFromInnerTube(id, signal) {
+  const res = await fetchApi('https://www.youtube.com/youtubei/v1/player', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      videoId: id,
+      context: { client: { clientName: 'ANDROID', clientVersion: '19.11.38', hl: 'fr', gl: 'FR' } },
+    }),
+  }, signal);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const d = await res.json();
+  const ps = d?.playabilityStatus;
+  if (ps && ps.status !== 'OK') throw new Error(ps.reason ?? ps.status);
+  const v = d?.videoDetails;
+  if (!v?.title) throw new Error('réponse InnerTube invalide');
+  const sd = d.streamingData ?? {};
+  const ok = (f) => f?.url && f.mimeType; // signatureCipher (sans url) ignoré : non déchiffrable côté client
+  const norm = (f) => ({
+    url: f.url, type: f.mimeType,
+    qualityLabel: f.qualityLabel ?? (f.height ? f.height + 'p' : undefined),
+    bitrate: f.bitrate ?? f.averageBitrate, contentLength: f.contentLength,
+  });
+  const formatStreams = (sd.formats ?? []).filter(ok).map(norm);       // muxé (a+v)
+  const adaptiveFormats = (sd.adaptiveFormats ?? []).filter(ok).map(norm); // vidéo seule + audio seul
+  if (!formatStreams.length && !adaptiveFormats.length) throw new Error('aucun flux exploitable (chiffré/protégé)');
+  const thumbs = v.thumbnail?.thumbnails ?? [];
+  return {
+    id, title: v.title, author: v.author, duration: Number(v.lengthSeconds) || 0,
+    thumb: thumbs[thumbs.length - 1]?.url ?? null, via: 'innertube', formatStreams, adaptiveFormats,
+  };
 }
 
 /** Étape B — Piped : /streams/:id → normalisation vers le schéma Invidious. */
@@ -228,8 +299,14 @@ async function fetchStreams(id, signal, onTry) {
  */
 async function fetchInfo(id, signal, onTry) {
   const meta = await fetchOembed(id, signal);
+  try { // priorité n°1 : InnerTube natif
+    onTry?.('https://www.youtube.com');
+    return await infoFromInnerTube(id, signal);
+  } catch (e) {
+    if (isAbort(e) && signal?.aborted) throw e;
+  }
   try {
-    const info = await tryInstances(COBALT_INSTANCES, (inst) => infoFromCobalt(inst, id, signal), signal, onTry);
+    const info = await tryInstances(cobaltList(), (inst) => infoFromCobalt(inst, id, signal), signal, onTry);
     if (meta) Object.assign(info, meta);
     return info;
   } catch (e) {
@@ -252,7 +329,10 @@ async function resolveCobalt(inst, watchUrl, kind, fmt, quality, signal) {
   else if (fmt === 'webm') body.youtubeVideoCodec = 'vp9';
   const res = await fetchT(inst.replace(/\/$/, '') + '/', {
     method: 'POST',
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    headers: {
+      Accept: 'application/json', 'Content-Type': 'application/json',
+      ...(inst === custom.url && custom.key ? { Authorization: 'Api-Key ' + custom.key } : {}),
+    },
     body: JSON.stringify(body),
   }, signal);
   const ext = kind === 'audio' ? (fmt === 'wav' ? 'wav' : 'mp3') : (fmt === 'webm' ? 'webm' : 'mp4');
@@ -265,9 +345,12 @@ async function resolveCobalt(inst, watchUrl, kind, fmt, quality, signal) {
       if (!d.url) throw new Error('URL Cobalt absente');
       return { url: d.url, filename: d.filename ?? null, ext, transcode: null, via: 'cobalt', host };
     case 'picker': {
-      const it = d.picker?.find((p) => p.type === 'video') ?? d.picker?.[0];
+      // audio demandé → piste audio du picker si présente ; sinon 1er fichier vidéo ; sinon 1er élément
+      const it = (kind === 'audio' && d.audio ? { url: d.audio } : null)
+        ?? d.picker?.find((p) => p.type === 'video')
+        ?? d.picker?.[0];
       if (!it?.url) throw new Error('picker vide');
-      return { url: it.url, filename: null, ext, transcode: null, via: 'cobalt', host };
+      return { url: it.url, filename: d.audioFilename && kind === 'audio' ? d.audioFilename : null, ext, transcode: null, via: 'cobalt', host };
     }
     case 'local-processing':
       throw new Error('traitement local Cobalt non pris en charge');
@@ -554,6 +637,9 @@ const CSS = `
 .ytc-result a{color:var(--color-success);font-weight:var(--font-weight-bold)}
 .ytc-actions{display:flex;gap:var(--space-3);flex-wrap:wrap}
 .ytc-actions .btn{flex:1}
+.ytc-adv{padding:var(--space-3) var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-md);display:flex;flex-direction:column;gap:var(--space-3)}
+.ytc-adv summary{cursor:pointer;font-weight:var(--font-weight-medium)}
+.ytc-adv small{display:block;margin-top:var(--space-2);color:var(--color-text-muted)}
 @media (max-width:520px){.ytc-info{flex-direction:column;align-items:flex-start}}
 `;
 
@@ -577,6 +663,15 @@ const TEMPLATE = `
       <select class="ytc-select" id="ytc-quality">__QUALITIES__</select>
     </label>
   </div>
+
+  <details class="ytc-adv">
+    <summary>Instance Cobalt personnelle (si les téléchargements échouent)</summary>
+    <div class="ytc-row">
+      <input class="ytc-input" id="ytc-cobalt-url" type="url" placeholder="https://mon-cobalt.exemple.com" autocomplete="off">
+      <input class="ytc-input" id="ytc-cobalt-key" type="password" placeholder="Clé API (optionnelle)" autocomplete="off">
+    </div>
+    <small>Instances publiques : clé/Turnstile requis, YouTube les bloque souvent. Saisissez votre instance (CORS activé) : mémorisée dans ce navigateur.</small>
+  </details>
 
   <div>
     <div class="ytc-bar" id="ytc-bar"><i></i></div>
@@ -629,6 +724,7 @@ function clearResult() {
   box.hidden = true;
   const link = q('link');
   link.removeAttribute('href'); link.removeAttribute('download'); link.removeAttribute('target');
+  link.removeAttribute('rel'); link.classList.remove('btn');
   link.onclick = null; link.textContent = '';
 }
 
@@ -654,20 +750,27 @@ function showBlobLink(blob, name) {
 }
 
 /** Repli CORS : lien direct (le navigateur télécharge sans passer par fetch). `auto` : tente de déclencher le clic. */
-function showDirectLink(url, name, auto = false) {
+function showDirectLink(url, name, auto = false, reason = 'restriction CORS') {
   const link = q('link');
+  const isAudio = /\.(mp3|wav|m4a|ogg|opus)$/i.test(name);
   link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
-  link.textContent = `⬇ ${name} (lien direct)`;
+  link.setAttribute('download', name);
+  link.classList.add('btn');
+  link.onclick = null;
+  link.textContent = isAudio ? "⬇ Télécharger directement l'audio" : '⬇ Télécharger directement la vidéo';
   q('result').hidden = false;
   setProgress(1);
-  setStatus('Restriction CORS : téléchargement direct par le navigateur (sinon cliquez sur le lien).');
-  if (auto) { try { link.click(); } catch { /* bloqué : le lien reste cliquable */ } }
+  setStatus(`Flux média trouvé, récupération locale impossible (${reason}). Téléchargement direct lancé dans un nouvel onglet — sinon cliquez sur le bouton.`);
+  if (auto) {
+    try { link.click(); } // ouvre/télécharge via le navigateur (target=_blank + download)
+    catch { setStatus(`Flux média trouvé (${reason}). Cliquez sur le bouton pour télécharger ${name}.`); }
+  }
 }
 
 /* ---------- Actions ---------- */
 async function analyze() {
   const id = parseVideoId(q('url').value);
-  if (!id) { setStatus('URL YouTube invalide.', true); return; }
+  if (!id) { setStatus('URL invalide : collez un lien YouTube (watch, youtu.be, shorts, embed).', true); return; }
 
   reset({ keepUrl: true });
   s.abort = new AbortController();
@@ -675,7 +778,7 @@ async function analyze() {
   try {
     s.info = await fetchInfo(id, s.abort.signal, (i) => setStatus(`Analyse via ${new URL(i).hostname}…`));
     if (!s) return;
-    q('thumb').src = `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+    q('thumb').src = s.info.thumb ?? `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
     q('title').textContent = s.info.title;
     q('meta').textContent = [s.info.author, s.info.duration ? fmtDur(s.info.duration) : ''].filter(Boolean).join(' · ');
     q('info').hidden = false;
@@ -723,9 +826,9 @@ async function run() {
     let src = null;
     for (const via of order) {
       try {
-        setStatus(via === 'cobalt' ? `Résolution Cobalt (${target})…` : 'Sélection des flux Piped/Invidious…');
+        setStatus(via === 'cobalt' ? `Résolution Cobalt (${target})…` : 'Sélection des flux (InnerTube/Piped/Invidious)…');
         src = via === 'cobalt'
-          ? await tryInstances(COBALT_INSTANCES, (i) => resolveCobalt(i, watchUrl, kind, fmt, quality, signal),
+          ? await tryInstances(cobaltList(), (i) => resolveCobalt(i, watchUrl, kind, fmt, quality, signal),
               signal, (i) => setStatus(`Cobalt ${new URL(i).hostname} : génération du lien ${target}…`))
           : pickInvidious(await withStreams(), kind, fmt, quality);
         break;
@@ -736,11 +839,19 @@ async function run() {
     }
     if (!src) {
       console.warn('[youtube-converter] sources échouées :', errors);
-      throw new Error('Téléchargement indisponible pour le moment. Réessayez dans quelques instants.');
+      const authBlock = errors.some((m) => /auth|jwt|turnstile|key|youtube/i.test(m));
+      throw new Error(authBlock
+        ? "Flux média bloqué : les instances Cobalt publiques exigent une clé API/Turnstile ou YouTube les bloque. Renseignez votre propre instance Cobalt (section ci-dessus)."
+        : "Flux média indisponible : aucune source (Cobalt, Piped, Invidious) n'a répondu. L'URL est valide, le blocage vient des services : réessayez plus tard ou utilisez votre instance Cobalt.");
     }
 
     let blob = null;
     if (src.via === 'cobalt') setStatus(`Lien Cobalt obtenu (${src.host}) — téléchargement…`);
+
+    // googlevideo sans CORS : FFmpeg ne pourrait pas récupérer les entrées → repli immédiat (flux natif/muxé)
+    if (FFMPEG_JOBS.includes(src.transcode) && isGoogleVideo(src.url)) {
+      src = degrade(src, info, kind, fmt, quality, new Error('googlevideo sans CORS'));
+    }
 
     // Transcodage local FFmpeg.wasm (chargé à la demande) ; bascule propre si indisponible
     if (FFMPEG_JOBS.includes(src.transcode)) {
@@ -764,7 +875,10 @@ async function run() {
         });
       } catch (e) {
         if (isAbort(e)) throw e;
-        if (s === st) showDirectLink(src.url, name, true);
+        if (s === st) {
+          const why = e instanceof TypeError ? 'blocage CORS/réseau du flux média' : (e.message || 'échec de récupération');
+          showDirectLink(src.url, name, true, why);
+        }
         return;
       }
       if (src.transcode === 'wav-webaudio') {
@@ -831,6 +945,20 @@ export function mount(container, ctx) {
   q('reset').addEventListener('click', () => reset(), opt);
   q('format').addEventListener('change', syncQuality, opt);
   syncQuality();
+
+  // Instance Cobalt personnelle : restauration + sauvegarde
+  const saved = lsGet();
+  custom.url = saved.url ?? ''; custom.key = saved.key ?? '';
+  q('cobalt-url').value = custom.url; q('cobalt-key').value = custom.key;
+  if (custom.url) q('cobalt-url').closest('details').open = true;
+  const saveCustom = () => {
+    let u = q('cobalt-url').value.trim().replace(/\/+$/, '');
+    try { new URL(u); } catch { u = ''; }
+    custom.url = u; custom.key = q('cobalt-key').value.trim();
+    lsSet({ url: custom.url, key: custom.key });
+  };
+  q('cobalt-url').addEventListener('change', saveCustom, opt);
+  q('cobalt-key').addEventListener('change', saveCustom, opt);
 }
 
 export function unmount() {
