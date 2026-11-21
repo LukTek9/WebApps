@@ -67,4 +67,12 @@ export const tools = [
     description: "Masquez ou floutez les données sensibles d'une image (rectangle noir, pixellisation, flou) 100 % localement.",
     module: () => import('./tools/image-redactor.js'),
   },
+  {
+    id: 'image-to-svg',
+    name: "Convertisseur Image vers SVG",
+    category: 'image',
+    icon: 'shapes',
+    description: "Vectorisez vos images matricielles (PNG, JPG, WEBP) en tracés SVG (noir & blanc / contours) 100 % localement.",
+    module: () => import('./tools/image-to-svg.js'),
+  },
 ];
