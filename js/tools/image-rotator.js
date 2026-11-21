@@ -72,10 +72,20 @@ const schedule = () => {
   s.raf = requestAnimationFrame(() => { if (s) { s.raf = 0; renderPreview(); } });
 };
 
+/** Format d'affichage : +90°, -45°, 0°. */
+const fmtAngle = (a) => `${a > 0 ? '+' : ''}${a}°`;
+
+/** Source unique de vérité de l'angle : normalise dans ]-180, 180], synchronise curseur + libellé, relance l'aperçu. */
 function setAngle(a) {
-  s.angle = normalize(a);
+  const n = Number(a);
+  let v = normalize(Number.isFinite(n) ? Math.round(n * 100) / 100 : 0);
+  if (Object.is(v, -0)) v = 0;
+  s.angle = v;
+  // Écriture programmatique : aucun événement natif émis ; le drapeau protège de toute boucle.
+  s.syncing = true;
   q('angle').value = s.angle;
-  q('angle-v').textContent = s.angle;
+  q('angle-v').textContent = fmtAngle(s.angle);
+  s.syncing = false;
   schedule();
 }
 
@@ -148,7 +158,7 @@ async function onFile(file) {
 
 export function mount(container, ctx) {
   s = { root: container, ctx, img: null, imgUrl: null, imgName: '', imgMime: '',
-        angle: 0, flipH: false, flipV: false, expand: true, raf: 0, dlUrl: null, cleanups: [] };
+        angle: 0, flipH: false, flipV: false, expand: true, raf: 0, syncing: false, dlUrl: null, cleanups: [] };
 
   container.innerHTML = `
   <style>
@@ -159,9 +169,11 @@ export function mount(container, ctx) {
     .rot-drop input{display:none}
     .rot-main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:1rem;align-items:start}
     @media(max-width:820px){.rot-main{grid-template-columns:1fr}}
-    .rot-preview{border:1px solid rgba(128,128,128,.35);border-radius:var(--radius,12px);padding:.5rem;text-align:center;
-      background:repeating-conic-gradient(rgba(128,128,128,.15) 0 25%,transparent 0 50%) 0 0/16px 16px}
-    .rot-preview canvas{max-width:100%;max-height:70vh;height:auto}
+    .rot-preview{display:grid;gap:.4rem;min-width:0;text-align:center}
+    /* Cadre d'affichage stable : dimensions fixes, indépendantes de la taille interne du canvas (bounding box). */
+    .rot-preview-box{box-sizing:border-box;width:100%;height:420px;flex:none;display:flex;align-items:center;justify-content:center;
+      overflow:hidden;contain:size layout paint;background:var(--bg-preview,#1e1e2e);border-radius:var(--radius,12px)}
+    .rot-preview-box canvas{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;margin:auto;display:block}
     .rot-panel{display:grid;gap:.75rem;border:1px solid rgba(128,128,128,.35);border-radius:var(--radius,12px);padding:1rem}
     .rot-panel fieldset{border:0;padding:0;margin:0;display:grid;gap:.5rem}
     .rot-row{display:grid;gap:.25rem;font-size:.9rem}
@@ -187,7 +199,7 @@ export function mount(container, ctx) {
       </div>
       <div class="rot-main">
         <div class="rot-preview">
-          <canvas id="rot-canvas"></canvas>
+          <div class="rot-preview-box"><canvas id="rot-canvas"></canvas></div>
           <div id="rot-dims" style="font-size:.8rem;opacity:.7"></div>
         </div>
 
@@ -202,7 +214,7 @@ export function mount(container, ctx) {
           </fieldset>
 
           <fieldset>
-            <label class="rot-row">Angle précis <output id="rot-angle-v">0</output>°
+            <label class="rot-row">Angle précis <output id="rot-angle-v">0°</output>
               <input type="range" id="rot-angle" min="-180" max="180" step="1" value="0">
             </label>
             <button class="rot-btn" id="rot-zero" type="button"><i data-lucide="undo-2"></i>Réinitialiser à 0°</button>
@@ -250,7 +262,10 @@ export function mount(container, ctx) {
 
   // Commandes
   container.querySelectorAll('[data-rot]').forEach((b) => on(b, 'click', () => setAngle(s.angle + Number(b.dataset.rot))));
-  on(q('angle'), 'input', () => setAngle(Number(q('angle').value)));
+  // Curseur : `input` (glissement fluide) + `change` (relâchement / clavier) ; ignorés pendant une MAJ programmatique.
+  const onSlider = () => { if (!s.syncing) setAngle(q('angle').value); };
+  on(q('angle'), 'input', onSlider);
+  on(q('angle'), 'change', onSlider);
   on(q('zero'), 'click', () => setAngle(0));
   on(q('fliph'), 'click', () => { s.flipH = !s.flipH; syncFlipButtons(); schedule(); });
   on(q('flipv'), 'click', () => { s.flipV = !s.flipV; syncFlipButtons(); schedule(); });
