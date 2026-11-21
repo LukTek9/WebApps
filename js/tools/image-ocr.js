@@ -136,9 +136,13 @@ function cancel() {
 }
 
 function syncResultButtons() {
-  const has = q('text').value.length > 0;
+  const txt = q('text').value;
+  const has = txt.length > 0;
   q('copy').disabled = !has;
   q('download').disabled = !has;
+  q('download-md').disabled = !has;
+  const words = txt.trim() ? txt.trim().split(/\s+/).length : 0;
+  q('stats').textContent = `${words} mot${words > 1 ? 's' : ''} · ${txt.length} caractère${txt.length > 1 ? 's' : ''}`;
 }
 
 async function copyText() {
@@ -156,12 +160,13 @@ function revokeDownload() {
   if (s?.dlUrl) { URL.revokeObjectURL(s.dlUrl); s.dlUrl = null; }
 }
 
-function downloadText() {
+function downloadText(ext = 'txt') {
   revokeDownload();
-  s.dlUrl = URL.createObjectURL(new Blob([q('text').value], { type: 'text/plain;charset=utf-8' }));
+  const mime = ext === 'md' ? 'text/markdown' : 'text/plain';
+  s.dlUrl = URL.createObjectURL(new Blob([q('text').value], { type: mime + ';charset=utf-8' }));
   const a = document.createElement('a');
   a.href = s.dlUrl;
-  a.download = `${baseName(s.file.name)}-ocr.txt`;
+  a.download = `${baseName(s.file.name)}-ocr.${ext}`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -246,9 +251,11 @@ export function mount(container, ctx) {
         <div class="ocr-box"><img id="ocr-preview" alt="Image source"></div>
         <div id="ocr-result" hidden>
           <div class="ocr-box"><textarea id="ocr-text" spellcheck="false" aria-label="Texte extrait (éditable)"></textarea></div>
+          <div id="ocr-stats" style="font-size:.85rem;opacity:.7;margin-top:.25rem"></div>
           <div class="ocr-actions">
             <button class="ocr-btn" id="ocr-copy" type="button"><i data-lucide="copy"></i>Copier</button>
-            <button class="ocr-btn ocr-primary" id="ocr-download" type="button"><i data-lucide="download"></i>Télécharger .txt</button>
+            <button class="ocr-btn ocr-primary" id="ocr-download" type="button"><i data-lucide="download"></i>Télécharger (.txt)</button>
+            <button class="ocr-btn ocr-primary" id="ocr-download-md" type="button"><i data-lucide="file-text"></i>Télécharger (.md)</button>
           </div>
         </div>
       </div>
@@ -268,7 +275,8 @@ export function mount(container, ctx) {
   on(q('cancel'), 'click', cancel);
   on(q('remove'), 'click', removeImage);
   on(q('copy'), 'click', copyText);
-  on(q('download'), 'click', downloadText);
+  on(q('download'), 'click', () => downloadText('txt'));
+  on(q('download-md'), 'click', () => downloadText('md'));
   on(q('text'), 'input', syncResultButtons);
 
   refreshIcons();
