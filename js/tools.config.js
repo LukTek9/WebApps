@@ -14,6 +14,7 @@ export const categories = [
   { id: 'audio', label: 'Audio', color: 'var(--cat-audio)' },
   { id: 'image', label: 'Image', icon: 'image', color: 'var(--cat-image)' },
   { id: 'utility', label: 'Utilitaire', icon: 'qr-code', color: 'var(--cat-utility)' },
+  { id: 'pdf', label: 'PDF & Documents', icon: 'file-text', color: 'var(--cat-pdf, #ef4444)' },
 ];
 
 /** Outils disponibles. `module` = import dynamique (lazy loading). */
@@ -114,5 +115,13 @@ export const tools = [
     icon: 'scan-text',
     description: "Extrayez et numérisez le texte contenu dans vos images et documents (OCR 100 % local via Tesseract.js).",
     module: () => import('./tools/image-ocr.js'),
+  },
+  {
+    id: 'pdf-merger',
+    name: "Fusionneur de PDF",
+    category: 'pdf',
+    icon: 'files',
+    description: "Combinez plusieurs fichiers PDF en un seul document dans l'ordre de votre choix, 100 % localement.",
+    module: () => import('./tools/pdf-merger.js'),
   },
 ];
