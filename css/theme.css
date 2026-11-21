@@ -106,7 +106,7 @@
 /* ---------- Reset / base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 
-html { font-size: var(--font-size-base); }
+html { font-size: var(--font-size-base); scrollbar-gutter: stable; }
 
 body {
   margin: 0;
@@ -207,10 +207,18 @@ button { font: inherit; cursor: pointer; }
 .hero p { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-lg); }
 
 /* ---------- Grille d'outils ---------- */
+/* Vue d'accueil : hauteur minimale constante → aucun saut entre listes longues/courtes */
+#home-view {
+  min-height: calc(100vh - var(--header-height));
+  align-content: start;
+}
+
 .tools-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-card), 1fr));
   gap: var(--grid-gap);
+  align-content: start;
+  align-items: start;
   padding-bottom: var(--space-12);
 }
 

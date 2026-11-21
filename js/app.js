@@ -43,7 +43,16 @@ function renderFilters() {
 /* ---------- Grille ---------- */
 function renderGrid() {
   els.grid.innerHTML = '';
-  const visible = tools.filter((t) => state.category === 'all' || t.category === state.category);
+  // Tri stable par ordre des catégories (config) ; ordre relatif conservé dans chaque catégorie
+  const catRank = (id) => {
+    const idx = categories.findIndex((c) => c.id === id);
+    return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+  };
+  const visible = tools
+    .filter((t) => state.category === 'all' || t.category === state.category)
+    .map((t, i) => ({ t, i }))
+    .sort((a, b) => catRank(a.t.category) - catRank(b.t.category) || a.i - b.i)
+    .map(({ t }) => t);
 
   for (const tool of visible) {
     const card = document.createElement('button');
