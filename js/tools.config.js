@@ -107,4 +107,12 @@ export const tools = [
     description: "Pivotez vos images (+90°, -90°, angle libre) et inversez-les en miroir horizontal/vertical 100 % localement.",
     module: () => import('./tools/image-rotator.js'),
   },
+  {
+    id: 'image-ocr',
+    name: "Extracteur de texte OCR",
+    category: 'image',
+    icon: 'scan-text',
+    description: "Extrayez et numérisez le texte contenu dans vos images et documents (OCR 100 % local via Tesseract.js).",
+    module: () => import('./tools/image-ocr.js'),
+  },
 ];
