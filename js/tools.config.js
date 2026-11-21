@@ -59,4 +59,12 @@ export const tools = [
     description: 'Rognez vos images facilement selon des ratios prédéfinis (1:1, 16:9, 4:3) ou librement, 100 % localement.',
     module: () => import('./tools/image-cropper.js'),
   },
+  {
+    id: 'image-redactor',
+    name: "Masqueur & Flouteur de zones",
+    category: 'image',
+    icon: 'shield-alert',
+    description: "Masquez ou floutez les données sensibles d'une image (rectangle noir, pixellisation, flou) 100 % localement.",
+    module: () => import('./tools/image-redactor.js'),
+  },
 ];
