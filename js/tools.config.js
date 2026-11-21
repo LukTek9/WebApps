@@ -196,4 +196,12 @@ export const tools = [
     description: "Retirez le mot de passe et les restrictions de vos PDF (avec le bon mot de passe), 100 % localement.",
     module: () => import('./tools/pdf-unlocker.js'),
   },
+  {
+    id: 'audio-trimmer',
+    name: "Découpeur Audio",
+    category: 'audio',
+    icon: 'audio-waveform',
+    description: "Découpez vos fichiers audio (MP3, WAV, OGG, M4A) avec fondus et aperçu, export WAV ou MP3 100 % localement.",
+    module: () => import('./tools/audio-trimmer.js'),
+  },
 ];
