@@ -75,4 +75,12 @@ export const tools = [
     description: "Vectorisez vos images matricielles (PNG, JPG, WEBP) en tracés SVG (noir & blanc / contours) 100 % localement.",
     module: () => import('./tools/image-to-svg.js'),
   },
+  {
+    id: 'favicon-generator',
+    name: "Générateur de Favicon",
+    category: 'image',
+    icon: 'globe',
+    description: "Générez vos fichiers favicon.ico multi-tailles et icônes PWA/Apple 100 % localement.",
+    module: () => import('./tools/favicon-generator.js'),
+  },
 ];
