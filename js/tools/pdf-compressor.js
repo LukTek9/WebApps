@@ -41,7 +41,6 @@ const CSS = `
 .pdfc-meta{display:flex;gap:16px;flex-wrap:wrap;align-items:baseline}
 .pdfc-meta strong{word-break:break-all}
 .pdfc-meta span{opacity:.7;font-size:.9em}
-.pdfc-reset{display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:none;border:1px solid var(--border,#3a3a4e);color:inherit;border-radius:var(--radius,12px);padding:6px 12px}
 .compressor-preview-box{height:440px;flex:none;overflow-y:auto;contain:size layout paint;background:var(--bg-preview,#1e1e2e);border-radius:var(--radius,12px);padding:16px;box-sizing:border-box;display:flex;gap:16px;flex-wrap:wrap;align-content:flex-start;justify-content:center}
 .pdfc-thumb{flex:none;width:260px;display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff}
 .pdfc-thumb canvas{max-width:100%;height:auto;background:#fff;border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,.4)}
@@ -323,7 +322,7 @@ export function mount(container, ctx) {
           <span class="pdfc-size"></span>
           <span class="pdfc-pages"></span>
         </div>
-        <button type="button" class="pdfc-reset" title="Changer de fichier"><i data-lucide="trash-2" style="width:16px;height:16px"></i> Changer de fichier</button>
+        <button type="button" class="btn-secondary pdfc-reset" title="Changer de fichier"><i data-lucide="trash-2"></i> Changer de fichier</button>
       </div>
       <div class="compressor-preview-box" style="margin-top:16px">
         <div class="pdfc-thumb"><div class="pdfc-thumb-canvas"></div><small>Page 1</small></div>
@@ -338,8 +337,8 @@ export function mount(container, ctx) {
         <div class="pdfc-bar"><i></i></div>
         <div class="pdfc-status"></div>
         <div class="pdfc-btns">
-          <button type="button" class="btn-primary pdfc-go">Compresser</button>
-          <button type="button" class="btn-primary pdfc-dl" hidden>Télécharger</button>
+          <button type="button" class="btn-primary pdfc-go"><i data-lucide="file-archive"></i> Compresser</button>
+          <button type="button" class="btn-primary pdfc-dl" hidden><i data-lucide="download"></i> Télécharger</button>
         </div>
       </div>
     </div>
