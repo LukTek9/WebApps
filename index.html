@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebApp Tools — Boîte à outils en ligne</title>
+  <meta name="description" content="Boîte à outils 100 % navigateur : vos fichiers ne quittent jamais votre appareil.">
+  <link rel="stylesheet" href="css/theme.css">
+</head>
+<body>
+
+  <!-- Header minimaliste -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <!-- Emplacement réservé : logo / branding -->
+      <button class="brand" id="brand-home" type="button" aria-label="Accueil">
+        <span class="brand__logo" id="brand-logo"><i data-lucide="wrench"></i></span>
+        <span class="brand__name">WebApp Tools</span>
+      </button>
+
+      <!-- Filtres de catégories (générés par app.js depuis tools.config.js) -->
+      <nav class="filters" id="filters" aria-label="Catégories"></nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Vue accueil : grille d'outils -->
+    <section id="home-view">
+      <div class="container">
+        <div class="hero">
+          <h1>Tous les outils dont vous avez besoin</h1>
+          <p>Traitement local dans votre navigateur — aucun serveur.</p>
+        </div>
+        <div class="tools-grid" id="tools-grid"></div>
+      </div>
+    </section>
+
+    <!-- Workspace : masqué par défaut -->
+    <section id="workspace" class="workspace" hidden>
+      <div class="container">
+        <div class="workspace__bar">
+          <button class="workspace__back" id="workspace-back" type="button">
+            <i data-lucide="arrow-left"></i> Retour
+          </button>
+          <h2 class="workspace__title" id="workspace-title"></h2>
+        </div>
+        <div class="workspace__body" id="workspace-body"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">100 % côté client — vos fichiers restent sur votre appareil.</div>
+  </footer>
+
+  <!-- Lucide Icons (version épinglée) -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <!-- Point d'entrée ES6 -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
