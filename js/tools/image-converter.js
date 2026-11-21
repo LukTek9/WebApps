@@ -63,6 +63,21 @@ const CSS = `
 .imgc-state[data-s=error] { color: #d33; font-weight: 600; }
 .imgc-row { display: flex; gap: .5rem; }
 .imgc-row .imgc-btn { flex: 1; padding: .45rem .6rem; font-size: .85rem; text-align: center; text-decoration: none; color: inherit; }
+.imgc-viewer { display: flex; flex-direction: column; gap: .75rem; padding: 1rem; border: 1px solid var(--imgc-border); border-radius: var(--imgc-radius); background: var(--imgc-bg); }
+.imgc-viewer[hidden] { display: none; }
+.imgc-vtitle { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.imgc-cmp { position: relative; width: 100%; aspect-ratio: 16 / 9; max-height: 420px; overflow: hidden; border-radius: calc(var(--imgc-radius) / 1.5);
+  background: repeating-conic-gradient(#e5e7eb 0% 25%, #fff 0% 50%) 50% / 16px 16px; }
+.imgc-cmp img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; user-select: none; pointer-events: none; }
+.imgc-cmp [hidden] { display: none; }
+.imgc-handle { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--imgc-accent); transform: translateX(-1px); pointer-events: none; }
+.imgc-tag { position: absolute; top: 8px; padding: 2px 8px; border-radius: 99px; font-size: .75rem; font-weight: 600; background: rgba(0,0,0,.6); color: #fff; }
+.imgc-tag.l { left: 8px; } .imgc-tag.r { right: 8px; }
+#imgc-vrange { width: 100%; accent-color: var(--imgc-accent); }
+.imgc-vinfo { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .75rem; font-size: .9rem; }
+.imgc-vinfo > div { display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap; }
+.imgc-vinfo span { color: var(--imgc-muted); min-width: 70px; }
+.imgc-vinfo .gain { color: #1a9d55; font-weight: 700; }
 `;
 
 const TEMPLATE = `
@@ -89,6 +104,18 @@ const TEMPLATE = `
     <button type="button" class="imgc-btn" id="imgc-cancel" disabled>Annuler</button>
   </div>
   <div class="imgc-status" id="imgc-status" role="status"></div>
+  <div class="imgc-viewer" id="imgc-viewer" hidden>
+    <div class="imgc-vtitle" id="imgc-vtitle"></div>
+    <div class="imgc-cmp">
+      <img id="imgc-vafter" alt="Après conversion" hidden>
+      <img id="imgc-vbefore" alt="Avant conversion">
+      <div class="imgc-handle" id="imgc-vhandle" hidden></div>
+      <span class="imgc-tag l">Avant</span>
+      <span class="imgc-tag r" id="imgc-vtagr" hidden>Après</span>
+    </div>
+    <input type="range" id="imgc-vrange" min="0" max="100" value="50" aria-label="Curseur de comparaison avant / après">
+    <div class="imgc-vinfo" id="imgc-vinfo"></div>
+  </div>
   <div class="imgc-grid" id="imgc-grid"></div>
 </div>`;
 
@@ -242,6 +269,7 @@ function removeItem(id) {
 function render() {
   if (!s) return;
   const grid = q('grid');
+  pickView();
   grid.replaceChildren();
   for (const it of s.items) {
     const card = document.createElement('div');
@@ -251,6 +279,10 @@ function render() {
     img.className = 'imgc-thumb';
     img.src = it.thumbUrl;
     img.alt = '';
+    img.style.cursor = 'pointer';
+    img.title = 'Comparer avant / après';
+    if (it.id === s.viewId) card.style.outline = '2px solid var(--imgc-accent)';
+    img.addEventListener('click', () => { s.viewId = it.id; render(); });
 
     const name = document.createElement('div');
     name.className = 'imgc-name';
@@ -297,6 +329,51 @@ function render() {
     grid.append(card);
   }
   syncButtons();
+  renderViewer();
+}
+
+/* ---------- Visionneuse comparative avant / après ---------- */
+
+const escH = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const extOf = (f) => (f.name.includes('.') ? f.name.split('.').pop() : f.type.split('/')[1] || '?').toUpperCase();
+
+/** Sélection par défaut : premier fichier converti. */
+function pickView() {
+  if (!s.items.some((x) => x.id === s.viewId)) s.viewId = s.items.find((x) => x.outUrl)?.id ?? null;
+}
+
+function applySlider() {
+  if (!s) return;
+  const r = q('vrange');
+  const v = r.disabled ? 100 : Number(r.value);
+  q('vbefore').style.clipPath = r.disabled ? '' : `inset(0 ${100 - v}% 0 0)`;
+  q('vhandle').style.left = v + '%';
+}
+
+function renderViewer() {
+  if (!s) return;
+  const it = s.items.find((x) => x.id === s.viewId);
+  q('viewer').hidden = !it;
+  if (!it) return;
+  const done = !!it.outUrl;
+  const before = q('vbefore');
+  const after = q('vafter');
+  if (before.getAttribute('src') !== it.thumbUrl) before.src = it.thumbUrl;
+  if (done) { if (after.getAttribute('src') !== it.outUrl) after.src = it.outUrl; } else after.removeAttribute('src');
+  after.hidden = !done;
+  q('vhandle').hidden = !done;
+  q('vtagr').hidden = !done;
+  q('vrange').disabled = !done;
+  q('vtitle').textContent = it.file.name;
+
+  const targetLabel = done ? it.outFmt : FORMATS.find((f) => f.id === q('format').value).label;
+  const gain = done ? Math.round((1 - it.outSize / it.file.size) * 100) : null;
+  const gainTxt = gain === null ? '—' : gain > 0 ? `-${gain} %` : gain < 0 ? `+${-gain} %` : '0 %';
+  q('vinfo').innerHTML = `
+    <div><span>Original</span><b>${escH(extOf(it.file))}</b><b>${fmtSize(it.file.size)}</b></div>
+    <div><span>${done ? 'Converti' : 'Cible'}</span><b>${escH(targetLabel)}</b><b>${done ? fmtSize(it.outSize) : '—'}</b></div>
+    <div><span>Variation</span><b class="${gain > 0 ? 'gain' : ''}">${gainTxt}</b></div>`;
+  applySlider();
 }
 
 function syncButtons() {
@@ -339,6 +416,7 @@ async function convertAll() {
       it.outUrl = URL.createObjectURL(blob);
       it.outSize = blob.size;
       it.outName = `${baseName(it.file.name)}.${fmt.ext}`;
+      it.outFmt = fmt.label;
       it.status = 'done';
       done++;
     } catch (e) {
@@ -406,6 +484,8 @@ export function mount(container, ctx) {
   drop.addEventListener('drop', (e) => addFiles(e.dataTransfer?.files ?? []));
 
   fmtSel.addEventListener('change', syncQuality);
+  fmtSel.addEventListener('change', renderViewer);
+  q('vrange').addEventListener('input', applySlider);
   q('quality').addEventListener('input', syncQuality);
   q('convert').addEventListener('click', convertAll);
   q('reset').addEventListener('click', reset);

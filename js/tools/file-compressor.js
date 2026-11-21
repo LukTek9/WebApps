@@ -63,6 +63,21 @@ const CSS = `
 .fcmp .st-error{color:var(--danger,#dc2626)}
 .fcmp .icon-btn{padding:4px 8px}
 .fcmp-total{font-size:.9rem;opacity:.85}
+.fcmp-row{cursor:pointer}
+.fcmp-row.sel{background:color-mix(in srgb,var(--cat-utility,#4f46e5) 8%,transparent)}
+.fcmp-viewer{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--border,#e2e8f0);border-radius:var(--radius-lg,16px);background:var(--surface,#f8fafc)}
+.fcmp-viewer[hidden]{display:none}
+.fcmp-vhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.fcmp-vhead strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fcmp-badge{padding:3px 10px;border-radius:99px;font-weight:700;font-size:.85rem;background:var(--success,#16a34a);color:#fff}
+.fcmp-badge.none{background:var(--border,#cbd5e1);color:inherit}
+.fcmp-cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.fcmp-pane{margin:0;display:flex;flex-direction:column;gap:6px}
+.fcmp-pane figcaption{font-size:.85rem;opacity:.85}
+.fcmp-prev{height:240px;display:grid;place-items:center;overflow:hidden;border-radius:var(--radius-sm,8px);border:1px solid var(--border,#e2e8f0);background:repeating-conic-gradient(#e5e7eb 0% 25%,#fff 0% 50%) 50%/16px 16px}
+.fcmp-prev img{max-width:100%;max-height:100%;object-fit:contain}
+.fcmp-ph{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.7;font-size:.85rem}
+.fcmp-pre{margin:0;width:100%;height:100%;overflow:auto;padding:8px;box-sizing:border-box;font-size:.75rem;white-space:pre-wrap;word-break:break-all;background:var(--bg,#fff);text-align:left}
 `;
 
 const TEMPLATE = `
@@ -91,6 +106,7 @@ const TEMPLATE = `
       <tbody id="fcmp-rows"></tbody>
     </table>
   </div>
+  <div class="fcmp-viewer" id="fcmp-viewer" hidden></div>
   <div class="fcmp-total" id="fcmp-total"></div>
 </div>`;
 
@@ -186,20 +202,26 @@ function releaseOutput(item) {
   item.out = null;
 }
 
+function releaseSrc(item) {
+  if (item.srcUrl) URL.revokeObjectURL(item.srcUrl);
+  item.srcUrl = null;
+}
+
 function releaseAll() {
-  s?.items.forEach(releaseOutput);
+  s?.items.forEach((i) => { releaseOutput(i); releaseSrc(i); });
 }
 
 /* --------------------------------- UI --------------------------------- */
 
 function render() {
+  pickView();
   q('table').hidden = s.items.length === 0;
   q('run').disabled = s.busy || !s.items.length;
   q('level').disabled = s.busy;
   q('rows').innerHTML = s.items.map((it) => {
     const gain = it.out ? Math.round((1 - it.out.size / it.file.size) * 100) : null;
     const gainTxt = gain === null ? '—' : gain > 0 ? `-${gain} %` : '0 %';
-    return `<tr>
+    return `<tr class="fcmp-row${it.id === s.viewId ? ' sel' : ''}" data-view="${it.id}">
       <td class="name" title="${esc(it.file.name)}">${esc(it.file.name)}</td>
       <td>${fmtSize(it.file.size)}</td>
       <td>${it.out ? fmtSize(it.out.size) : '—'}</td>
@@ -216,7 +238,55 @@ function render() {
   q('total').textContent = done.length
     ? `Total : ${fmtSize(tin)} → ${fmtSize(tout)} (${tin > tout ? '-' + Math.round((1 - tout / tin) * 100) : '0'} %)`
     : '';
+  renderViewer();
   refreshIcons();
+}
+
+/* ----------------------- Visionneuse comparative ----------------------- */
+
+/** Sélection par défaut : premier fichier traité, sinon le premier de la liste. */
+function pickView() {
+  if (!s.items.some((x) => x.id === s.viewId)) s.viewId = (s.items.find((x) => x.out) ?? s.items[0])?.id ?? null;
+}
+
+const extOf = (f) => (f.name.includes('.') ? f.name.split('.').pop() : f.type.split('/')[1] || 'fichier').toUpperCase();
+
+function renderViewer() {
+  const box = q('viewer');
+  const it = s.items.find((x) => x.id === s.viewId);
+  box.hidden = !it;
+  if (!it) return;
+  const kind = it.route;
+  if (kind === 'image' && !it.srcUrl) it.srcUrl = URL.createObjectURL(it.file); // révoqué via releaseSrc
+  const gain = it.out ? Math.round((1 - it.out.size / it.file.size) * 100) : null;
+  const badge = gain === null ? '—' : gain > 0 ? `-${gain} %` : '0 %';
+  const body = (url, k) =>
+    kind === 'image' ? `<img src="${url}" alt="">`
+    : kind === 'json' ? `<pre class="fcmp-pre" data-k="${k}"></pre>`
+    : `<div class="fcmp-ph"><i data-lucide="file"></i><span>${esc(extOf(it.file))}</span></div>`;
+  const pane = (title, size, inner) =>
+    `<figure class="fcmp-pane"><figcaption>${title} · <b>${size}</b></figcaption><div class="fcmp-prev">${inner}</div></figure>`;
+  box.innerHTML = `
+    <div class="fcmp-vhead">
+      <strong title="${esc(it.file.name)}">${esc(it.file.name)}</strong>
+      <small>${STATUS[it.status]}</small>
+      <span class="fcmp-badge${gain > 0 ? '' : ' none'}">${badge}</span>
+    </div>
+    <div class="fcmp-cmp">
+      ${pane('Avant', fmtSize(it.file.size), body(it.srcUrl, 'a'))}
+      ${pane('Après', it.out ? fmtSize(it.out.size) : '—', it.out ? body(it.url, 'b') : `<div class="fcmp-ph"><span>${STATUS[it.status]}</span></div>`)}
+    </div>`;
+  if (kind === 'json') {
+    const me = s;
+    const fill = async (k, blob) => {
+      if (!blob) return;
+      const t = (await blob.text()).slice(0, 800);
+      const el = me === s ? box.querySelector(`[data-k="${k}"]`) : null;
+      if (el && s.viewId === it.id) el.textContent = t;
+    };
+    fill('a', it.file);
+    fill('b', it.out);
+  }
 }
 
 let nextId = 1;
@@ -234,6 +304,7 @@ function removeItem(id) {
   const i = s.items.findIndex((x) => x.id === id);
   if (i < 0) return;
   releaseOutput(s.items[i]);
+  releaseSrc(s.items[i]);
   s.items.splice(i, 1);
   render();
 }
@@ -287,7 +358,10 @@ export function mount(container, ctx) {
   on(q('run'), 'click', runAll);
   on(q('rows'), 'click', (e) => {
     const b = e.target.closest('[data-remove]');
-    if (b) removeItem(Number(b.dataset.remove));
+    if (b) return removeItem(Number(b.dataset.remove));
+    if (e.target.closest('a')) return; // téléchargement : ne pas re-rendre
+    const r = e.target.closest('[data-view]');
+    if (r) { s.viewId = Number(r.dataset.view); render(); }
   });
   render();
 }

@@ -26,6 +26,13 @@ const CSS = `
 .ir-status{font-weight:600}.ir-status.ok{color:#16a34a}.ir-status.err{color:#dc2626}
 .ir-row{display:flex;gap:.5rem;margin-top:.3rem}
 .ir-row .ir-btn{padding:.45rem .8rem;font-size:.85rem}
+.resizer-preview-box{display:flex;flex-direction:column;gap:.6rem;padding:1rem;border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-lg,16px);background:var(--color-surface,transparent)}
+.resizer-preview-box[hidden]{display:none}
+.ir-ptitle{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem;font-size:.85rem}
+.ir-pstage{display:grid;place-items:center;max-height:420px;overflow:auto;padding:.5rem;border-radius:var(--radius-md,10px);background:repeating-conic-gradient(#e5e7eb 0% 25%,#fff 0% 50%) 50%/16px 16px}
+.ir-pstage canvas{max-width:100%;max-height:400px}
+.ir-thumb{cursor:pointer}
+.ir-active{outline:2px solid var(--color-primary,#e5322d)}
 `;
 
 const MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
@@ -96,6 +103,10 @@ export function mount(container, ctx) {
       <button class="ir-btn" data-ref="run" disabled>Redimensionner</button>
       <button class="ir-btn ir-sec" data-ref="clear" disabled>Tout supprimer</button>
     </div>
+    <div class="resizer-preview-box" data-ref="pbox" hidden>
+      <div class="ir-ptitle"><strong>Aperçu du résultat final</strong><span data-ref="pinfo"></span></div>
+      <div class="ir-pstage"><canvas data-ref="pcv"></canvas></div>
+    </div>
     <div class="ir-grid" data-ref="grid"></div>
   </div>`;
 
@@ -104,6 +115,7 @@ export function mount(container, ctx) {
     drop: $('drop'), file: $('file'), mode: $('mode'), w: $('w'), h: $('h'),
     wLabel: $('wLabel'), hLabel: $('hLabel'), fmt: $('fmt'), ratio: $('ratio'),
     run: $('run'), clear: $('clear'), grid: $('grid'),
+    pbox: $('pbox'), pcv: $('pcv'), pinfo: $('pinfo'),
   };
   const items = [];
   let uid = 0;
@@ -123,7 +135,7 @@ export function mount(container, ctx) {
       ? `${fmtSize(it.file.size)} → ${fmtSize(it.out.blob.size)}`
       : fmtSize(it.file.size);
     c.innerHTML = `
-      <div class="ir-thumb" style="background-image:url('${it.srcUrl}')"></div>
+      <div class="ir-thumb" data-prev="${it.id}" title="Afficher l'aperçu" style="background-image:url('${it.srcUrl}')"></div>
       <div class="ir-body">
         <div class="ir-name" title="${esc(it.file.name)}">${esc(it.file.name)}</div>
         <div>${dims} px</div>
@@ -150,8 +162,10 @@ export function mount(container, ctx) {
       items.push(it);
       el.grid.appendChild(it.card);
       renderCard(it);
+      if (activeId === null && it.img) activeId = it.id;
     }
     refreshBtns();
+    schedulePreview();
   };
 
   /** Calcule les dimensions cibles selon les réglages. */
@@ -198,6 +212,36 @@ export function mount(container, ctx) {
 
   const toBlob = (cv, mime) => new Promise((res) => cv.toBlob(res, mime, 0.92));
 
+  /* ---- Aperçu dynamique : même rééchantillonnage + même format que l'export ---- */
+  let activeId = null, pTimer = 0, pSeq = 0;
+  const outMimeOf = (it) => {
+    const m = el.fmt.value === 'original' ? it.file.type : OUT_MIME[el.fmt.value];
+    return MIME_EXT[m] ? m : 'image/png';
+  };
+  const renderPreview = async () => {
+    if (!state) return;
+    items.forEach((x) => x.card.classList.toggle('ir-active', x.id === activeId));
+    const it = items.find((x) => x.id === activeId && x.img);
+    if (!it) { el.pbox.hidden = true; return; }
+    const { w, h } = target(it);
+    const mime = outMimeOf(it);
+    const cv = resample(it.img, w, h);
+    el.pcv.width = w; el.pcv.height = h;
+    const g = el.pcv.getContext('2d');
+    if (mime === 'image/jpeg') { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); } else g.clearRect(0, 0, w, h);
+    g.drawImage(cv, 0, 0);
+    cv.width = cv.height = 0; // libère le buffer temporaire
+    el.pbox.hidden = false;
+    const head = `${it.file.name} · ${it.w}×${it.h} → ${w}×${h} px · ${MIME_EXT[mime].toUpperCase()}`;
+    el.pinfo.textContent = head;
+    const seq = ++pSeq;
+    const blob = await toBlob(el.pcv, mime);
+    if (seq !== pSeq || !state || !blob) return;
+    el.pinfo.textContent = `${head} · ≈ ${fmtSize(blob.size)} (original ${fmtSize(it.file.size)})`;
+  };
+  const schedulePreview = () => { clearTimeout(pTimer); pTimer = setTimeout(renderPreview, 80); };
+  const pEvents = [[el.w, 'input'], [el.h, 'input'], [el.mode, 'change'], [el.fmt, 'change'], [el.ratio, 'change']];
+
   const processItem = async (it) => {
     if (!it.img) return;
     it.status = 'Traitement…'; it.statusCls = ''; renderCard(it);
@@ -238,7 +282,9 @@ export function mount(container, ctx) {
     revokeItem(items[i]);
     items[i].card.remove();
     items.splice(i, 1);
+    if (activeId === id) activeId = items.find((x) => x.img)?.id ?? null;
     refreshBtns();
+    schedulePreview();
   };
 
   const handlers = {
@@ -250,7 +296,12 @@ export function mount(container, ctx) {
     drop: (e) => { e.preventDefault(); el.drop.classList.remove('ir-over'); addFiles(Array.from(e.dataTransfer.files)); },
     run: async () => { el.run.disabled = true; for (const it of items) await processItem(it); refreshBtns(); },
     clear: () => { [...items].forEach((it) => removeItem(it.id)); },
-    grid: (e) => { const b = e.target.closest('[data-del]'); if (b) removeItem(Number(b.dataset.del)); },
+    grid: (e) => {
+      const b = e.target.closest('[data-del]');
+      if (b) return removeItem(Number(b.dataset.del));
+      const t = e.target.closest('[data-prev]');
+      if (t) { activeId = Number(t.dataset.prev); schedulePreview(); }
+    },
   };
 
   el.drop.addEventListener('click', handlers.dropClick);
@@ -263,8 +314,12 @@ export function mount(container, ctx) {
   el.clear.addEventListener('click', handlers.clear);
   el.grid.addEventListener('click', handlers.grid);
   el.mode.addEventListener('change', onModeChange);
+  pEvents.forEach(([n, ev]) => n.addEventListener(ev, schedulePreview));
 
   state.cleanup = () => {
+    clearTimeout(pTimer); pSeq++;
+    pEvents.forEach(([n, ev]) => n.removeEventListener(ev, schedulePreview));
+    el.pcv.width = el.pcv.height = 0;
     el.drop.removeEventListener('click', handlers.dropClick);
     el.drop.removeEventListener('keydown', handlers.dropKey);
     el.file.removeEventListener('change', handlers.fileChange);

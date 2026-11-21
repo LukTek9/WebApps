@@ -5,6 +5,9 @@
  */
 
 const PDFLIB_URL = 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+const PDFJS_WORKER = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+const THUMB_W = 170; // largeur CSS des vignettes (px)
 const OUT_NAME = 'fusion_documents.pdf';
 
 let s = null; // état de l'instance montée
@@ -37,6 +40,108 @@ function loadPdfLib() {
     throw e;
   });
   return libPromise;
+}
+
+/** Chargement paresseux de pdf.js (rendu des vignettes uniquement). */
+let jsPromise = null;
+function loadPdfJs() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (jsPromise) return jsPromise;
+  jsPromise = new Promise((resolve, reject) => {
+    const el = document.createElement('script');
+    el.src = PDFJS_URL;
+    el.async = true;
+    el.onload = () => {
+      if (!window.pdfjsLib) return reject(new Error('pdf.js indisponible.'));
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+      resolve(window.pdfjsLib);
+    };
+    el.onerror = () => { el.remove(); reject(new Error('Chargement de pdf.js impossible.')); };
+    document.head.appendChild(el);
+  }).catch((e) => { jsPromise = null; throw e; });
+  return jsPromise;
+}
+
+/** Rend la 1re page en JPEG (data URL). Copie du buffer : pdf.js transfère/détache l'ArrayBuffer. */
+async function renderCover(it) {
+  const lib = await loadPdfJs();
+  const task = lib.getDocument({ data: it.buf.slice(0) });
+  try {
+    const doc = await task.promise;
+    const page = await doc.getPage(1);
+    const base = page.getViewport({ scale: 1 });
+    const vp = page.getViewport({ scale: (THUMB_W * Math.min(window.devicePixelRatio || 1, 2)) / base.width });
+    const cv = document.createElement('canvas');
+    cv.width = Math.ceil(vp.width);
+    cv.height = Math.ceil(vp.height);
+    const g = cv.getContext('2d');
+    g.fillStyle = '#fff';
+    g.fillRect(0, 0, cv.width, cv.height);
+    await page.render({ canvasContext: g, viewport: vp }).promise;
+    const url = cv.toDataURL('image/jpeg', 0.8);
+    cv.width = cv.height = 0; // libère le buffer canvas
+    return url;
+  } finally {
+    task.destroy();
+  }
+}
+
+/** File séquentielle : génère les vignettes manquantes sans bloquer l'UI. */
+async function makeThumbs() {
+  const me = s;
+  if (!me || me.thumbing) return;
+  me.thumbing = true;
+  try {
+    for (let it; s === me && (it = me.items.find((x) => x.thumb === undefined)); ) {
+      it.thumb = null; // en cours (placeholder affiché)
+      try { it.thumb = await renderCover(it); } catch { it.thumb = null; }
+      if (s !== me) return;
+      const box = me.root.querySelector(`.pdfm-card[data-id="${it.id}"] .pdfm-thumb`);
+      if (box && it.thumb) box.innerHTML = `<img src="${it.thumb}" alt="" draggable="false"><span class="pdfm-idx">${box.dataset.idx}</span>`;
+    }
+  } finally {
+    me.thumbing = false;
+  }
+}
+
+/** Réordonnancement par glisser-déposer : le DOM est réordonné en direct, l'état synchronisé au relâchement. */
+function bindDrag() {
+  const list = q('list');
+  let dragEl = null;
+  const renumber = () =>
+    [...list.children].forEach((li, i) => {
+      const idx = li.querySelector('.pdfm-idx');
+      if (idx) idx.textContent = i + 1;
+      const th = li.querySelector('.pdfm-thumb');
+      if (th) th.dataset.idx = i + 1;
+    });
+  list.addEventListener('dragstart', (e) => {
+    const c = e.target.closest?.('.pdfm-card');
+    if (!c || s.busy) return e.preventDefault();
+    dragEl = c;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', c.dataset.id);
+    requestAnimationFrame(() => c.classList.add('is-drag'));
+  });
+  list.addEventListener('dragover', (e) => {
+    if (!dragEl) return;
+    e.preventDefault();
+    const over = e.target.closest('.pdfm-card');
+    if (!over || over === dragEl) return;
+    const r = over.getBoundingClientRect();
+    const after = e.clientX > r.left + r.width / 2;
+    list.insertBefore(dragEl, after ? over.nextSibling : over);
+    renumber();
+  });
+  list.addEventListener('drop', (e) => { if (dragEl) e.preventDefault(); });
+  list.addEventListener('dragend', () => {
+    if (!dragEl) return;
+    dragEl.classList.remove('is-drag');
+    dragEl = null;
+    const byId = new Map(s.items.map((it) => [it.id, it]));
+    s.items = [...list.children].map((li) => byId.get(Number(li.dataset.id))).filter(Boolean);
+    render();
+  });
 }
 
 function setStatus(msg = '', isError = false) {
@@ -78,16 +183,18 @@ function render() {
   list.innerHTML = s.items
     .map(
       (it, i) => `
-    <li class="pdfm-card" data-id="${it.id}">
-      <span class="pdfm-idx">${i + 1}</span>
-      <i data-lucide="file-text" class="pdfm-fileicon"></i>
+    <li class="pdfm-card" data-id="${it.id}" draggable="${!s.busy}">
+      <div class="pdfm-thumb" data-idx="${i + 1}" title="Glisser pour réordonner">
+        ${it.thumb ? `<img src="${it.thumb}" alt="Couverture de ${esc(it.name)}" draggable="false">` : '<i data-lucide="file-text" class="pdfm-fileicon"></i>'}
+        <span class="pdfm-idx">${i + 1}</span>
+      </div>
       <div class="pdfm-info">
         <div class="pdfm-name" title="${esc(it.name)}">${esc(it.name)}</div>
         <div class="pdfm-meta">${fmtSize(it.size)} · ${it.pages} page${it.pages > 1 ? 's' : ''}</div>
       </div>
       <div class="pdfm-actions">
-        <button type="button" data-act="up" aria-label="Monter" ${i === 0 || s.busy ? 'disabled' : ''}><i data-lucide="chevron-up"></i></button>
-        <button type="button" data-act="down" aria-label="Descendre" ${i === last || s.busy ? 'disabled' : ''}><i data-lucide="chevron-down"></i></button>
+        <button type="button" data-act="up" aria-label="Avancer" ${i === 0 || s.busy ? 'disabled' : ''}><i data-lucide="chevron-left"></i></button>
+        <button type="button" data-act="down" aria-label="Reculer" ${i === last || s.busy ? 'disabled' : ''}><i data-lucide="chevron-right"></i></button>
         <button type="button" data-act="del" class="is-danger" aria-label="Supprimer" ${s.busy ? 'disabled' : ''}><i data-lucide="trash-2"></i></button>
       </div>
     </li>`
@@ -130,6 +237,7 @@ async function addFiles(fileList) {
   if (!s) return;
   s.busy = false;
   render();
+  makeThumbs();
   const problems = errors.length + rejected;
   setStatus(
     problems
@@ -184,18 +292,24 @@ async function merge() {
 }
 
 const STYLE = `
-.pdfm{display:flex;flex-direction:column;gap:16px;max-width:760px;margin:0 auto;width:100%}
+.pdfm{display:flex;flex-direction:column;gap:16px;max-width:960px;margin:0 auto;width:100%}
 .pdfm-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:40px 20px;text-align:center;cursor:pointer;
   border:2px dashed var(--border, var(--color-border, #cbd5e1));border-radius:var(--radius, 14px);background:var(--surface, var(--color-surface, #fff));transition:.2s}
 .pdfm-drop:hover,.pdfm-drop.is-over{border-color:var(--cat-pdf,#ef4444);background:color-mix(in srgb,var(--cat-pdf,#ef4444) 6%,transparent)}
 .pdfm-drop i,.pdfm-drop svg{width:40px;height:40px;color:var(--cat-pdf,#ef4444)}
 .pdfm-drop strong{font-size:1.05rem}
 .pdfm-drop small{opacity:.65}
-.pdfm-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.pdfm-card{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border, var(--color-border, #e2e8f0));
+.pdfm-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.pdfm-card{display:flex;flex-direction:column;gap:8px;padding:10px;cursor:grab;transition:.15s;border:1px solid var(--border, var(--color-border, #e2e8f0));
   border-radius:var(--radius, 12px);background:var(--surface, var(--color-surface, #fff))}
-.pdfm-idx{min-width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.75rem;font-weight:600;color:#fff;background:var(--cat-pdf,#ef4444)}
-.pdfm-fileicon,.pdfm-card svg.pdfm-fileicon{width:22px;height:22px;color:var(--cat-pdf,#ef4444);flex:none}
+.pdfm-idx{position:absolute;top:6px;left:6px;box-shadow:0 1px 3px rgba(0,0,0,.3);min-width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.75rem;font-weight:600;color:#fff;background:var(--cat-pdf,#ef4444)}
+.pdfm-fileicon,.pdfm-card svg.pdfm-fileicon{width:40px;height:40px;color:var(--cat-pdf,#ef4444);opacity:.6}
+.pdfm-thumb{position:relative;aspect-ratio:3/4;display:grid;place-items:center;overflow:hidden;border-radius:8px;border:1px solid var(--border, var(--color-border, #e2e8f0));background:color-mix(in srgb,currentColor 6%,transparent)}
+.pdfm-thumb img{width:100%;height:100%;object-fit:contain;background:#fff;pointer-events:none}
+.pdfm-card.is-drag{opacity:.45;transform:scale(.97)}
+.pdfm-card:active{cursor:grabbing}
+.pdfm-info{text-align:center}
+.pdfm-actions{justify-content:center}
 .pdfm-info{flex:1;min-width:0}
 .pdfm-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pdfm-meta{font-size:.8rem;opacity:.65}
@@ -284,6 +398,7 @@ export function mount(container, ctx) {
     }
   });
   q('clear').addEventListener('click', clearAll);
+  bindDrag();
   q('merge').addEventListener('click', merge);
 
   render();
