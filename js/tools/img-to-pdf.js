@@ -127,7 +127,7 @@ export function mount(container, ctx) {
       </div>
       <div class="img2pdf-head">
         <span class="img2pdf-meta" data-role="meta">0 image · 0 o</span>
-        <button type="button" class="btn-secondary" data-role="clear"><i data-lucide="trash-2"></i> Tout effacer</button>
+        <button type="button" class="btn-remove-file" data-role="clear"><i data-lucide="trash-2"></i> Tout effacer</button>
       </div>
       <div class="img2pdf-preview-box" data-role="preview"></div>
       <div class="img2pdf-options">

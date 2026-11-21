@@ -298,3 +298,53 @@ button { font: inherit; cursor: pointer; }
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }
+
+
+/* ===== Global dropdown menus ===== */
+select,
+.form-select {
+  background: var(--bg-card, #2a2a3c);
+  color: var(--text-color, #e0e0e0);
+  border: 1px solid var(--border-color, #3a3a4c);
+  border-radius: var(--radius, 8px);
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: auto;
+}
+
+select:focus,
+.form-select:focus {
+  border-color: var(--cat-pdf, #ef4444);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+select option {
+  background: var(--bg-card, #2a2a3c);
+  color: var(--text-color, #e0e0e0);
+  padding: 8px;
+}
+
+/* ===== Global file removal button ===== */
+.btn-remove-file {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 6px 12px;
+  border-radius: var(--radius, 8px);
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-remove-file:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}

@@ -83,7 +83,8 @@ const CSS = `
 .po-btn:hover:not(:disabled){background:rgba(127,127,127,.15)}
 .po-btn:disabled{opacity:.45;cursor:not-allowed}
 .po-btn.primary,.btn-primary{background:var(--primary,#ef4444);border-color:var(--primary,#ef4444);color:#fff;font-weight:600;padding:10px 20px;font-size:14px;display:inline-flex;align-items:center;gap:8px;height:auto;max-width:max-content;flex:none;white-space:nowrap}
-.po-remove{flex:none;padding:6px 12px;font-size:13px;gap:6px}
+.po-remove{flex:none}
+.po-remove svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .po-btn svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .po-btn.primary:hover:not(:disabled){filter:brightness(1.1);background:var(--primary,#ef4444)}
 .organizer-preview-box{height:480px;flex:none;overflow-y:auto;contain:size layout paint;background:var(--bg-preview,#1e1e2e);
@@ -161,7 +162,7 @@ export function mount(container, ctx) {
     <div class="po-meta">
       <span class="po-meta-name">Aucun fichier</span>
       <span class="po-meta-info">—</span>
-      <button type="button" class="po-btn po-remove" data-act="remove" title="Retirer le fichier" aria-label="Retirer le fichier">${svg('trash')} Retirer le fichier</button>
+      <button type="button" class="btn-remove-file po-remove" data-act="remove" title="Retirer le fichier" aria-label="Retirer le fichier">${svg('trash')} Retirer le fichier</button>
     </div>
     <div class="po-actions">
       <button type="button" class="po-btn" data-act="rot-all-cw" disabled>${svg('rotate')} Pivoter tout +90°</button>

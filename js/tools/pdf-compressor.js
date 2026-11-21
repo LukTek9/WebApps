@@ -327,7 +327,7 @@ export function mount(container, ctx) {
           <span class="pdfc-size"></span>
           <span class="pdfc-pages"></span>
         </div>
-        <button type="button" class="btn-secondary pdfc-reset" title="Changer de fichier"><i data-lucide="trash-2"></i> Changer de fichier</button>
+        <button type="button" class="btn-remove-file pdfc-reset" title="Changer de fichier"><i data-lucide="trash-2"></i> Changer de fichier</button>
       </div>
       <div class="compressor-preview-box" style="margin-top:16px">
         <div class="pdfc-thumb"><div class="pdfc-thumb-canvas"></div><small>Page 1</small></div>

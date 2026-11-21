@@ -195,7 +195,7 @@ const TEMPLATE = `
         <span class="pdf2img-meta-name"></span>
         <span class="pdf2img-meta-sub"></span>
       </div>
-      <button type="button" class="btn-secondary pdf2img-change"><i data-lucide="trash-2"></i>Changer de fichier</button>
+      <button type="button" class="btn-remove-file pdf2img-change"><i data-lucide="trash-2"></i>Changer de fichier</button>
     </div>
 
     <div class="pdf2img-toolbar">
