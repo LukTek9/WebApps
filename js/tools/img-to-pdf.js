@@ -15,37 +15,6 @@ const PAGE_SIZES = { a4: [595.28, 841.89], letter: [612, 792] };
 /** Marges en points. */
 const MARGINS = { none: 0, small: 20, large: 50 };
 
-const STYLE_ID = 'img2pdf-style';
-const CSS = `
-.img2pdf { display:flex; flex-direction:column; gap:16px; }
-.img2pdf-drop { border:2px dashed var(--border, #3b3b52); border-radius:var(--radius); padding:36px 16px; text-align:center; cursor:pointer; transition:border-color .2s, background .2s; }
-.img2pdf-drop:hover, .img2pdf-drop.is-over { border-color:var(--cat-color, var(--cat-pdf, #ef4444)); background:rgba(239,68,68,.06); }
-.img2pdf-drop i, .img2pdf-drop svg { width:40px; height:40px; color:var(--cat-color, var(--cat-pdf, #ef4444)); }
-.img2pdf-drop p { margin:8px 0 0; }
-.img2pdf-head { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:40px; }
-.img2pdf-meta { font-size:.9rem; opacity:.8; }
-.img2pdf-preview-box { height:480px; flex:none; overflow-y:auto; contain:size layout paint; background:var(--bg-preview, #1e1e2e); border-radius:var(--radius); padding:16px; box-sizing:border-box; }
-.img2pdf-empty { height:100%; display:flex; align-items:center; justify-content:center; opacity:.5; font-size:.95rem; }
-.img2pdf-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:12px; }
-.img2pdf-card { position:relative; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:calc(var(--radius) / 1.5); padding:8px; display:flex; flex-direction:column; gap:6px; cursor:grab; }
-.img2pdf-card.is-dragging { opacity:.4; }
-.img2pdf-card.is-target { outline:2px solid var(--cat-color, var(--cat-pdf, #ef4444)); }
-.img2pdf-thumb { width:100%; height:110px; object-fit:contain; border-radius:6px; background:rgba(0,0,0,.25); pointer-events:none; }
-.img2pdf-name { font-size:.75rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; opacity:.85; }
-.img2pdf-idx { position:absolute; top:4px; left:4px; background:rgba(0,0,0,.65); color:#fff; font-size:.7rem; border-radius:10px; padding:1px 7px; }
-.img2pdf-actions { display:flex; justify-content:space-between; gap:4px; }
-.img2pdf-actions button { flex:1; border:0; border-radius:6px; padding:4px 0; cursor:pointer; background:rgba(255,255,255,.1); color:inherit; font-size:.85rem; }
-.img2pdf-actions button:hover:not(:disabled) { background:rgba(255,255,255,.2); }
-.img2pdf-actions button:disabled { opacity:.3; cursor:default; }
-.img2pdf-actions .img2pdf-del:hover { background:rgba(239,68,68,.6); }
-.img2pdf-options { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; }
-.img2pdf-options label { display:flex; flex-direction:column; gap:4px; font-size:.85rem; }
-.img2pdf-options select { padding:8px; border-radius:var(--radius); border:1px solid var(--border, #3b3b52); background:var(--bg-card, transparent); color:inherit; }
-.img2pdf-convert { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:14px; font-size:1rem; border:0; border-radius:var(--radius); color:#fff; cursor:pointer; background:var(--cat-color, var(--cat-pdf, #ef4444)); }
-.img2pdf-convert:disabled { opacity:.5; cursor:not-allowed; }
-.img2pdf-error { color:#f87171; font-size:.85rem; min-height:1.2em; }
-`;
-
 /** État du module (réinitialisé au mount/unmount). */
 let state = null;
 
@@ -110,19 +79,12 @@ async function toPngBytes(url, w, h) {
 export function mount(container, ctx) {
   state = { items: [], busy: false, dragFrom: null, uid: 0, container, root: null, pdfLibPromise: null, mounted: true, onChange: null };
 
-  if (!document.getElementById(STYLE_ID)) {
-    const st = document.createElement('style');
-    st.id = STYLE_ID;
-    st.textContent = CSS;
-    document.head.appendChild(st);
-  }
-
   container.innerHTML = `
     <div class="img2pdf">
       <div class="img2pdf-drop" data-role="drop">
         <i data-lucide="file-up"></i>
         <p><strong>Glissez vos images ici</strong> ou cliquez pour parcourir</p>
-        <p style="font-size:.8rem;opacity:.6">PNG, JPG, WebP — plusieurs fichiers</p>
+        <p class="img2pdf-hint">PNG, JPG, WebP — plusieurs fichiers</p>
         <input type="file" accept="image/*" multiple hidden data-role="input">
       </div>
       <div class="img2pdf-head">
@@ -351,6 +313,5 @@ export function unmount() {
   state.items.forEach((i) => URL.revokeObjectURL(i.url));
   state.items = [];
   if (state.container) state.container.innerHTML = '';
-  document.getElementById(STYLE_ID)?.remove();
   state = null;
 }

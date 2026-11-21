@@ -291,51 +291,9 @@ async function merge() {
   }
 }
 
-const STYLE = `
-.pdfm{display:flex;flex-direction:column;gap:16px;max-width:960px;margin:0 auto;width:100%}
-.pdfm-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:40px 20px;text-align:center;cursor:pointer;
-  border:2px dashed var(--border, var(--color-border, #cbd5e1));border-radius:var(--radius, 14px);background:var(--surface, var(--color-surface, #fff));transition:.2s}
-.pdfm-drop:hover,.pdfm-drop.is-over{border-color:var(--cat-pdf,#ef4444);background:color-mix(in srgb,var(--cat-pdf,#ef4444) 6%,transparent)}
-.pdfm-drop i,.pdfm-drop svg{width:40px;height:40px;color:var(--cat-pdf,#ef4444)}
-.pdfm-drop strong{font-size:1.05rem}
-.pdfm-drop small{opacity:.65}
-.pdfm-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
-.pdfm-card{display:flex;flex-direction:column;gap:8px;padding:10px;cursor:grab;transition:.15s;border:1px solid var(--border, var(--color-border, #e2e8f0));
-  border-radius:var(--radius, 12px);background:var(--surface, var(--color-surface, #fff))}
-.pdfm-idx{position:absolute;top:6px;left:6px;box-shadow:0 1px 3px rgba(0,0,0,.3);min-width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.75rem;font-weight:600;color:#fff;background:var(--cat-pdf,#ef4444)}
-.pdfm-fileicon,.pdfm-card svg.pdfm-fileicon{width:40px;height:40px;color:var(--cat-pdf,#ef4444);opacity:.6}
-.pdfm-thumb{position:relative;aspect-ratio:3/4;display:grid;place-items:center;overflow:hidden;border-radius:8px;border:1px solid var(--border, var(--color-border, #e2e8f0));background:color-mix(in srgb,currentColor 6%,transparent)}
-.pdfm-thumb img{width:100%;height:100%;object-fit:contain;background:#fff;pointer-events:none}
-.pdfm-card.is-drag{opacity:.45;transform:scale(.97)}
-.pdfm-card:active{cursor:grabbing}
-.pdfm-info{text-align:center}
-.pdfm-actions{justify-content:center}
-.pdfm-info{flex:1;min-width:0}
-.pdfm-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pdfm-meta{font-size:.8rem;opacity:.65}
-.pdfm-actions{display:flex;gap:4px}
-.pdfm-actions button{width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--border, var(--color-border, #e2e8f0));
-  border-radius:8px;background:transparent;color:inherit;cursor:pointer;transition:.15s}
-.pdfm-actions button:hover:not(:disabled){background:color-mix(in srgb,currentColor 8%,transparent)}
-.pdfm-actions button.is-danger:hover:not(:disabled){color:#ef4444;border-color:#ef4444}
-.pdfm-actions button:disabled{opacity:.35;cursor:not-allowed}
-.pdfm-actions svg{width:16px;height:16px}
-.pdfm-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
-.pdfm-summary{flex:1;font-size:.85rem;opacity:.7}
-.pdfm-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:var(--radius, 10px);border:1px solid var(--border, var(--color-border, #cbd5e1));
-  background:transparent;color:inherit;font:inherit;font-weight:600;cursor:pointer;transition:.15s}
-.pdfm-btn svg{width:16px;height:16px}
-.pdfm-btn.is-primary{background:var(--cat-pdf,#ef4444);border-color:var(--cat-pdf,#ef4444);color:#fff}
-.pdfm-btn:hover:not(:disabled){filter:brightness(.95)}
-.pdfm-btn:disabled{opacity:.45;cursor:not-allowed}
-.pdfm-status{min-height:1.2em;font-size:.9rem;opacity:.8}
-.pdfm-status.is-error{color:#ef4444;opacity:1}
-`;
-
 export function mount(container, ctx) {
   s = { root: container, ctx, items: [], seq: 0, busy: false, urls: new Set(), timers: new Set() };
   container.innerHTML = `
-    <style>${STYLE}</style>
     <div class="pdfm">
       <div class="pdfm-drop" id="pdfm-drop" tabindex="0" role="button" aria-label="Ajouter des fichiers PDF">
         <i data-lucide="upload-cloud"></i>

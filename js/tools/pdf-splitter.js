@@ -315,59 +315,6 @@ async function run() {
   }
 }
 
-/* ------------------------------ Styles ------------------------------- */
-
-const STYLE = `
-.spl{display:flex;flex-direction:column;gap:14px;max-width:960px;margin:0 auto;width:100%}
-.spl button{font:inherit;color:inherit}
-.spl-drop{display:flex;align-items:center;justify-content:center;gap:14px;padding:18px 20px;text-align:center;cursor:pointer;min-height:84px;box-sizing:border-box;
-  border:2px dashed var(--border, var(--color-border, #cbd5e1));border-radius:var(--radius, 14px);background:var(--surface, var(--color-surface, transparent));transition:border-color .2s,background .2s}
-.spl-drop:hover,.spl-drop.is-over{border-color:var(--cat-pdf,#ef4444);background:color-mix(in srgb,var(--cat-pdf,#ef4444) 6%,transparent)}
-.spl-drop svg{width:34px;height:34px;color:var(--cat-pdf,#ef4444);flex:none}
-.spl-drop small{display:block;opacity:.65}
-.spl-info{display:flex;align-items:center;gap:12px;height:60px;box-sizing:border-box;padding:0 14px;border:1px solid var(--border, var(--color-border, #e2e8f0));border-radius:var(--radius, 12px)}
-.spl-info svg{width:26px;height:26px;color:var(--cat-pdf,#ef4444);flex:none}
-.spl-infotxt{min-width:0;flex:1}
-.spl-fname{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.spl-fmeta{font-size:.85rem;opacity:.7}
-.spl-modes{display:flex;gap:8px;flex-wrap:wrap}
-.spl-mode{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;border:1px solid var(--border, var(--color-border, #cbd5e1));border-radius:var(--radius, 10px);transition:.15s}
-.spl-mode:has(input:checked){border-color:var(--cat-pdf,#ef4444);background:color-mix(in srgb,var(--cat-pdf,#ef4444) 10%,transparent);font-weight:600}
-.spl-mode input{accent-color:var(--cat-pdf,#ef4444)}
-.spl-rangebar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-height:40px}
-.spl-rangebar input[type=text]{flex:1 1 220px;min-width:0;padding:9px 12px;font:inherit;color:inherit;background:transparent;box-sizing:border-box;
-  border:1px solid var(--border, var(--color-border, #cbd5e1));border-radius:var(--radius, 10px)}
-.spl-rangebar input.is-invalid{border-color:#ef4444;outline:1px solid #ef4444}
-.spl-rangebar input:disabled{opacity:.5}
-.spl-count{font-size:.85rem;opacity:.75;min-width:170px;text-align:right}
-.spl-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;cursor:pointer;background:transparent;border:1px solid var(--border, var(--color-border, #cbd5e1));border-radius:var(--radius, 10px);transition:.15s}
-.spl-btn svg{width:16px;height:16px}
-.spl-btn.is-primary{font-weight:600;background:var(--cat-pdf,#ef4444);border-color:var(--cat-pdf,#ef4444);color:#fff}
-.spl-btn:hover:not(:disabled){filter:brightness(.95)}
-.spl-btn:disabled{opacity:.45;cursor:not-allowed}
-/* Visionneuse : dimensions totalement fixes, aucun saut de mise en page */
-.splitter-preview-box{position:relative;flex:none;width:100%;box-sizing:border-box;height:440px;min-height:440px;max-height:440px;overflow-y:auto;overflow-x:hidden;
-  scrollbar-gutter:stable;contain:size layout paint;background:var(--bg-preview,#1e1e2e);border-radius:var(--radius, 12px)}
-.spl-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#fff;opacity:.55;text-align:center;pointer-events:none}
-.spl-empty[hidden]{display:none}
-.spl-empty svg{width:40px;height:40px}
-.spl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:12px;padding:12px;align-content:start}
-.spl-cell{position:relative;display:flex;flex-direction:column;gap:4px;padding:4px;margin:0;cursor:pointer;color:#fff;background:transparent;
-  border:2px solid transparent;border-radius:8px;transition:border-color .12s,background .12s}
-.spl-cell:hover{background:rgba(255,255,255,.07)}
-.spl-page{display:grid;place-items:center;aspect-ratio:3/4;overflow:hidden;border-radius:4px;background:#fff;opacity:.9}
-.spl-page img{width:100%;height:100%;object-fit:contain;pointer-events:none}
-.spl-num{font-size:.75rem;text-align:center;opacity:.8}
-.spl-check{position:absolute;top:8px;right:8px;width:22px;height:22px;display:grid;place-items:center;border-radius:50%;opacity:0;transition:opacity .12s;color:#fff;background:var(--cat-pdf,#ef4444);box-shadow:0 1px 4px rgba(0,0,0,.5)}
-.spl-check svg{width:14px;height:14px}
-.spl-cell.is-sel,.spl-grid.is-all .spl-cell{border-color:var(--cat-pdf,#ef4444);background:color-mix(in srgb,var(--cat-pdf,#ef4444) 22%,transparent)}
-.spl-cell.is-sel .spl-check,.spl-grid.is-all .spl-check{opacity:1}
-.spl-grid.is-all .spl-cell{cursor:default}
-.spl-bar{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px}
-.spl-status{min-height:1.3em;font-size:.9rem;opacity:.85}
-.spl-status.is-error{color:#ef4444;opacity:1}
-`;
-
 /* ------------------------------ Contrat ------------------------------ */
 
 export function mount(container, ctx) {
@@ -378,7 +325,6 @@ export function mount(container, ctx) {
     urls: new Set(), timers: new Set(),
   };
   container.innerHTML = `
-    <style>${STYLE}</style>
     <div class="spl">
       <div class="spl-drop" id="spl-drop" tabindex="0" role="button" aria-label="Choisir un fichier PDF">
         <i data-lucide="upload-cloud"></i>

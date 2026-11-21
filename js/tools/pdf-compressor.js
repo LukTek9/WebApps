@@ -31,44 +31,6 @@ const LEVELS = {
   light:       { label: 'Faible compression', desc: 'Qualité maximale, gain modéré', scale: 2.0, quality: 0.85 },
 };
 
-const STYLE_ID = 'pdf-compressor-style';
-const CSS = `
-.pdfc{display:flex;flex-direction:column;gap:16px;max-width:900px;margin:0 auto}
-.pdfc-drop{border:2px dashed var(--border,#3a3a4e);border-radius:var(--radius,12px);padding:56px 24px;text-align:center;cursor:pointer;transition:background .2s,border-color .2s}
-.pdfc-drop:hover,.pdfc-drop.is-over{background:rgba(127,127,127,.08);border-color:var(--primary,#ef4444)}
-.pdfc-drop p{margin:8px 0 0;opacity:.7}
-.pdfc-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.pdfc-meta{display:flex;gap:16px;flex-wrap:wrap;align-items:baseline}
-.pdfc-meta strong{word-break:break-all}
-.pdfc-meta span{opacity:.7;font-size:.9em}
-.pdfc .btn-primary{background:var(--cat-color,var(--cat-pdf,#ef4444));color:#fff;border:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:var(--radius,8px);font-weight:600;font-size:14px;cursor:pointer;height:auto;width:auto}
-.pdfc .btn-primary:hover:not(:disabled){opacity:.9;filter:brightness(1.05)}
-.pdfc .btn-primary:disabled{opacity:.5;cursor:not-allowed;filter:none}
-.pdfc .btn-secondary{background:transparent;color:var(--text-color,#e0e0e0);border:1px solid var(--border-color,#333);padding:8px 14px;border-radius:var(--radius,8px);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
-.pdfc .btn-primary svg,.pdfc .btn-secondary svg{width:16px;height:16px;flex:none}
-.compressor-preview-box{height:440px;flex:none;overflow-y:auto;contain:size layout paint;background:var(--bg-preview,#1e1e2e);border-radius:var(--radius,12px);padding:16px;box-sizing:border-box;display:flex;gap:16px;flex-wrap:wrap;align-content:flex-start;justify-content:center}
-.pdfc-thumb{flex:none;width:260px;display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff}
-.pdfc-thumb canvas{max-width:100%;height:auto;background:#fff;border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,.4)}
-.pdfc-thumb small{opacity:.7}
-.pdfc-compare{flex:1 1 260px;min-width:240px;display:flex;flex-direction:column;gap:12px;color:#fff}
-.pdfc-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(255,255,255,.06);border-radius:8px}
-.pdfc-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:600;background:#16a34a;color:#fff}
-.pdfc-badge.is-neg{background:#dc2626}
-.pdfc-levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.pdfc-level{display:block;cursor:pointer}
-.pdfc-level input{position:absolute;opacity:0;pointer-events:none}
-.pdfc-level div{border:2px solid var(--border,#3a3a4e);border-radius:var(--radius,12px);padding:12px 14px;transition:border-color .2s,background .2s}
-.pdfc-level input:checked + div{border-color:var(--primary,#ef4444);background:rgba(239,68,68,.08)}
-.pdfc-level b{display:block}.pdfc-level span{font-size:.85em;opacity:.7}
-.pdfc-actions{display:flex;flex-direction:column;gap:8px}
-.pdfc-bar{height:8px;border-radius:999px;background:rgba(127,127,127,.25);overflow:hidden}
-.pdfc-bar i{display:block;height:100%;width:0;background:var(--primary,#ef4444);transition:width .15s}
-.pdfc-status{font-size:.9em;opacity:.8;min-height:1.2em}
-.pdfc-btns{display:flex;gap:12px;flex-wrap:wrap}
-.pdfc-error{color:#dc2626;font-size:.9em}
-.pdfc [hidden]{display:none!important}
-`;
-
 // ── État module ─────────────────────────────────────────────────────────────
 let root = null;
 let pdfjsLib = null;
@@ -300,11 +262,6 @@ function reset(keepUi) {
 export function mount(container, ctx) {
   root = container;
   level = 'recommended';
-  if (!document.getElementById(STYLE_ID)) {
-    const st = document.createElement('style');
-    st.id = STYLE_ID; st.textContent = CSS;
-    document.head.appendChild(st);
-  }
 
   const levelsHtml = Object.entries(LEVELS).map(([k, v]) => `
     <label class="pdfc-level">
@@ -315,7 +272,7 @@ export function mount(container, ctx) {
   root.innerHTML = `
   <div class="pdfc">
     <div class="pdfc-drop" tabindex="0" role="button" aria-label="Déposer un PDF">
-      <i data-lucide="file-archive" style="width:48px;height:48px"></i>
+      <i data-lucide="file-archive" class="icon-xl"></i>
       <h3>Glissez votre PDF ici</h3>
       <p>ou cliquez pour sélectionner un fichier</p>
       <input class="pdfc-input" type="file" accept="application/pdf" hidden>
@@ -329,7 +286,7 @@ export function mount(container, ctx) {
         </div>
         <button type="button" class="btn-remove-file pdfc-reset" title="Changer de fichier"><i data-lucide="trash-2"></i> Changer de fichier</button>
       </div>
-      <div class="compressor-preview-box" style="margin-top:16px">
+      <div class="compressor-preview-box u-mt-4">
         <div class="pdfc-thumb"><div class="pdfc-thumb-canvas"></div><small>Page 1</small></div>
         <div class="pdfc-compare">
           <div class="pdfc-row"><span>Poids initial</span><strong class="pdfc-old">—</strong></div>
@@ -337,8 +294,8 @@ export function mount(container, ctx) {
           <div><span class="pdfc-badge" hidden></span></div>
         </div>
       </div>
-      <div class="pdfc-levels" style="margin-top:16px">${levelsHtml}</div>
-      <div class="pdfc-actions" style="margin-top:16px">
+      <div class="pdfc-levels u-mt-4">${levelsHtml}</div>
+      <div class="pdfc-actions u-mt-4">
         <div class="pdfc-bar"><i></i></div>
         <div class="pdfc-status"></div>
         <div class="pdfc-btns">

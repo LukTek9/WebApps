@@ -17,7 +17,6 @@ const PDFJS_BASES = [
 ];
 const THUMB_W = 150;
 const THUMB_H = 200;
-const STYLE_ID = 'po-organizer-style';
 
 let pdfLibPromise = null;
 let pdfJsPromise = null;
@@ -65,54 +64,6 @@ function loadPdfJs() {
   return pdfJsPromise;
 }
 
-/* ───────────────────────── Styles (tokens de thème via var(--…)) ───────────────────────── */
-
-const CSS = `
-.po-root{display:flex;flex-direction:column;gap:12px;width:100%;box-sizing:border-box}
-.po-drop{flex:none;height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
-  border:2px dashed var(--border,#44475a);border-radius:var(--radius,12px);cursor:pointer;text-align:center;
-  color:var(--text-muted,#9aa0b4);transition:border-color .15s,background .15s}
-.po-drop:hover,.po-drop.is-over{border-color:var(--primary,#ef4444);background:rgba(239,68,68,.06)}
-.po-drop strong{color:var(--text,inherit);font-size:1rem}
-.po-meta{flex:none;height:52px;display:flex;align-items:center;gap:16px;padding:0 4px;overflow:hidden;white-space:nowrap}
-.po-meta-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
-.po-meta-info{color:var(--text-muted,#9aa0b4);font-size:.9rem;flex:none}
-.po-actions{flex:none;display:flex;flex-wrap:wrap;gap:8px}
-.po-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 14px;border:1px solid var(--border,#44475a);
-  border-radius:var(--radius,12px);background:var(--surface,transparent);color:var(--text,inherit);font:inherit;cursor:pointer;transition:background .15s,opacity .15s}
-.po-btn:hover:not(:disabled){background:rgba(127,127,127,.15)}
-.po-btn:disabled{opacity:.45;cursor:not-allowed}
-.po-btn.primary,.btn-primary{background:var(--primary,#ef4444);border-color:var(--primary,#ef4444);color:#fff;font-weight:600;padding:10px 20px;font-size:14px;display:inline-flex;align-items:center;gap:8px;height:auto;max-width:max-content;flex:none;white-space:nowrap}
-.po-remove{flex:none}
-.po-remove svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.po-btn svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.po-btn.primary:hover:not(:disabled){filter:brightness(1.1);background:var(--primary,#ef4444)}
-.organizer-preview-box{height:480px;flex:none;overflow-y:auto;contain:size layout paint;background:var(--bg-preview,#1e1e2e);
-  border-radius:var(--radius,12px);padding:16px;width:100%;box-sizing:border-box}
-.po-empty{height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-muted,#9aa0b4);text-align:center}
-.po-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:14px;align-content:start}
-.po-card{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:var(--radius,12px);background:rgba(255,255,255,.06);
-  border:1px solid transparent;cursor:grab;user-select:none}
-.po-card.is-dragging{opacity:.4}
-.po-card.is-target{border-color:var(--primary,#ef4444)}
-.po-thumb{height:${THUMB_H}px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:rgba(0,0,0,.25);border-radius:6px}
-.po-thumb canvas{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.4)}
-.po-card-bar{display:flex;align-items:center;justify-content:space-between;gap:4px;color:#e5e7eb}
-.po-num{font-size:.8rem;color:#c3c7d6;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.po-ibtn{width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:6px;
-  background:rgba(255,255,255,.1);color:#e5e7eb;cursor:pointer}
-.po-ibtn:hover:not(:disabled){background:rgba(255,255,255,.22)}
-.po-ibtn:disabled{opacity:.3;cursor:not-allowed}
-.po-ibtn.danger:hover:not(:disabled){background:#dc2626}
-.po-ibtn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.po-foot{flex:none;display:flex;align-items:center;gap:14px;height:44px}
-.po-progress{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;justify-content:center}
-.po-bar{height:8px;border-radius:99px;background:rgba(127,127,127,.25);overflow:hidden}
-.po-bar>div{height:100%;width:0;background:var(--primary,#ef4444);transition:width .15s}
-.po-status{font-size:.8rem;color:var(--text-muted,#9aa0b4);height:1.1em;line-height:1.1em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.po-status.error{color:#ef4444}
-`;
-
 /* ───────────────────────── Icônes SVG inline (style Lucide) ───────────────────────── */
 
 const ICONS = {
@@ -143,18 +94,11 @@ const norm = (a) => ((a % 360) + 360) % 360;
 export function mount(container, ctx) {
   unmount(); // sécurité : un seul montage
 
-  if (!document.getElementById(STYLE_ID)) {
-    const st = document.createElement('style');
-    st.id = STYLE_ID;
-    st.textContent = CSS;
-    document.head.appendChild(st);
-  }
-
   const root = document.createElement('div');
   root.className = 'po-root';
   root.innerHTML = `
     <div class="po-drop" tabindex="0" role="button" aria-label="Choisir un fichier PDF">
-      ${svg('upload').replace('<svg', '<svg style="width:32px;height:32px;fill:none;stroke:currentColor;stroke-width:2"')}
+      ${svg('upload').replace('<svg', '<svg class="icon-lg"')}
       <strong>Glissez-déposez un PDF ici</strong>
       <span class="po-drop-hint">ou cliquez pour parcourir</span>
       <input type="file" accept="application/pdf" hidden>
@@ -256,8 +200,6 @@ export function unmount() {
     workerBlobUrl = null;
     pdfJsPromise = null; // le worker sera recréé au prochain montage
   }
-  const st = document.getElementById(STYLE_ID);
-  if (st) st.remove();
   S = null;
 }
 
@@ -575,14 +517,14 @@ function setView(hasFile) {
   const { drop, meta, actions, box, foot, hint } = S.el;
   drop.style.display = hasFile ? 'none' : '';
   [meta, actions, box, foot].forEach((n) => { n.style.display = hasFile ? '' : 'none'; });
-  if (hasFile) { hint.textContent = DROP_HINT; hint.style.color = ''; }
+  if (hasFile) { hint.textContent = DROP_HINT; hint.classList.remove('status-error'); }
 }
 
 /** Message d'erreur affiché dans la dropzone (statut du pied masqué hors fichier). */
 function showDropError(msg) {
   if (!S) return;
   S.el.hint.textContent = msg;
-  S.el.hint.style.color = '#ef4444';
+  S.el.hint.classList.add('status-error');
 }
 
 /** Retire le fichier : libère la mémoire, réinitialise l'état, réaffiche la dropzone. */
