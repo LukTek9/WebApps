@@ -43,4 +43,12 @@ export const tools = [
     description: 'Compressez n\'importe quel fichier (Images, PDF, Textes, Archives) 100 % localement dans votre navigateur.',
     module: () => import('./tools/file-compressor.js'),
   },
+  {
+    id: 'image-resizer',
+    name: "Redimensionneur d'images",
+    category: 'image',
+    icon: 'scaling',
+    description: 'Redimensionnez vos images en pixels ou en pourcentage tout en conservant leur qualité, 100 % localement.',
+    module: () => import('./tools/image-resizer.js'),
+  },
 ];
