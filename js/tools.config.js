@@ -180,4 +180,12 @@ export const tools = [
     description: "Pivotez les pages de vos PDF une par une ou en lot (toutes, paires, impaires) avec aperçu, 100 % localement.",
     module: () => import('./tools/pdf-rotator.js'),
   },
+  {
+    id: 'pdf-protector',
+    name: "Protecteur de PDF",
+    category: 'pdf',
+    icon: 'lock',
+    description: "Chiffrez vos PDF par mot de passe et limitez l'impression, la copie ou la modification, 100 % localement.",
+    module: () => import('./tools/pdf-protector.js'),
+  },
 ];
