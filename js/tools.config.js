@@ -164,4 +164,12 @@ export const tools = [
     description: "Convertissez et combinez vos images PNG, JPG ou WebP en un document PDF unique 100 % localement.",
     module: () => import('./tools/img-to-pdf.js'),
   },
+  {
+    id: 'pdf-page-numbers',
+    name: "Numéroteur de pages PDF",
+    category: 'pdf',
+    icon: 'list-ordered',
+    description: "Ajoutez une numérotation de pages à vos PDF (position, format, police, couleur) 100 % localement.",
+    module: () => import('./tools/pdf-page-numbers.js'),
+  },
 ];

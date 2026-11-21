@@ -1023,3 +1023,43 @@ select option {
 .fcmp-prev img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .fcmp-ph { display: flex; flex-direction: column; align-items: center; gap: 6px; opacity: .7; font-size: .85rem; }
 .fcmp-pre { margin: 0; width: 100%; height: 100%; overflow: auto; padding: 8px; box-sizing: border-box; font-size: .75rem; white-space: pre-wrap; word-break: break-all; background: var(--color-bg); text-align: left; }
+
+/* ===== Outil : Numéroteur de pages PDF (.pdfnum-*) ===== */
+.pdfnum { display: flex; flex-direction: column; gap: var(--space-4); max-width: 960px; margin: 0 auto; width: 100%; color: var(--color-text); }
+.pdfnum-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); min-height: 200px; padding: var(--space-8) var(--space-4); text-align: center; cursor: pointer; border: 2px dashed var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); transition: border-color var(--transition), background var(--transition); }
+.pdfnum-drop:hover, .pdfnum-drop.is-over, .pdfnum-drop:focus-visible { border-color: var(--cat-pdf); background: color-mix(in srgb, var(--cat-pdf) 6%, transparent); outline: none; }
+.pdfnum-drop svg { width: 44px; height: 44px; color: var(--cat-pdf); }
+.pdfnum-drop strong { font-size: var(--font-size-lg); }
+.pdfnum-drop small { color: var(--color-text-muted); }
+.pdfnum-work { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: var(--space-6); align-items: start; }
+@media (max-width: 800px) { .pdfnum-work { grid-template-columns: 1fr; } }
+.pdfnum-main { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.pdfnum-file { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.pdfnum-file > svg { width: 28px; height: 28px; flex: none; color: var(--cat-pdf); }
+.pdfnum-file-txt { flex: 1; min-width: 0; }
+.pdfnum-name { font-weight: var(--font-weight-bold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pdfnum-meta { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.pdfnum-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.pdfnum-field { display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-muted); }
+.pdfnum-field input[type="number"], .pdfnum-field select { width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); color: var(--color-text); font: inherit; }
+.pdfnum-field input[type="color"] { width: 100%; height: 40px; padding: 2px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); cursor: pointer; }
+.pdfnum-field input:focus-visible, .pdfnum-field select:focus-visible { outline: 2px solid var(--cat-pdf); outline-offset: 1px; }
+.pdfnum-field:has(.pdfnum-pos) { grid-column: 1 / -1; }
+.pdfnum-pos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); max-width: 320px; }
+.pdfnum-pos button { padding: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); font-size: var(--font-size-sm); transition: background var(--transition), border-color var(--transition), color var(--transition); }
+.pdfnum-pos button:hover { border-color: var(--cat-pdf); color: var(--cat-pdf); }
+.pdfnum-pos button[aria-pressed="true"] { background: var(--cat-pdf); border-color: var(--cat-pdf); color: var(--color-text-on-primary); font-weight: var(--font-weight-bold); }
+.pdfnum-side { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.pdfnum-side h4 { margin: 0; align-self: flex-start; font-size: var(--font-size-sm); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; }
+.pdfnum-sheet { position: relative; width: 200px; max-width: 100%; overflow: hidden; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-shadow: var(--shadow-md); }
+.pdfnum-sheet::before { content: ""; position: absolute; inset: 16% 12%; background: repeating-linear-gradient(to bottom, var(--color-border) 0 2px, transparent 2px 10px); opacity: .7; }
+.pdfnum-label { position: absolute; line-height: 1; white-space: nowrap; font-family: var(--font-family); }
+.pdfnum-hint { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted); text-align: center; }
+.pdfnum-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+.pdfnum-actions .btn-primary { flex: 1 1 200px; }
+.pdfnum-bar { height: 8px; border-radius: var(--radius-pill); background: var(--color-border); overflow: hidden; visibility: hidden; }
+.pdfnum-bar.is-on { visibility: visible; }
+.pdfnum-bar > i { display: block; height: 100%; width: 0; background: var(--cat-pdf); transition: width var(--transition); }
+.pdfnum-status { min-height: 1.3em; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.pdfnum-status.is-error { color: var(--color-error); }
+.pdfnum-status.is-ok { color: var(--color-success); }
