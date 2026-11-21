@@ -4,7 +4,6 @@
  * Formats de sortie : PNG, JPEG, WEBP (natifs canvas), BMP et ICO (encodeurs maison).
  */
 
-const STYLE_ID = 'imgc-style';
 const ICO_MAX = 256; // taille max d'une entrée ICO
 
 const FORMATS = [
@@ -21,64 +20,6 @@ const STATUS_LABEL = {
   done: 'Terminé',
   error: 'Erreur',
 };
-
-// Tokens de thème avec valeurs de repli : l'outil reste lisible même si une variable manque.
-const CSS = `
-.imgc { --imgc-accent: var(--accent, var(--color-primary, #e5322d)); --imgc-bg: var(--surface, var(--color-surface, #fff));
-  --imgc-border: var(--border, var(--color-border, #d9dde3)); --imgc-text: var(--text, var(--color-text, #1f2937));
-  --imgc-muted: var(--text-muted, var(--color-text-muted, #6b7280)); --imgc-radius: var(--radius, var(--radius-md, 12px));
-  display: flex; flex-direction: column; gap: 1.25rem; color: var(--imgc-text); }
-.imgc-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem;
-  min-height: 240px; padding: 2rem; text-align: center; cursor: pointer;
-  border: 3px dashed var(--imgc-border); border-radius: var(--imgc-radius); background: var(--imgc-bg);
-  transition: border-color .2s, background .2s, transform .2s; }
-.imgc-drop:hover, .imgc-drop.is-over, .imgc-drop:focus-visible { border-color: var(--imgc-accent); transform: translateY(-1px); outline: none; }
-.imgc-drop svg { width: 56px; height: 56px; color: var(--imgc-accent); }
-.imgc-drop strong { font-size: 1.15rem; }
-.imgc-drop span { color: var(--imgc-muted); font-size: .9rem; }
-.imgc-opts { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-end; padding: 1rem 1.25rem;
-  border: 1px solid var(--imgc-border); border-radius: var(--imgc-radius); background: var(--imgc-bg); }
-.imgc-field { display: flex; flex-direction: column; gap: .4rem; min-width: 180px; }
-.imgc-field label { font-size: .8rem; font-weight: 600; color: var(--imgc-muted); text-transform: uppercase; letter-spacing: .04em; }
-.imgc-field select { padding: .55rem .75rem; border: 1px solid var(--imgc-border); border-radius: calc(var(--imgc-radius) / 1.5);
-  background: var(--imgc-bg); color: inherit; font: inherit; }
-.imgc-field input[type=range] { width: 100%; accent-color: var(--imgc-accent); }
-.imgc-field[hidden] { display: none; }
-.imgc-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
-.imgc-btn { padding: .7rem 1.4rem; border: 1px solid var(--imgc-border); border-radius: calc(var(--imgc-radius) / 1.5);
-  background: var(--imgc-bg); color: inherit; font: inherit; font-weight: 600; cursor: pointer; transition: filter .15s, transform .15s; }
-.imgc-btn:hover:not(:disabled) { filter: brightness(.96); transform: translateY(-1px); }
-.imgc-btn:disabled { opacity: .45; cursor: not-allowed; }
-.imgc-btn.primary { background: var(--imgc-accent); border-color: var(--imgc-accent); color: #fff; }
-.imgc-status { min-height: 1.2em; font-size: .9rem; color: var(--imgc-muted); }
-.imgc-status.err { color: #d33; }
-.imgc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
-.imgc-card { display: flex; flex-direction: column; gap: .5rem; padding: .75rem; border: 1px solid var(--imgc-border);
-  border-radius: var(--imgc-radius); background: var(--imgc-bg); }
-.imgc-thumb { width: 100%; aspect-ratio: 4 / 3; object-fit: contain; border-radius: calc(var(--imgc-radius) / 1.5);
-  background: repeating-conic-gradient(#e5e7eb 0% 25%, #fff 0% 50%) 50% / 16px 16px; }
-.imgc-name { font-weight: 600; font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.imgc-meta { display: flex; justify-content: space-between; gap: .5rem; font-size: .8rem; color: var(--imgc-muted); }
-.imgc-state[data-s=done] { color: #1a9d55; font-weight: 600; }
-.imgc-state[data-s=error] { color: #d33; font-weight: 600; }
-.imgc-row { display: flex; gap: .5rem; }
-.imgc-row .imgc-btn { flex: 1; padding: .45rem .6rem; font-size: .85rem; text-align: center; text-decoration: none; color: inherit; }
-.imgc-viewer { display: flex; flex-direction: column; gap: .75rem; padding: 1rem; border: 1px solid var(--imgc-border); border-radius: var(--imgc-radius); background: var(--imgc-bg); }
-.imgc-viewer[hidden] { display: none; }
-.imgc-vtitle { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.imgc-cmp { position: relative; width: 100%; aspect-ratio: 16 / 9; max-height: 420px; overflow: hidden; border-radius: calc(var(--imgc-radius) / 1.5);
-  background: repeating-conic-gradient(#e5e7eb 0% 25%, #fff 0% 50%) 50% / 16px 16px; }
-.imgc-cmp img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; user-select: none; pointer-events: none; }
-.imgc-cmp [hidden] { display: none; }
-.imgc-handle { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--imgc-accent); transform: translateX(-1px); pointer-events: none; }
-.imgc-tag { position: absolute; top: 8px; padding: 2px 8px; border-radius: 99px; font-size: .75rem; font-weight: 600; background: rgba(0,0,0,.6); color: #fff; }
-.imgc-tag.l { left: 8px; } .imgc-tag.r { right: 8px; }
-#imgc-vrange { width: 100%; accent-color: var(--imgc-accent); }
-.imgc-vinfo { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .75rem; font-size: .9rem; }
-.imgc-vinfo > div { display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap; }
-.imgc-vinfo span { color: var(--imgc-muted); min-width: 70px; }
-.imgc-vinfo .gain { color: #1a9d55; font-weight: 700; }
-`;
 
 const TEMPLATE = `
 <div class="imgc">
@@ -106,7 +47,7 @@ const TEMPLATE = `
   <div class="imgc-status" id="imgc-status" role="status"></div>
   <div class="imgc-viewer" id="imgc-viewer" hidden>
     <div class="imgc-vtitle" id="imgc-vtitle"></div>
-    <div class="imgc-cmp">
+    <div class="imgc-cmp checkerboard-bg">
       <img id="imgc-vafter" alt="Après conversion" hidden>
       <img id="imgc-vbefore" alt="Avant conversion">
       <div class="imgc-handle" id="imgc-vhandle" hidden></div>
@@ -276,12 +217,11 @@ function render() {
     card.className = 'imgc-card';
 
     const img = document.createElement('img');
-    img.className = 'imgc-thumb';
+    img.className = 'imgc-thumb checkerboard-bg';
     img.src = it.thumbUrl;
     img.alt = '';
-    img.style.cursor = 'pointer';
     img.title = 'Comparer avant / après';
-    if (it.id === s.viewId) card.style.outline = '2px solid var(--imgc-accent)';
+    if (it.id === s.viewId) card.classList.add('is-active');
     img.addEventListener('click', () => { s.viewId = it.id; render(); });
 
     const name = document.createElement('div');
@@ -458,12 +398,6 @@ function reset() {
 
 export function mount(container, ctx) {
   unmount();
-  if (!document.getElementById(STYLE_ID)) {
-    const st = document.createElement('style');
-    st.id = STYLE_ID;
-    st.textContent = CSS;
-    document.head.append(st);
-  }
   container.innerHTML = TEMPLATE;
   s = { root: container, ctx, items: [], seq: 0, busy: false, cancel: false };
 
@@ -501,5 +435,4 @@ export function unmount() {
   s.items.forEach(releaseItem); // revokeObjectURL
   s.root.replaceChildren();
   s = null;
-  document.getElementById(STYLE_ID)?.remove();
 }

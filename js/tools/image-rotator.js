@@ -58,7 +58,7 @@ function setStatus(msg = '', isError = false) {
   const el = q('status');
   if (!el) return;
   el.textContent = msg;
-  el.style.color = isError ? '#dc2626' : 'inherit';
+  el.classList.toggle('status-error', isError);
 }
 
 /** Ramène un angle dans ]-180, 180]. */
@@ -203,33 +203,6 @@ export function mount(container, ctx) {
         angle: 0, flipH: false, flipV: false, expand: true, raf: 0, syncing: false, dlUrl: null, cleanups: [] };
 
   container.innerHTML = `
-  <style>
-    .rot{display:grid;gap:1rem;font-family:var(--font-family,inherit)}
-    .rot-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;min-height:220px;
-      border:2px dashed rgba(128,128,128,.5);border-radius:var(--radius,12px);cursor:pointer;text-align:center;padding:1rem}
-    .rot-drop.rot-over{border-color:var(--primary,#4f46e5);background:rgba(79,70,229,.08)}
-    .rot-drop input{display:none}
-    .rot-main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:1rem;align-items:start}
-    @media(max-width:820px){.rot-main{grid-template-columns:1fr}}
-    .rot-preview{display:grid;gap:.4rem;min-width:0;text-align:center}
-    /* Cadre d'affichage stable : dimensions fixes, indépendantes de la taille interne du canvas (bounding box). */
-    .rot-preview-box{box-sizing:border-box;width:100%;height:420px;flex:none;display:flex;align-items:center;justify-content:center;
-      overflow:hidden;contain:size layout paint;background:var(--bg-preview,#1e1e2e);border-radius:var(--radius,12px)}
-    .rot-preview-box canvas{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;margin:auto;display:block}
-    .rot-panel{display:grid;gap:.75rem;border:1px solid rgba(128,128,128,.35);border-radius:var(--radius,12px);padding:1rem}
-    .rot-panel fieldset{border:0;padding:0;margin:0;display:grid;gap:.5rem}
-    .rot-row{display:grid;gap:.25rem;font-size:.9rem}
-    .rot-row select{padding:.4rem;border-radius:8px;border:1px solid rgba(128,128,128,.5);background:transparent;color:inherit}
-    .rot-btns{display:flex;flex-wrap:wrap;gap:.5rem}
-    .rot-btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.55rem .8rem;border:1px solid rgba(128,128,128,.5);
-      border-radius:var(--radius,12px);background:transparent;color:inherit;font-weight:600;cursor:pointer}
-    .rot-btn[aria-pressed=true]{background:var(--primary,#4f46e5);border-color:var(--primary,#4f46e5);color:#fff}
-    .rot-btn.rot-primary{background:var(--primary,#4f46e5);border-color:var(--primary,#4f46e5);color:#fff}
-    .rot-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
-    .rot-ev{cursor:pointer;border-bottom:1px dashed currentColor;border-radius:3px;padding:0 .2em;transition:background .15s}
-    .rot-ev:hover,.rot-ev:focus-visible{background:rgba(128,128,128,.18);border-bottom-style:solid;outline:0}
-    .rot-ev-input{width:4.5em;padding:0 .25em;font:inherit;color:inherit;background:transparent;border:1px solid var(--primary,#4f46e5);border-radius:4px}
-  </style>
   <div class="rot">
     <label class="rot-drop" id="rot-drop">
       <i data-lucide="image-plus"></i>
@@ -245,7 +218,7 @@ export function mount(container, ctx) {
       <div class="rot-main">
         <div class="rot-preview">
           <div class="rot-preview-box"><canvas id="rot-canvas"></canvas></div>
-          <div id="rot-dims" style="font-size:.8rem;opacity:.7"></div>
+          <div id="rot-dims" class="rot-dims"></div>
         </div>
 
         <div class="rot-panel">

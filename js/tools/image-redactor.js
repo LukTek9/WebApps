@@ -3,33 +3,6 @@
  * Contrat : mount(container, ctx) / unmount().
  */
 
-const STYLE_ID = 'image-redactor-styles';
-const CSS = `
-.ir2-root{display:flex;flex-direction:column;gap:1.25rem;font-family:var(--font-base,inherit);color:var(--color-text,inherit)}
-.ir2-drop{border:2px dashed var(--color-border,#cbd5e1);border-radius:var(--radius-lg,16px);padding:3rem 1.5rem;text-align:center;cursor:pointer;transition:background .2s,border-color .2s;background:var(--color-surface,transparent)}
-.ir2-drop:hover,.ir2-drop.ir2-over{border-color:var(--color-primary,#e5322d);background:var(--color-primary-soft,rgba(229,50,45,.06))}
-.ir2-drop i,.ir2-drop svg{width:40px;height:40px;margin-bottom:.5rem}
-.ir2-drop p{margin:.25rem 0}.ir2-hint{opacity:.65;font-size:.85rem}
-.ir2-hidden{display:none!important}
-.ir2-editor{display:flex;flex-direction:column;gap:1rem}
-.ir2-bar{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;padding:1rem 1.25rem;border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-lg,16px);background:var(--color-surface,transparent)}
-.ir2-field{display:flex;flex-direction:column;gap:.35rem;font-size:.9rem}
-.ir2-field select{padding:.55rem .7rem;border:1px solid var(--color-border,#cbd5e1);border-radius:var(--radius-md,10px);font:inherit;background:var(--color-bg,#fff);color:inherit}
-.ir2-modes{display:flex;gap:.4rem;flex-wrap:wrap}
-.ir2-chip{padding:.45rem .9rem;border:1px solid var(--color-border,#cbd5e1);border-radius:999px;background:transparent;color:inherit;font:inherit;font-size:.85rem;cursor:pointer}
-.ir2-chip.on{background:var(--color-primary,#e5322d);border-color:var(--color-primary,#e5322d);color:#fff}
-.ir2-stage{display:flex;justify-content:center;padding:1rem;border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-lg,16px);background:#0001}
-.ir2-canvas{max-width:100%;max-height:65vh;cursor:crosshair;touch-action:none;display:block}
-.ir2-actions{display:flex;gap:.75rem;flex-wrap:wrap;align-items:center}
-.ir2-btn{padding:.65rem 1.2rem;border:0;border-radius:var(--radius-md,10px);font:inherit;font-weight:600;cursor:pointer;background:var(--color-primary,#e5322d);color:#fff}
-.ir2-btn.ir2-sec{background:transparent;color:inherit;border:1px solid var(--color-border,#cbd5e1)}
-.ir2-btn:disabled{opacity:.5;cursor:not-allowed}
-.ir2-status{font-size:.85rem;font-weight:600}.ir2-status.err{color:#dc2626}
-.ir2-ev{cursor:pointer;border-bottom:1px dashed currentColor;border-radius:3px;padding:0 .2em;transition:background .15s}
-.ir2-ev:hover,.ir2-ev:focus-visible{background:rgba(128,128,128,.18);border-bottom-style:solid;outline:0}
-.ir2-ev-input{width:4.5em;padding:0 .25em;font:inherit;color:inherit;background:transparent;border:1px solid var(--color-primary,#e5322d);border-radius:4px}
-`;
-
 const MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 const OUT_MIME = { jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 const MODES = [
@@ -84,12 +57,6 @@ function editable(badge, slider, fmt, cls) {
 
 export function mount(container, ctx) {
   unmount();
-  if (!document.getElementById(STYLE_ID)) {
-    const st = document.createElement('style');
-    st.id = STYLE_ID;
-    st.textContent = CSS;
-    document.head.appendChild(st);
-  }
 
   container.innerHTML = `
   <div class="ir2-root">

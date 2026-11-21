@@ -3,39 +3,6 @@
  * Contrat : mount(container, ctx) / unmount().
  */
 
-const STYLE_ID = 'image-cropper-styles';
-const CSS = `
-.ic-root{display:flex;flex-direction:column;gap:1.25rem;font-family:var(--font-base,inherit);color:var(--color-text,inherit)}
-.ic-drop{border:2px dashed var(--color-border,#cbd5e1);border-radius:var(--radius-lg,16px);padding:3rem 1.5rem;text-align:center;cursor:pointer;transition:background .2s,border-color .2s;background:var(--color-surface,transparent)}
-.ic-drop:hover,.ic-drop.ic-over{border-color:var(--color-primary,#e5322d);background:var(--color-primary-soft,rgba(229,50,45,.06))}
-.ic-drop i,.ic-drop svg{width:40px;height:40px;margin-bottom:.5rem}
-.ic-drop p{margin:.25rem 0}.ic-hint{opacity:.65;font-size:.85rem}
-.ic-hidden{display:none!important}
-.ic-editor{display:flex;flex-direction:column;gap:1rem}
-.ic-stage-wrap{display:flex;justify-content:center;padding:1rem;border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-lg,16px);background:#0001}
-.ic-stage{position:relative;display:inline-block;line-height:0;user-select:none;touch-action:none;overflow:hidden}
-.ic-img{max-width:100%;max-height:60vh;display:block;pointer-events:none}
-.ic-box{position:absolute;box-sizing:border-box;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.55);cursor:move;touch-action:none}
-.ic-h{position:absolute;width:14px;height:14px;background:var(--color-primary,#e5322d);border:2px solid #fff;border-radius:50%;box-sizing:border-box;touch-action:none}
-.ic-h[data-h=nw]{left:-8px;top:-8px;cursor:nwse-resize}.ic-h[data-h=ne]{right:-8px;top:-8px;cursor:nesw-resize}
-.ic-h[data-h=sw]{left:-8px;bottom:-8px;cursor:nesw-resize}.ic-h[data-h=se]{right:-8px;bottom:-8px;cursor:nwse-resize}
-.ic-h[data-h=n]{left:calc(50% - 7px);top:-8px;cursor:ns-resize}.ic-h[data-h=s]{left:calc(50% - 7px);bottom:-8px;cursor:ns-resize}
-.ic-h[data-h=w]{left:-8px;top:calc(50% - 7px);cursor:ew-resize}.ic-h[data-h=e]{right:-8px;top:calc(50% - 7px);cursor:ew-resize}
-.ic-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;padding:1.25rem;border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-lg,16px);background:var(--color-surface,transparent)}
-.ic-field{display:flex;flex-direction:column;gap:.35rem;font-size:.9rem}
-.ic-field select{padding:.55rem .7rem;border:1px solid var(--color-border,#cbd5e1);border-radius:var(--radius-md,10px);font:inherit;background:var(--color-bg,#fff);color:inherit}
-.ic-ratios{display:flex;gap:.4rem;flex-wrap:wrap}
-.ic-chip{padding:.4rem .8rem;border:1px solid var(--color-border,#cbd5e1);border-radius:999px;background:transparent;color:inherit;font:inherit;font-size:.85rem;cursor:pointer}
-.ic-chip.on{background:var(--color-primary,#e5322d);border-color:var(--color-primary,#e5322d);color:#fff}
-.ic-info{font-variant-numeric:tabular-nums;font-size:.9rem;line-height:1.6}
-.ic-actions{display:flex;gap:.75rem;flex-wrap:wrap;align-items:center}
-.ic-btn{padding:.65rem 1.2rem;border:0;border-radius:var(--radius-md,10px);font:inherit;font-weight:600;cursor:pointer;background:var(--color-primary,#e5322d);color:#fff;text-decoration:none;display:inline-block}
-.ic-btn.ic-sec{background:transparent;color:inherit;border:1px solid var(--color-border,#cbd5e1)}
-.ic-result{display:flex;gap:1rem;align-items:center;padding:1rem;border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-lg,16px);flex-wrap:wrap}
-.ic-result img{max-height:120px;max-width:200px;border-radius:8px;background:#0001}
-.ic-status{font-size:.85rem;font-weight:600}.ic-status.err{color:#dc2626}
-`;
-
 const MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 const OUT_MIME = { jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 const RATIOS = [
@@ -54,12 +21,6 @@ const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
 
 export function mount(container, ctx) {
   unmount();
-  if (!document.getElementById(STYLE_ID)) {
-    const st = document.createElement('style');
-    st.id = STYLE_ID;
-    st.textContent = CSS;
-    document.head.appendChild(st);
-  }
 
   container.innerHTML = `
   <div class="ic-root">

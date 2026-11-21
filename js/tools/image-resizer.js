@@ -3,38 +3,6 @@
  * Contrat : mount(container, ctx) / unmount().
  */
 
-const STYLE_ID = 'image-resizer-styles';
-const CSS = `
-.ir-root{display:flex;flex-direction:column;gap:1.25rem;font-family:var(--font-base,inherit);color:var(--color-text,inherit)}
-.ir-drop{border:2px dashed var(--color-border,#cbd5e1);border-radius:var(--radius-lg,16px);padding:3rem 1.5rem;text-align:center;cursor:pointer;transition:background .2s,border-color .2s;background:var(--color-surface,transparent)}
-.ir-drop:hover,.ir-drop.ir-over{border-color:var(--color-primary,#e5322d);background:var(--color-primary-soft,rgba(229,50,45,.06))}
-.ir-drop i,.ir-drop svg{width:40px;height:40px;margin-bottom:.5rem}
-.ir-drop p{margin:.25rem 0}.ir-hint{opacity:.65;font-size:.85rem}
-.ir-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;padding:1.25rem;border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-lg,16px);background:var(--color-surface,transparent)}
-.ir-field{display:flex;flex-direction:column;gap:.35rem;font-size:.9rem}
-.ir-field input[type=number],.ir-field select{padding:.55rem .7rem;border:1px solid var(--color-border,#cbd5e1);border-radius:var(--radius-md,10px);font:inherit;background:var(--color-bg,#fff);color:inherit}
-.ir-check{flex-direction:row;align-items:center;gap:.5rem}
-.ir-actions{display:flex;gap:.75rem;flex-wrap:wrap}
-.ir-btn{padding:.65rem 1.2rem;border:0;border-radius:var(--radius-md,10px);font:inherit;font-weight:600;cursor:pointer;background:var(--color-primary,#e5322d);color:#fff;text-decoration:none;display:inline-block}
-.ir-btn:disabled{opacity:.5;cursor:not-allowed}
-.ir-btn.ir-sec{background:transparent;color:inherit;border:1px solid var(--color-border,#cbd5e1)}
-.ir-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
-.ir-card{border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-lg,16px);overflow:hidden;display:flex;flex-direction:column;background:var(--color-surface,transparent)}
-.ir-thumb{height:150px;background:#0001 center/contain no-repeat}
-.ir-body{padding:.9rem;display:flex;flex-direction:column;gap:.4rem;font-size:.85rem}
-.ir-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ir-status{font-weight:600}.ir-status.ok{color:#16a34a}.ir-status.err{color:#dc2626}
-.ir-row{display:flex;gap:.5rem;margin-top:.3rem}
-.ir-row .ir-btn{padding:.45rem .8rem;font-size:.85rem}
-.resizer-preview-box{display:flex;flex-direction:column;gap:.6rem;padding:1rem;border:1px solid var(--color-border,#e2e8f0);border-radius:var(--radius-lg,16px);background:var(--color-surface,transparent)}
-.resizer-preview-box[hidden]{display:none}
-.ir-ptitle{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem;font-size:.85rem}
-.ir-pstage{display:grid;place-items:center;max-height:420px;overflow:auto;padding:.5rem;border-radius:var(--radius-md,10px);background:repeating-conic-gradient(#e5e7eb 0% 25%,#fff 0% 50%) 50%/16px 16px}
-.ir-pstage canvas{max-width:100%;max-height:400px}
-.ir-thumb{cursor:pointer}
-.ir-active{outline:2px solid var(--color-primary,#e5322d)}
-`;
-
 const MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 const OUT_MIME = { jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 
@@ -61,12 +29,6 @@ function revokeItem(it) {
 
 export function mount(container, ctx) {
   unmount();
-  if (!document.getElementById(STYLE_ID)) {
-    const st = document.createElement('style');
-    st.id = STYLE_ID;
-    st.textContent = CSS;
-    document.head.appendChild(st);
-  }
 
   container.innerHTML = `
   <div class="ir-root">
@@ -105,7 +67,7 @@ export function mount(container, ctx) {
     </div>
     <div class="resizer-preview-box" data-ref="pbox" hidden>
       <div class="ir-ptitle"><strong>Aperçu du résultat final</strong><span data-ref="pinfo"></span></div>
-      <div class="ir-pstage"><canvas data-ref="pcv"></canvas></div>
+      <div class="ir-pstage checkerboard-bg"><canvas data-ref="pcv"></canvas></div>
     </div>
     <div class="ir-grid" data-ref="grid"></div>
   </div>`;

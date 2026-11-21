@@ -34,7 +34,7 @@ function setStatus(msg = '', isError = false) {
   const el = q('status');
   if (!el) return;
   el.textContent = msg;
-  el.style.color = isError ? '#dc2626' : 'inherit';
+  el.classList.toggle('status-error', isError);
 }
 
 function setProgress(p, label = '') {
@@ -207,27 +207,6 @@ export function mount(container, ctx) {
   s = { root: container, ctx, file: null, imgUrl: null, worker: null, runId: 0, busy: false, dlUrl: null, cleanups: [] };
 
   container.innerHTML = `
-  <style>
-    .ocr{display:grid;gap:1rem;font-family:var(--font-family,inherit)}
-    .ocr-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;min-height:220px;
-      border:2px dashed rgba(128,128,128,.5);border-radius:var(--radius,12px);cursor:pointer;text-align:center;padding:1rem}
-    .ocr-drop.ocr-over{border-color:var(--primary,#4f46e5);background:rgba(79,70,229,.08)}
-    .ocr-drop input{display:none}
-    .ocr-bar{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}
-    .ocr-bar select{padding:.5rem;border-radius:8px;border:1px solid rgba(128,128,128,.5);background:transparent;color:inherit}
-    .ocr-btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.55rem .9rem;border:1px solid rgba(128,128,128,.5);
-      border-radius:var(--radius,12px);background:transparent;color:inherit;font-weight:600;cursor:pointer}
-    .ocr-btn.ocr-primary{background:var(--primary,#4f46e5);border-color:var(--primary,#4f46e5);color:#fff}
-    .ocr-btn:disabled{opacity:.5;cursor:not-allowed}
-    .ocr-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:start}
-    @media(max-width:820px){.ocr-cols{grid-template-columns:1fr}}
-    .ocr-box{border:1px solid rgba(128,128,128,.35);border-radius:var(--radius,12px);padding:.5rem}
-    .ocr-box img{max-width:100%;max-height:60vh;display:block;margin:0 auto}
-    .ocr-box textarea{width:100%;min-height:50vh;box-sizing:border-box;resize:vertical;padding:.5rem;border:0;outline:0;
-      background:transparent;color:inherit;font:inherit}
-    .ocr-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem}
-    #ocr-progress{width:100%}
-  </style>
   <div class="ocr">
     <label class="ocr-drop" id="ocr-drop">
       <i data-lucide="scan-text"></i>
@@ -235,7 +214,7 @@ export function mount(container, ctx) {
       <input type="file" id="ocr-input" accept="image/*">
     </label>
 
-    <div id="ocr-workarea" hidden style="display:grid;gap:1rem">
+    <div id="ocr-workarea" class="ocr-work" hidden>
       <div class="ocr-bar">
         <span id="ocr-file-name"></span>
         <label>Langue
@@ -251,7 +230,7 @@ export function mount(container, ctx) {
         <div class="ocr-box"><img id="ocr-preview" alt="Image source"></div>
         <div id="ocr-result" hidden>
           <div class="ocr-box"><textarea id="ocr-text" spellcheck="false" aria-label="Texte extrait (éditable)"></textarea></div>
-          <div id="ocr-stats" style="font-size:.85rem;opacity:.7;margin-top:.25rem"></div>
+          <div id="ocr-stats" class="ocr-stats"></div>
           <div class="ocr-actions">
             <button class="ocr-btn" id="ocr-copy" type="button"><i data-lucide="copy"></i>Copier</button>
             <button class="ocr-btn ocr-primary" id="ocr-download" type="button"><i data-lucide="download"></i>Télécharger (.txt)</button>
