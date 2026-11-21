@@ -124,4 +124,12 @@ export const tools = [
     description: "Combinez plusieurs fichiers PDF en un seul document dans l'ordre de votre choix, 100 % localement.",
     module: () => import('./tools/pdf-merger.js'),
   },
+  {
+    id: 'pdf-splitter',
+    name: "Diviseur de PDF",
+    category: 'pdf',
+    icon: 'scissors',
+    description: "Découpez, séparez ou extrayez les pages de vos fichiers PDF 100 % localement avec aperçu visuel.",
+    module: () => import('./tools/pdf-splitter.js'),
+  },
 ];
