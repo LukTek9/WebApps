@@ -148,4 +148,12 @@ export const tools = [
     description: "Réduisez le poids de vos fichiers PDF 100 % localement avec visionneuse comparative.",
     module: () => import('./tools/pdf-compressor.js'),
   },
+  {
+    id: 'pdf-to-img',
+    name: "PDF vers Images",
+    category: 'pdf',
+    icon: 'image',
+    description: "Convertissez les pages de vos documents PDF en images PNG, JPG ou WebP 100 % localement.",
+    module: () => import('./tools/pdf-to-img.js'),
+  },
 ];
