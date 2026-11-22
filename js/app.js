@@ -2,15 +2,13 @@
  * app.js — Pilotage UI : grille de cartes, filtres, workspace, lazy loading des outils.
  */
 import { categories, tools } from './tools.config.js';
-import { animateHeroAndGrid, animateHomeEnter, animateWorkspaceEnter } from './animations.js';
+import { animateHeroAndGrid, animateHomeEnter, animateToolContent, animateWorkspaceEnter } from './animations.js';
 
 const $ = (id) => document.getElementById(id);
 const els = {
   home: $('home-view'),
   grid: $('tools-grid'),
   filters: $('filters'),
-  filtersToggle: $('filters-toggle'),
-  filtersToggleLabel: $('filters-toggle-label'),
   workspace: $('workspace'),
   title: $('workspace-title'),
   body: $('workspace-body'),
@@ -45,23 +43,25 @@ function setActiveThemeColor(categoryId) {
 /* ---------- Filtres ---------- */
 function renderFilters() {
   els.filters.innerHTML = '';
-  els.filtersToggleLabel.textContent = categories.find((category) => category.id === state.category)?.label ?? 'Tout';
   for (const cat of categories) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'filter-btn' + (cat.id === state.category ? ' is-active' : '');
     btn.setAttribute('aria-pressed', String(cat.id === state.category));
+    const icon = document.createElement('i');
+    icon.className = 'filter-btn__icon';
+    icon.setAttribute('data-lucide', cat.icon ?? (cat.id === 'all' ? 'layers' : 'audio-lines'));
+    icon.setAttribute('aria-hidden', 'true');
     const label = document.createElement('span');
     label.className = 'filter-btn__label';
     label.textContent = cat.label;
     const count = document.createElement('span');
     count.className = 'filter-btn__count';
     count.textContent = String(cat.id === 'all' ? tools.length : tools.filter((tool) => tool.category === cat.id).length);
-    btn.append(label, count);
+    btn.append(icon, label, count);
     btn.addEventListener('click', () => {
       state.category = cat.id;
       setActiveThemeColor(state.category);
-      closeFilters(true);
       renderFilters();
       renderGrid();
       window.scrollTo({
@@ -71,26 +71,6 @@ function renderFilters() {
     });
     els.filters.appendChild(btn);
   }
-  requestAnimationFrame(updateFilterOverflow);
-}
-
-function closeFilters(returnFocus = false) {
-  els.filters.classList.remove('is-open');
-  els.filtersToggle.setAttribute('aria-expanded', 'false');
-  if (returnFocus && getComputedStyle(els.filtersToggle).display !== 'none') {
-    els.filtersToggle.focus({ preventScroll: true });
-  }
-}
-
-function updateFilterOverflow() {
-  if (els.filters.classList.contains('is-open')) return;
-  const wasCollapsed = els.filters.classList.contains('has-overflow');
-  if (wasCollapsed) els.filters.style.display = 'flex';
-  const hasOverflow = els.filters.scrollWidth > els.filters.clientWidth;
-  els.filters.style.removeProperty('display');
-  els.filters.classList.toggle('has-overflow', hasOverflow);
-  els.filtersToggle.hidden = !hasOverflow;
-  if (!hasOverflow) closeFilters();
 }
 
 function motionForTool(id) {
@@ -192,6 +172,7 @@ async function openTool(id) {
     await mod.mount(els.body, { tool });
     state.activeModule = mod;
     refreshIcons();
+    animateToolContent(els.body);
   } catch (err) {
     console.error(`[tool:${id}]`, err);
     state.loaded.delete(id);
@@ -212,14 +193,6 @@ function closeTool() {
 
 /* ---------- Init ---------- */
 setActiveThemeColor(state.category);
-window.addEventListener('resize', updateFilterOverflow);
-els.filtersToggle.addEventListener('click', () => {
-  const isOpen = els.filters.classList.toggle('is-open');
-  els.filtersToggle.setAttribute('aria-expanded', String(isOpen));
-});
-document.addEventListener('click', (event) => {
-  if (!els.filters.contains(event.target) && !els.filtersToggle.contains(event.target)) closeFilters();
-});
 els.back.addEventListener('click', closeTool);
 els.brand.addEventListener('click', closeTool);
 els.search.addEventListener('submit', (event) => event.preventDefault());
@@ -246,10 +219,6 @@ els.reset.addEventListener('click', () => {
   els.searchInput.focus();
 });
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && els.filters.classList.contains('is-open')) {
-    closeFilters(true);
-    return;
-  }
   const target = event.target;
   const isTyping = target instanceof HTMLElement
     && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));

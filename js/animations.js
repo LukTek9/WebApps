@@ -114,6 +114,17 @@ export function animateWorkspaceEnter(workspaceEl) {
   });
 }
 
+export function animateToolContent(container) {
+  const root = container?.firstElementChild;
+  if (!root) return;
+  const children = [...root.children];
+  const targets = children.length > 1 ? children : [...(children[0]?.children ?? [])];
+  animate(targets.filter((element) => !element.hidden), { y: 12, opacity: 0 }, { y: 0, opacity: 1 }, {
+    duration: 0.36,
+    stagger: 0.045,
+  });
+}
+
 export function animateHomeEnter(homeEl) {
   if (!homeEl) return;
   animate([homeEl], { y: 16, opacity: 0 }, { y: 0, opacity: 1 }, { duration: 0.35 });
