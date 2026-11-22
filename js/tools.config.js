@@ -227,4 +227,12 @@ export const tools = [
     description: "Assemblez plusieurs fichiers audio dans l'ordre de votre choix avec silences configurables, export WAV, MP3 ou OGG 100 % localement.",
     module: () => import('./tools/audio-merger.js'),
   },
+  {
+    id: 'sound-generator',
+    name: "Générateur de bruits & fréquences",
+    category: 'audio',
+    icon: 'waves',
+    description: "Générez des bruits (blanc, rose, brun) et des fréquences pures (sinus, carré, scie, triangle) avec lecture en direct et export WAV, 100 % localement.",
+    module: () => import('./tools/sound-generator.js'),
+  },
 ];
