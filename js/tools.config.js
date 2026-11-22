@@ -332,4 +332,12 @@ export const tools = [
     description: "Capturez des images de vos vidéos (MP4, WEBM, MOV, AVI, MKV) en PNG, JPEG ou WebP à la résolution native, manuellement ou à intervalle, export ZIP, 100 % localement.",
     module: () => import('./tools/video-frame-grabber.js'),
   },
+  {
+    id: 'video-merger',
+    name: "Fusionneur de Vidéos",
+    category: 'video',
+    icon: 'combine',
+    description: "Fusionnez plusieurs vidéos (MP4, WEBM, MOV, AVI, MKV) dans l'ordre de votre choix, avec résolution normalisée et sortie MP4 ou WEBM, 100 % localement via FFmpeg.wasm.",
+    module: () => import('./tools/video-merger.js'),
+  },
 ];
