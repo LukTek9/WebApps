@@ -413,7 +413,7 @@ function cancelCountdown() {
   clearTimeout(c.timer);
   s.cd = null;
   c.resolve(false);
-  const ov = q('countdown'); if (ov) ov.hidden = true;
+  const ov = q('cd'); if (ov) ov.hidden = true;
 }
 
 /** Arrête TOUS les flux et pilotes de la capture (écran, webcam, micro, canvas, mixage, aperçu, rAF, Worker). */
@@ -525,7 +525,7 @@ async function startCapture() {
 
 /** 3, 2, 1 sur l'aperçu ; renvoie false si annulé (reset, source coupée, unmount). */
 async function runCountdown(st) {
-  const ov = q('countdown');
+  const ov = q('cd');
   ov.hidden = false;
   for (let n = COUNTDOWN_S; n >= 1; n--) {
     ov.textContent = String(n);
@@ -968,7 +968,7 @@ const TEMPLATE = `
     <div class="scrrec-view">
       <video class="scrrec-preview" id="scrrec-preview" muted autoplay playsinline></video>
       <p class="scrrec-empty">L'aperçu en direct s'affichera ici au démarrage de la capture.</p>
-      <div class="scrrec-countdown" id="scrrec-countdown" aria-live="assertive" hidden></div>
+      <div class="scrrec-countdown" id="scrrec-cd" aria-live="assertive" hidden></div>
     </div>
     <div class="scrrec-timer">
       <span class="scrrec-dot" aria-hidden="true"></span>
