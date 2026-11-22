@@ -308,4 +308,12 @@ export const tools = [
     description: "Extrayez la piste audio de vos vidéos (MP4, WEBM, MOV, AVI, MKV) en MP3, WAV, M4A ou OGG avec choix du débit, 100 % localement via FFmpeg.wasm.",
     module: () => import('./tools/video-to-audio.js'),
   },
+  {
+    id: 'video-to-gif',
+    name: "Vidéo vers GIF",
+    category: 'video',
+    icon: 'image-play',
+    description: "Transformez un extrait de vidéo (MP4, WEBM, MOV, AVI, MKV) en GIF animé : plage, largeur, FPS, palette 256 couleurs et boucle, 100 % localement via FFmpeg.wasm.",
+    module: () => import('./tools/video-to-gif.js'),
+  },
 ];
