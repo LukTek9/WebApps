@@ -1,117 +1,60 @@
-const nativeAnimations = new WeakMap();
+import { gsap } from 'gsap';
 
 function prefersReducedMotion() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 }
 
-function stopNativeAnimation(element) {
-  const active = nativeAnimations.get(element);
-  if (!active) return;
-  active.cancel();
-  nativeAnimations.delete(element);
-}
+function animateGroups(groups) {
+  const activeGroups = groups.filter(({ elements }) => elements.length);
+  const targets = [...new Set(activeGroups.flatMap(({ elements }) => elements))];
+  if (!targets.length) return;
 
-function resetElement(element) {
-  stopNativeAnimation(element);
-  element.style.removeProperty('transform');
-  element.style.removeProperty('opacity');
-  element.style.removeProperty('transition');
-  element.style.removeProperty('will-change');
-}
+  gsap.killTweensOf(targets);
+  gsap.set(targets, { clearProps: 'transform,opacity,visibility' });
+  if (prefersReducedMotion()) return;
 
-function animateNatively(elements, from, to, { duration, stagger }) {
-  const easing = 'cubic-bezier(0.215, 0.61, 0.355, 1)';
-
-  elements.forEach((element, index) => {
-    resetElement(element);
-    const delay = index * stagger * 1000;
-
-    if (typeof element.animate === 'function') {
-      const animation = element.animate([
-        { transform: `translate3d(0, ${from.y}px, 0)`, opacity: from.opacity },
-        { transform: `translate3d(0, ${to.y}px, 0)`, opacity: to.opacity },
-      ], {
-        duration: duration * 1000,
-        delay,
-        easing,
-        fill: 'both',
-      });
-      nativeAnimations.set(element, animation);
-      animation.onfinish = () => {
-        if (nativeAnimations.get(element) !== animation) return;
-        nativeAnimations.delete(element);
-        animation.cancel();
-        resetElement(element);
-      };
-      return;
-    }
-
-    const record = { cancel: () => clearTimeout(timer) };
-    const timer = window.setTimeout(() => {
-      if (nativeAnimations.get(element) !== record) return;
-      nativeAnimations.delete(element);
-      resetElement(element);
-    }, delay + duration * 1000 + 50);
-    nativeAnimations.set(element, record);
-    element.style.transition = `transform ${duration}s ${easing} ${delay}ms, opacity ${duration}s ${easing} ${delay}ms`;
-    element.style.willChange = 'transform, opacity';
-    element.style.transform = `translate3d(0, ${from.y}px, 0)`;
-    element.style.opacity = String(from.opacity);
-    requestAnimationFrame(() => {
-      if (nativeAnimations.get(element) !== record) return;
-      element.style.transform = `translate3d(0, ${to.y}px, 0)`;
-      element.style.opacity = String(to.opacity);
-    });
-  });
-}
-
-function animate(elements, from, to, { duration, stagger = 0 }) {
-  if (!elements.length) return;
-
-  if (prefersReducedMotion()) {
-    if (window.gsap) {
-      window.gsap.killTweensOf(elements);
-      window.gsap.set(elements, { clearProps: 'transform,opacity' });
-    }
-    elements.forEach(resetElement);
-    return;
-  }
-
-  if (window.gsap) {
-    elements.forEach((element) => {
-      stopNativeAnimation(element);
-      window.gsap.killTweensOf(element);
-    });
-    window.gsap.fromTo(elements, from, {
-      ...to,
+  const timeline = gsap.timeline();
+  activeGroups.forEach(({ elements, y, duration, stagger = 0 }) => {
+    timeline.fromTo(elements, {
+      y,
+      autoAlpha: 0,
+    }, {
+      y: 0,
+      autoAlpha: 1,
       duration,
       stagger,
       ease: 'power3.out',
       overwrite: 'auto',
-      clearProps: 'transform,opacity',
-    });
-    return;
-  }
-
-  animateNatively(elements, from, to, { duration, stagger });
+      clearProps: 'transform,opacity,visibility',
+    }, 0);
+  });
+  return timeline;
 }
 
 export function animateHeroAndGrid(container) {
   if (!container) return;
-  animate([...container.querySelectorAll('.hero h1, .hero__intro')], { y: 18, opacity: 0 }, { y: 0, opacity: 1 }, {
-    duration: 0.48,
-    stagger: 0.08,
-  });
-  animate([...container.querySelectorAll('.tool-card')], { y: 18, opacity: 0 }, { y: 0, opacity: 1 }, {
-    duration: 0.42,
-    stagger: 0.03,
-  });
+  animateGroups([
+    {
+      elements: [...container.querySelectorAll('.hero h1, .hero__intro')],
+      y: 18,
+      duration: 0.48,
+      stagger: 0.08,
+    },
+    {
+      elements: [...container.querySelectorAll('.tool-card')],
+      y: 18,
+      duration: 0.42,
+      stagger: 0.03,
+    },
+  ]);
 }
 
 export function animateWorkspaceEnter(workspaceEl) {
-  animate(workspaceEl ? [workspaceEl] : [], { y: 16, opacity: 0 }, { y: 0, opacity: 1 }, {
+  animateGroups([{
+    elements: workspaceEl ? [workspaceEl] : [],
+    y: 16,
     duration: 0.35,
-  });
+  }]);
 }
 
 export function animateToolContent(container) {
@@ -119,17 +62,27 @@ export function animateToolContent(container) {
   if (!root) return;
   const children = [...root.children];
   const targets = children.length > 1 ? children : [...(children[0]?.children ?? [])];
-  animate(targets.filter((element) => !element.hidden), { y: 12, opacity: 0 }, { y: 0, opacity: 1 }, {
+  animateGroups([{
+    elements: targets.filter((element) => !element.hidden),
+    y: 12,
     duration: 0.36,
     stagger: 0.045,
-  });
+  }]);
 }
 
 export function animateHomeEnter(homeEl) {
   if (!homeEl) return;
-  animate([homeEl], { y: 16, opacity: 0 }, { y: 0, opacity: 1 }, { duration: 0.35 });
-  animate([...homeEl.querySelectorAll('.tool-card')], { y: 18, opacity: 0 }, { y: 0, opacity: 1 }, {
-    duration: 0.42,
-    stagger: 0.03,
-  });
+  animateGroups([
+    {
+      elements: [homeEl],
+      y: 16,
+      duration: 0.35,
+    },
+    {
+      elements: [...homeEl.querySelectorAll('.tool-card')],
+      y: 18,
+      duration: 0.42,
+      stagger: 0.03,
+    },
+  ]);
 }
