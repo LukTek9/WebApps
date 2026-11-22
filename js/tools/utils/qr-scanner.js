@@ -7,6 +7,10 @@ let previewUrl = null;
 let detector = null;
 let scanning = false;
 let result = '';
+let scanCanvas = null;
+let jsQRPromise = null;
+
+const JSQR_URL = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
 
 const CONTENT = `
   <div class="security-tools__layout">
@@ -14,7 +18,7 @@ const CONTENT = `
       ${createDropzone({ id: 'image', title: 'Glissez-déposez une image QR ici', hint: 'ou cliquez pour parcourir · PNG, JPEG, WebP…', accept: 'image/*', label: 'Choisir une image QR' })}
       <div class="security-tools__actions"><button class="btn-primary" data-action="camera-start" type="button">Démarrer la caméra</button><button class="btn-secondary" data-action="camera-stop" type="button" disabled>Arrêter la caméra</button></div>
       <div class="utility-tools__scanner-stage"><img data-preview alt="Aperçu de l’image sélectionnée" hidden><video data-video playsinline muted hidden></video></div>
-      <p class="security-tools__hint">Le décodage utilise l’API BarcodeDetector du navigateur. La caméra nécessite votre autorisation et une connexion sécurisée (HTTPS ou localhost).</p>
+      <p class="security-tools__hint">Le décodage utilise l’API BarcodeDetector du navigateur, ou jsQR (chargé à la demande) si elle est absente. La caméra nécessite votre autorisation et une connexion sécurisée (HTTPS ou localhost).</p>
     </section>
     <section class="security-tools__panel">
       <div class="security-tools__panel-heading"><div><h3>Contenu détecté</h3><p>Un QR peut contenir un lien, du texte ou d’autres données.</p></div></div>
@@ -23,13 +27,45 @@ const CONTENT = `
     </section>
   </div>`;
 
-async function createDetector() {
-  if (typeof window.BarcodeDetector !== 'function') {
-    throw new Error('La détection QR n’est pas prise en charge par ce navigateur. Essayez un navigateur compatible avec BarcodeDetector.');
+function loadJsQR() {
+  if (typeof window.jsQR === 'function') return Promise.resolve(window.jsQR);
+  if (!jsQRPromise) {
+    jsQRPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = JSQR_URL;
+      script.async = true;
+      script.onload = () => (typeof window.jsQR === 'function' ? resolve(window.jsQR) : reject(new Error('jsQR indisponible après chargement.')));
+      script.onerror = () => { script.remove(); reject(new Error('Impossible de charger jsQR (réseau ou CDN bloqué).')); };
+      document.head.appendChild(script);
+    }).catch((error) => { jsQRPromise = null; throw error; });
   }
-  const supported = await window.BarcodeDetector.getSupportedFormats?.();
-  if (supported && !supported.includes('qr_code')) throw new Error('Ce navigateur ne prend pas en charge le format QR code.');
-  return new window.BarcodeDetector({ formats: ['qr_code'] });
+  return jsQRPromise;
+}
+
+function createJsQRDetector(jsQR) {
+  return {
+    async detect(source) {
+      const width = source.videoWidth || source.naturalWidth || source.width;
+      const height = source.videoHeight || source.naturalHeight || source.height;
+      if (!width || !height) return [];
+      scanCanvas = scanCanvas || document.createElement('canvas');
+      scanCanvas.width = width;
+      scanCanvas.height = height;
+      const context = scanCanvas.getContext('2d', { willReadFrequently: true });
+      context.drawImage(source, 0, 0, width, height);
+      const { data } = context.getImageData(0, 0, width, height);
+      const code = jsQR(data, width, height);
+      return code?.data ? [{ rawValue: code.data }] : [];
+    },
+  };
+}
+
+async function createDetector() {
+  if (typeof window.BarcodeDetector === 'function') {
+    const supported = await window.BarcodeDetector.getSupportedFormats?.();
+    if (!supported || supported.includes('qr_code')) return new window.BarcodeDetector({ formats: ['qr_code'] });
+  }
+  return createJsQRDetector(await loadJsQR());
 }
 
 function setResult(codes) {
@@ -177,6 +213,8 @@ export function unmount() {
   stopCamera();
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = null;
+  if (scanCanvas) { scanCanvas.width = 0; scanCanvas.height = 0; }
+  scanCanvas = null;
   ui?.destroy();
   ui = null;
   detector = null;
