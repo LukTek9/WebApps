@@ -17,6 +17,8 @@
 /* ---------- Constantes ---------- */
 const TIMESLICE_MS = 1000;
 const COUNTDOWN_S = 3;
+const STOP_FALLBACK_MS = 1500;    // filet de sécurité : finalize() garanti même si l'événement « stop » ne vient jamais (Firefox)
+const FIX_DURATION_TIMEOUT_MS = 1000; // correction de durée WebM : jamais bloquante
 const PIP_MIN_INTERVAL_MS = 20;   // évite un double dessin rAF + Worker
 const PIP_TICK_MS = 33;           // cadence de repli quand l'onglet est masqué (rAF suspendu)
 const LOAD_TIMEOUT_MS = 90000;    // Worker FFmpeg bloqué (Firefox) → échec explicite au lieu d'une attente infinie
@@ -123,12 +125,34 @@ function videoConstraints(quality) {
 }
 
 /** Les WebM de MediaRecorder n'ont pas de durée : force le calcul pour permettre la navigation dans la lecture. */
+let fixCancel = null;
 function fixDuration(v) {
-  v.addEventListener('loadedmetadata', () => {
-    if (v.duration !== Infinity) return;
-    v.addEventListener('timeupdate', () => { v.currentTime = 0; }, { once: true });
-    v.currentTime = 1e101;
-  }, { once: true });
+  fixCancel?.();
+  let timer = 0, done = false;
+  const restore = () => { try { v.currentTime = 0; } catch { /* ignoré */ } };
+  const cleanup = () => {
+    if (done) return;
+    done = true;
+    clearTimeout(timer);
+    v.removeEventListener('loadedmetadata', onMeta);
+    v.removeEventListener('timeupdate', onTime);
+    v.removeEventListener('seeked', onTime);
+    v.removeEventListener('error', cleanup);
+    if (fixCancel === cleanup) fixCancel = null;
+  };
+  const onTime = () => { cleanup(); restore(); };
+  const onMeta = () => {
+    v.removeEventListener('loadedmetadata', onMeta);
+    if (v.duration !== Infinity) { cleanup(); return; }
+    v.addEventListener('timeupdate', onTime);
+    v.addEventListener('seeked', onTime);
+    try { v.currentTime = 1e101; } catch { cleanup(); }
+  };
+  v.addEventListener('loadedmetadata', onMeta);
+  v.addEventListener('error', cleanup);
+  // Firefox peut ne jamais émettre « seeked » sur une position énorme : abandon forcé et retour à 0
+  timer = setTimeout(() => { const wasActive = !done; cleanup(); if (wasActive) restore(); }, FIX_DURATION_TIMEOUT_MS);
+  fixCancel = cleanup;
 }
 
 /** Vide un élément <video> et libère sa ressource média. */
@@ -193,8 +217,8 @@ function updateControls() {
   q('pause').disabled = !live;
   q('pause').textContent = st === 'paused' ? LBL_RESUME : LBL_PAUSE;
   q('stop').disabled = !live;
-  q('reset').disabled = !(st === 'countdown' || live || st === 'stopped') || s.busy;
-  q('result').hidden = st !== 'stopped';
+  q('reset').disabled = !(st === 'countdown' || live || st === 'done') || s.busy;
+  q('result').hidden = st !== 'done';
   q('stage').classList.toggle('has-preview', st === 'countdown' || live);
 }
 
@@ -225,6 +249,7 @@ function releaseMp4() {
 
 function releaseResult() {
   if (!s) return;
+  fixCancel?.();
   releaseMp4();
   resetVideoEl(q('play'));
   if (s.blobUrl) { URL.revokeObjectURL(s.blobUrl); s.blobUrl = null; }
@@ -543,9 +568,9 @@ function beginRecorder(st) {
     setStatus(`Enregistrement impossible : ${e?.message || 'format vidéo non pris en charge'}.`, 'error');
     return;
   }
-  st.rec = rec; st.chunks = [];
+  st.rec = rec; st.chunks = []; st.finalized = false;
   st.mime = rec.mimeType || mime || 'video/webm';
-  rec.ondataavailable = (e) => { if (s === st && e.data && e.data.size) st.chunks.push(e.data); };
+  rec.ondataavailable = (e) => { if (s === st && !st.finalized && e.data && e.data.size) st.chunks.push(e.data); };
   rec.onerror = (e) => {
     if (s !== st) return;
     st.endNote = `Erreur d'enregistrement (${e?.error?.message || 'inconnue'}).`;
@@ -586,20 +611,40 @@ function stopRecording() {
   if (st.state === 'recording') st.accum += performance.now() - st.t0;
   setState('processing');
   setStatus('Finalisation…');
-  try { st.rec.stop(); } catch { finalize(st); } // recorder déjà inactif → finalise directement
+  // Filet de sécurité : finalize() s'exécute quoi qu'il arrive (idempotent)
+  clearTimeout(st.stopTimer);
+  st.stopTimer = setTimeout(() => finalize(st), STOP_FALLBACK_MS);
+  // Ordre : flush des données, puis stop() du recorder ; les pistes ne sont arrêtées qu'ensuite (dans finalize)
+  const rec = st.rec;
+  if (rec && rec.state !== 'inactive') {
+    try { rec.requestData(); } catch { /* recorder en pause / non supporté */ }
+    try { rec.stop(); } catch { finalize(st); }
+  } else {
+    finalize(st); // recorder déjà inactif (arrêt automatique) : aucune attente
+  }
 }
 
 /** Fin d'enregistrement : libère tous les flux, assemble le blob, prépare lecture + téléchargement. */
 function finalize(st) {
-  if (s !== st) return;
+  // Idempotent : « stop » du recorder, filet de 1500 ms et arrêt automatique peuvent tous l'appeler
+  if (s !== st || st.finalized) return;
+  if (st.state !== 'recording' && st.state !== 'paused' && st.state !== 'processing') return;
+  st.finalized = true;
+  clearTimeout(st.stopTimer); st.stopTimer = 0;
   if (st.state === 'recording') st.accum += performance.now() - st.t0; // arrêt automatique du recorder
   stopClock();
-  releaseCapture();
-  const chunks = st.chunks; st.chunks = []; st.rec = null;
+  const rec = st.rec; st.rec = null;
+  if (rec) {
+    rec.ondataavailable = null; rec.onstop = null; rec.onerror = null;
+    try { if (rec.state !== 'inactive') rec.stop(); } catch { /* déjà arrêté */ }
+  }
+  releaseCapture(); // pistes arrêtées seulement après stop() du recorder
+  const chunks = st.chunks; st.chunks = [];
   const note = st.endNote; st.endNote = '';
   if (!chunks.length) {
+    setProgress(false);
     setState('idle');
-    setStatus(`${note ? note + ' ' : ''}Enregistrement vide : aucune donnée capturée.`, 'error');
+    setStatus(`${note ? note + ' ' : ''}Enregistrement vide : le navigateur n'a fourni aucune donnée. Enregistrez au moins une seconde puis réessayez.`, 'error');
     return;
   }
   st.blob = new Blob(chunks, { type: st.mime });
@@ -619,7 +664,7 @@ function finalize(st) {
   q('mp4').disabled = !wasmSupported();
   setProgress(false);
   q('time').textContent = fmtClock(st.accum);
-  setState('stopped');
+  setState('done');
   setStatus(`${note ? note + ' ' : ''}Enregistrement terminé. Visionnez puis téléchargez.`, note ? undefined : 'ok');
 }
 
@@ -627,6 +672,7 @@ function finalize(st) {
 function hardStop() {
   if (!s) return;
   s.abort?.abort(); s.abort = null;
+  clearTimeout(s.stopTimer); s.stopTimer = 0;
   cancelCountdown();
   const rec = s.rec; s.rec = null;
   if (rec) {
@@ -778,7 +824,7 @@ async function transcodeMp4(blob, durationS, signal) {
 }
 
 async function convertMp4() {
-  if (!s || s.state !== 'stopped' || s.busy || !s.blob) return;
+  if (!s || s.state !== 'done' || s.busy || !s.blob) return;
   const st = s;
   releaseMp4();
   st.abort = new AbortController();
@@ -906,12 +952,13 @@ export function mount(container, ctx) {
 
   s = {
     root: container, ctx, ready, unsupportedMsg, avail,
-    state: 'idle',            // idle | preparing | countdown | recording | paused | processing | stopped
+    state: 'idle',            // idle | preparing | countdown | recording | paused | processing | done
     mode: ['screen', 'webcam', 'pip'].find((m) => avail[m]) || 'screen',
     pos: 'br', shape: 'rounded', cfg: null, busy: false,
     display: null, cam: null, mic: null, canvasStream: null, mixTrack: null, ac: null, stream: null, pip: null,
     rec: null, chunks: [], mime: '', accum: 0, t0: 0, clockRaf: 0, cd: null,
     blob: null, blobUrl: null, mp4Url: null, baseName: '', endNote: '', note: '', abort: null,
+    stopTimer: 0, finalized: false,
     listeners: new AbortController(),
   };
   const opt = { signal: s.listeners.signal };
