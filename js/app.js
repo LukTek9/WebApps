@@ -2,6 +2,7 @@
  * app.js — Pilotage UI : grille de cartes, filtres, workspace, lazy loading des outils.
  */
 import { categories, tools } from './tools.config.js';
+import { animateHeroAndGrid, animateHomeEnter, animateWorkspaceEnter } from './animations.js';
 
 const $ = (id) => document.getElementById(id);
 const els = {
@@ -85,12 +86,11 @@ function renderGrid() {
     .sort((a, b) => catRank(a.t.category) - catRank(b.t.category) || a.i - b.i)
     .map(({ t }) => t);
 
-  for (const [index, tool] of visible.entries()) {
+  for (const tool of visible) {
     const card = document.createElement('button');
     card.type = 'button';
     card.className = 'tool-card';
     card.style.setProperty('--tool-color', catColor(tool.category));
-    card.style.setProperty('--card-index', String(Math.min(index, 10)));
 
     // textContent : pas d'injection HTML depuis la config
     const icon = document.createElement('span');
@@ -119,6 +119,7 @@ function renderGrid() {
   els.empty.hidden = visible.length > 0;
   els.grid.hidden = visible.length === 0;
   refreshIcons();
+  animateHeroAndGrid(els.home);
 }
 
 /* ---------- Workspace ---------- */
@@ -136,6 +137,7 @@ async function openTool(id) {
 
   els.home.hidden = true;
   els.workspace.hidden = false;
+  animateWorkspaceEnter(els.workspace);
   els.title.textContent = tool.name;
   showStatus('Chargement…');
   window.scrollTo({ top: 0 });
@@ -162,6 +164,7 @@ function closeTool() {
   els.body.innerHTML = '';
   els.workspace.hidden = true;
   els.home.hidden = false;
+  animateHomeEnter(els.home);
   history.replaceState(null, '', location.pathname);
 }
 

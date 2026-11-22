@@ -4,6 +4,12 @@
    ========================================================================== */
 
 :root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 140ms;
+  --dur-med: 220ms;
+  --dur-slow: 360ms;
+
   /* --- Couleurs de marque () --- */
   --color-primary: #e5322d;
   --color-primary-hover: #c92822;
@@ -2123,13 +2129,16 @@ select option {
 .brand__logo {
   background: linear-gradient(145deg, #f34f45, var(--color-primary) 68%);
   box-shadow: 0 6px 16px color-mix(in srgb, var(--color-primary) 28%, transparent);
-  transition: transform 220ms ease, box-shadow 220ms ease;
+  transition: transform var(--dur-med) var(--ease-spring), box-shadow var(--dur-med) var(--ease-out-expo);
+  will-change: transform;
 }
 
 .brand:hover .brand__logo {
-  transform: rotate(-8deg) scale(1.06);
+  transform: translateZ(0) rotate(-8deg) scale(1.06);
   box-shadow: 0 8px 20px color-mix(in srgb, var(--color-primary) 36%, transparent);
 }
+
+.brand:active .brand__logo { transform: translateZ(0) rotate(-4deg) scale(0.96); }
 
 .filters {
   justify-content: flex-end;
@@ -2144,11 +2153,29 @@ select option {
   gap: 7px;
   padding: 8px 12px;
   white-space: nowrap;
-  transition: background var(--transition), color var(--transition), transform var(--transition);
+  transition: background var(--dur-fast) ease, color var(--dur-fast) ease, transform var(--dur-med) var(--ease-spring), box-shadow var(--dur-med) var(--ease-out-expo);
+  will-change: transform;
 }
 
-.filter-btn:hover { transform: translateY(-1px); }
+.filter-btn:hover { transform: translate3d(0, -1px, 0); }
+.filter-btn:active { transform: translate3d(0, 0, 0) scale(0.97); }
 .filter-btn.is-active { box-shadow: 0 4px 10px color-mix(in srgb, var(--color-primary) 22%, transparent); }
+.filter-btn__count { transition: transform var(--dur-med) var(--ease-spring); }
+.filter-btn:hover .filter-btn__count { transform: scale(1.08); }
+
+.workspace__back {
+  transition: transform var(--dur-med) var(--ease-spring), box-shadow var(--dur-med) var(--ease-out-expo), border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+  will-change: transform;
+}
+
+.workspace__back:hover {
+  transform: translate3d(0, -1px, 0);
+  box-shadow: var(--shadow-sm);
+}
+
+.workspace__back:active { transform: translate3d(0, 0, 0) scale(0.97); }
+.workspace__back svg { transition: transform var(--dur-med) var(--ease-spring); }
+.workspace__back:hover svg { transform: translate3d(-2px, 0, 0) rotate(-5deg); }
 
 .filter-btn__count {
   min-width: 1.5em;
@@ -2330,9 +2357,9 @@ select option {
   min-height: 220px;
   overflow: hidden;
   border-color: color-mix(in srgb, var(--color-border) 76%, transparent);
-  animation: tool-card-enter 420ms both cubic-bezier(0.2, 0.7, 0.2, 1);
-  animation-delay: calc(var(--card-index, 0) * 32ms);
-  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  transition: transform var(--dur-med) var(--ease-spring), box-shadow var(--dur-med) var(--ease-out-expo), border-color var(--dur-fast) ease;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .tool-card::after {
@@ -2355,10 +2382,12 @@ select option {
 
 .tool-card:hover,
 .tool-card:focus-visible {
-  transform: translateY(-5px);
+  transform: translate3d(0, -5px, 0);
   border-color: color-mix(in srgb, var(--tool-color) 45%, var(--color-border));
   box-shadow: 0 16px 36px rgba(51, 48, 46, 0.12);
 }
+
+.tool-card:active { transform: translate3d(0, -1px, 0) scale(0.99); }
 
 .tool-card:hover::after,
 .tool-card:focus-visible::after {
@@ -2369,8 +2398,8 @@ select option {
 }
 
 .tool-card:focus-visible { outline: 3px solid color-mix(in srgb, var(--tool-color) 40%, transparent); outline-offset: 3px; }
-.tool-card__icon { transition: transform 220ms ease; }
-.tool-card:hover .tool-card__icon { transform: scale(1.08) rotate(-4deg); }
+.tool-card__icon { transition: transform var(--dur-med) var(--ease-spring); }
+.tool-card:hover .tool-card__icon { transform: translateZ(0) scale(1.08) rotate(-4deg); }
 .tool-card__title { padding-right: 16px; }
 
 .tools-empty {
@@ -2435,7 +2464,19 @@ select option {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+  .brand:hover .brand__logo,
+  .brand:active .brand__logo,
+  .filter-btn:hover,
+  .filter-btn:active,
+  .filter-btn:hover .filter-btn__count,
+  .tool-card:hover,
+  .tool-card:focus-visible,
+  .tool-card:active,
+  .tool-card:hover .tool-card__icon,
+  .workspace__back:hover,
+  .workspace__back:active,
+  .workspace__back:hover svg { transform: none !important; }
 }
 
 /* ---------- Vue catégorie : introduction en panneau latéral ---------- */
