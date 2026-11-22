@@ -294,6 +294,10 @@ export function mount(container, ctx) {
           <div><span class="pdfc-badge" hidden></span></div>
         </div>
       </div>
+      <div class="pdfc-notice u-mt-4" role="note">
+        <i data-lucide="triangle-alert"></i>
+        <p><strong>Attention :</strong> chaque page est convertie en image JPEG. Le PDF obtenu ne contiendra plus de texte sélectionnable ni de recherche possible (liens et formulaires perdus). Conservez l'original si vous en avez besoin.</p>
+      </div>
       <div class="pdfc-levels u-mt-4">${levelsHtml}</div>
       <div class="pdfc-actions u-mt-4">
         <div class="pdfc-bar"><i></i></div>

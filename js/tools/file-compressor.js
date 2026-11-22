@@ -1,5 +1,5 @@
 /**
- * file-compressor.js — Compresseur universel 100 % local (aucun envoi réseau).
+ * file-compressor.js — Optimiseur d'images (JPEG/PNG/WebP) et minificateur JSON, 100 % local (aucun envoi réseau).
  *
  * Règle : chaque fichier conserve son format et son extension d'origine.
  * Moteurs (lossy/lossless dans le même format) :
@@ -36,9 +36,9 @@ const TEMPLATE = `
 <div class="fcmp">
   <label class="fcmp-drop" id="fcmp-drop">
     <i data-lucide="archive" class="fcmp-drop-icon"></i>
-    <strong>Glissez vos fichiers ici ou cliquez pour parcourir</strong>
-    <small>Tous types de fichiers · format d'origine conservé · traitement 100 % local</small>
-    <input type="file" id="fcmp-input" accept="*/*" multiple>
+    <strong>Glissez vos images (JPEG, PNG, WebP) ou fichiers JSON ici, ou cliquez pour parcourir</strong>
+    <small>Optimisation d'images · minification JSON · format d'origine conservé · traitement 100 % local</small>
+    <input type="file" id="fcmp-input" accept="image/jpeg,image/png,image/webp,application/json,.json,.jpg,.jpeg,.png,.webp" multiple>
   </label>
   <div class="fcmp-bar">
     <label class="fcmp-opt">Niveau de compression

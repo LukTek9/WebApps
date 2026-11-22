@@ -37,10 +37,10 @@ export const tools = [
   },
   {
     id: 'file-compressor',
-    name: 'Compresseur universel',
+    name: "Compresseur d'images & JSON",
     category: 'utility',
     icon: 'archive',
-    description: 'Compressez n\'importe quel fichier (Images, PDF, Textes, Archives) 100 % localement dans votre navigateur.',
+    description: 'Optimisez vos images JPEG, PNG et WebP (format conservé) et minifiez vos fichiers JSON, 100 % localement dans votre navigateur.',
     module: () => import('./tools/file-compressor.js'),
   },
   {

@@ -30,6 +30,7 @@ function renderFilters() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'filter-btn' + (cat.id === state.category ? ' is-active' : '');
+    btn.setAttribute('aria-pressed', String(cat.id === state.category));
     btn.textContent = cat.label;
     btn.addEventListener('click', () => {
       state.category = cat.id;
@@ -67,7 +68,7 @@ function renderGrid() {
     i.setAttribute('data-lucide', tool.icon);
     icon.appendChild(i);
 
-    const title = document.createElement('h3');
+    const title = document.createElement('span');
     title.className = 'tool-card__title';
     title.textContent = tool.name;
 
