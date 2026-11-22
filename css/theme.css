@@ -2445,6 +2445,7 @@ select option {
     grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
     align-items: start;
     gap: clamp(2rem, 4vw, 4rem);
+    min-height: calc(100vh - var(--header-height));
   }
 
   .is-category-view .hero {
