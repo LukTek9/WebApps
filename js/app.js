@@ -13,9 +13,16 @@ const els = {
   body: $('workspace-body'),
   back: $('workspace-back'),
   brand: $('brand-home'),
+  search: $('tool-search'),
+  searchInput: $('tool-search-input'),
+  searchClear: $('tool-search-clear'),
+  resultsCount: $('results-count'),
+  heroToolCount: $('hero-tool-count'),
+  empty: $('tools-empty'),
+  reset: $('tools-reset'),
 };
 
-const state = { category: 'all', activeModule: null, loaded: new Map() };
+const state = { category: 'all', query: '', activeModule: null, loaded: new Map() };
 
 /** Rafraîchit les icônes Lucide (no-op si CDN indisponible). */
 const refreshIcons = () => window.lucide?.createIcons();
@@ -31,7 +38,13 @@ function renderFilters() {
     btn.type = 'button';
     btn.className = 'filter-btn' + (cat.id === state.category ? ' is-active' : '');
     btn.setAttribute('aria-pressed', String(cat.id === state.category));
-    btn.textContent = cat.label;
+    const label = document.createElement('span');
+    label.className = 'filter-btn__label';
+    label.textContent = cat.label;
+    const count = document.createElement('span');
+    count.className = 'filter-btn__count';
+    count.textContent = String(cat.id === 'all' ? tools.length : tools.filter((tool) => tool.category === cat.id).length);
+    btn.append(label, count);
     btn.addEventListener('click', () => {
       state.category = cat.id;
       renderFilters();
@@ -44,22 +57,30 @@ function renderFilters() {
 /* ---------- Grille ---------- */
 function renderGrid() {
   els.grid.innerHTML = '';
+  const normalize = (value) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr');
+  const query = normalize(state.query.trim());
   // Tri stable par ordre des catégories (config) ; ordre relatif conservé dans chaque catégorie
   const catRank = (id) => {
     const idx = categories.findIndex((c) => c.id === id);
     return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
   };
   const visible = tools
-    .filter((t) => state.category === 'all' || t.category === state.category)
+    .filter((tool) => {
+      const inCategory = state.category === 'all' || tool.category === state.category;
+      const category = categories.find((cat) => cat.id === tool.category)?.label ?? '';
+      const matchesQuery = !query || normalize(`${tool.name} ${tool.description} ${category}`).includes(query);
+      return inCategory && matchesQuery;
+    })
     .map((t, i) => ({ t, i }))
     .sort((a, b) => catRank(a.t.category) - catRank(b.t.category) || a.i - b.i)
     .map(({ t }) => t);
 
-  for (const tool of visible) {
+  for (const [index, tool] of visible.entries()) {
     const card = document.createElement('button');
     card.type = 'button';
     card.className = 'tool-card';
     card.style.setProperty('--tool-color', catColor(tool.category));
+    card.style.setProperty('--card-index', String(Math.min(index, 10)));
 
     // textContent : pas d'injection HTML depuis la config
     const icon = document.createElement('span');
@@ -80,6 +101,10 @@ function renderGrid() {
     card.addEventListener('click', () => openTool(tool.id));
     els.grid.appendChild(card);
   }
+  const resultLabel = visible.length === 1 ? 'outil' : 'outils';
+  els.resultsCount.textContent = `${visible.length} ${resultLabel}`;
+  els.empty.hidden = visible.length > 0;
+  els.grid.hidden = visible.length === 0;
   refreshIcons();
 }
 
@@ -130,8 +155,43 @@ function closeTool() {
 /* ---------- Init ---------- */
 els.back.addEventListener('click', closeTool);
 els.brand.addEventListener('click', closeTool);
+els.search.addEventListener('submit', (event) => event.preventDefault());
+els.searchInput.addEventListener('input', () => {
+  state.query = els.searchInput.value;
+  els.searchClear.hidden = !state.query;
+  renderGrid();
+});
+els.searchClear.addEventListener('click', () => {
+  els.searchInput.value = '';
+  state.query = '';
+  els.searchClear.hidden = true;
+  renderGrid();
+  els.searchInput.focus();
+});
+els.reset.addEventListener('click', () => {
+  state.category = 'all';
+  state.query = '';
+  els.searchInput.value = '';
+  els.searchClear.hidden = true;
+  renderFilters();
+  renderGrid();
+  els.searchInput.focus();
+});
+document.addEventListener('keydown', (event) => {
+  const target = event.target;
+  const isTyping = target instanceof HTMLElement
+    && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+  if (event.key === '/' && !isTyping && !els.home.hidden) {
+    event.preventDefault();
+    els.searchInput.focus();
+  }
+  if (event.key === 'Escape' && document.activeElement === els.searchInput) {
+    els.searchClear.click();
+  }
+});
 
 renderFilters();
+els.heroToolCount.textContent = `${tools.length} outils gratuits`;
 renderGrid();
 
 // Deep link : index.html#<tool-id>

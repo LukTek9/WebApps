@@ -10,33 +10,56 @@
 </head>
 <body>
 
-  <!-- Header minimaliste -->
   <header class="site-header">
     <div class="container site-header__inner">
-      <!-- Emplacement réservé : logo / branding -->
       <button class="brand" id="brand-home" type="button" aria-label="Accueil">
-        <span class="brand__logo" id="brand-logo"><i data-lucide="wrench"></i></span>
+        <span class="brand__logo"><i data-lucide="wrench"></i></span>
         <span class="brand__name">WebApp Tools</span>
       </button>
-
-      <!-- Filtres de catégories (générés par app.js depuis tools.config.js) -->
       <nav class="filters" id="filters" aria-label="Catégories"></nav>
     </div>
   </header>
 
   <main>
-    <!-- Vue accueil : grille d'outils -->
     <section id="home-view">
       <div class="container">
         <div class="hero">
-          <h1>Tous les outils dont vous avez besoin</h1>
-          <p>Traitement local dans votre navigateur — aucun envoi de fichier.</p>
+          <p class="hero__eyebrow"><span aria-hidden="true"></span> Votre boîte à outils, en un seul endroit</p>
+          <h1>Les bons outils.<br><span>Le bon résultat.</span></h1>
+          <p class="hero__intro">Gagnez du temps avec des outils simples et efficaces, directement dans votre navigateur.</p>
+          <form class="tool-search" id="tool-search" role="search">
+            <i data-lucide="search" aria-hidden="true"></i>
+            <label class="sr-only" for="tool-search-input">Rechercher un outil</label>
+            <input id="tool-search-input" type="search" placeholder="Que souhaitez-vous faire ?" autocomplete="off">
+            <kbd aria-hidden="true">/</kbd>
+            <button class="tool-search__clear" id="tool-search-clear" type="button" aria-label="Effacer la recherche" hidden>
+              <i data-lucide="x" aria-hidden="true"></i>
+            </button>
+          </form>
+          <div class="hero__trust">
+            <span><i data-lucide="shield-check" aria-hidden="true"></i> Fichiers traités sur votre appareil</span>
+            <span class="hero__tool-count" id="hero-tool-count"></span>
+          </div>
         </div>
-        <div class="tools-grid" id="tools-grid"></div>
+        <section class="catalog" aria-label="Catalogue des outils">
+          <div class="catalog__heading">
+            <div>
+              <p class="catalog__eyebrow">À vous de jouer</p>
+              <h2>Explorez les outils</h2>
+            </div>
+            <p class="catalog__count" id="results-count" aria-live="polite"></p>
+          </div>
+          <div class="tools-grid" id="tools-grid"></div>
+          <div class="tools-empty" id="tools-empty" hidden>
+            <span class="tools-empty__icon"><i data-lucide="search-x" aria-hidden="true"></i></span>
+            <h3>Aucun outil trouvé</h3>
+            <p>Essayez un autre mot-clé ou affichez toutes les catégories.</p>
+            <button class="tools-empty__reset" id="tools-reset" type="button">Voir tous les outils</button>
+          </div>
+        </section>
       </div>
     </section>
 
-    <!-- Workspace : masqué par défaut -->
     <section id="workspace" class="workspace" hidden>
       <div class="container">
         <div class="workspace__bar">
@@ -51,12 +74,13 @@
   </main>
 
   <footer class="site-footer">
-    <div class="container">Vos fichiers sont traités localement dans votre navigateur et ne sont jamais envoyés. Certains outils chargent à la demande des bibliothèques externes via CDN (sans transmettre vos fichiers).</div>
+    <div class="container site-footer__inner">
+      <i data-lucide="lock-keyhole" aria-hidden="true"></i>
+      <p>Vos fichiers restent sur votre appareil. Certains outils chargent des bibliothèques via CDN, sans transmettre vos fichiers.</p>
+    </div>
   </footer>
 
-  <!-- Lucide Icons (version épinglée) -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
-  <!-- Point d'entrée ES6 -->
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
