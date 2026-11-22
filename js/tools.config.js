@@ -340,4 +340,12 @@ export const tools = [
     description: "Fusionnez plusieurs vidéos (MP4, WEBM, MOV, AVI, MKV) dans l'ordre de votre choix, avec résolution normalisée et sortie MP4 ou WEBM, 100 % localement via FFmpeg.wasm.",
     module: () => import('./tools/video-merger.js'),
   },
+  {
+    id: 'video-speed-reverse',
+    name: "Vitesse & Inversion Vidéo",
+    category: 'video',
+    icon: 'gauge',
+    description: "Accélérez, ralentissez ou inversez vos vidéos (0.25× à 4×) avec audio ajusté, export MP4 ou WEBM, 100 % localement via FFmpeg.wasm.",
+    module: () => import('./tools/video-speed-reverse.js'),
+  },
 ];
