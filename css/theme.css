@@ -259,10 +259,8 @@ button { font: inherit; cursor: pointer; }
   margin: 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 /* ---------- Workspace ---------- */
@@ -1263,3 +1261,39 @@ select option {
 .vrec-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .vrec-download { padding: var(--space-4); border: 1px dashed var(--color-success); border-radius: var(--radius-md); text-align: center; }
 .vrec-download a { text-decoration: none; }
+
+/* ===== Outil : Convertisseur Audio (.audconv-*) — token catégorie : --cat-audio ===== */
+.audconv { display: flex; flex-direction: column; gap: var(--space-4); max-width: 760px; margin: 0 auto; width: 100%; color: var(--color-text); }
+.audconv-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); min-height: 240px; padding: var(--space-8) var(--space-4); text-align: center; cursor: pointer; border: 2px dashed var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); transition: border-color var(--transition), background var(--transition); }
+.audconv-drop:hover, .audconv-drop.is-over, .audconv-drop:focus-visible { border-color: var(--cat-audio); background: color-mix(in srgb, var(--cat-audio) 6%, transparent); outline: none; }
+.audconv-drop svg { color: var(--cat-audio); }
+.audconv-drop strong { font-size: var(--font-size-lg); }
+.audconv-drop small { color: var(--color-text-muted); }
+.audconv-editor { display: flex; flex-direction: column; gap: var(--space-4); }
+.audconv-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.audconv-file { display: flex; flex-direction: column; min-width: 0; }
+.audconv-name { font-weight: var(--font-weight-bold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
+.audconv-meta { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.audconv-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-3); }
+.audconv-stat { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.audconv-stat small { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.audconv-stat b { font-variant-numeric: tabular-nums; color: var(--cat-audio); }
+.audconv-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-4); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.audconv-field { display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-muted); }
+.audconv-field select { width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); color: var(--color-text); font: inherit; }
+.audconv-field select:focus-visible { outline: 2px solid var(--cat-audio); outline-offset: 1px; }
+.audconv-field select:disabled { opacity: 0.5; cursor: not-allowed; }
+.audconv-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.audconv .btn-primary { background: var(--cat-audio); color: var(--color-text-on-primary); }
+.audconv .btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--cat-audio) 85%, var(--color-text)); }
+.audconv .btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--cat-audio) 10%, transparent); color: var(--cat-audio); }
+.audconv-bar { height: 8px; border-radius: var(--radius-pill); background: var(--color-border); overflow: hidden; visibility: hidden; }
+.audconv-bar.is-on { visibility: visible; }
+.audconv-bar > i { display: block; height: 100%; width: 0; background: var(--cat-audio); transition: width var(--transition); }
+.audconv-bar.is-indeterminate > i { width: 40%; animation: audconv-slide 1.1s infinite ease-in-out; }
+@keyframes audconv-slide { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
+@media (prefers-reduced-motion: reduce) { .audconv-bar.is-indeterminate > i { animation: none; } }
+.audconv-status { min-height: 1.3em; margin: var(--space-2) 0 0; font-size: var(--font-size-sm); }
+.audconv-result { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-4); border: 1px dashed var(--color-success); border-radius: var(--radius-lg); background: var(--color-surface); }
+.audconv-audio { width: 100%; }
+.audconv-link { align-self: flex-start; text-decoration: none; }

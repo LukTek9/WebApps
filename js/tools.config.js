@@ -212,4 +212,12 @@ export const tools = [
     description: "Enregistrez votre voix au micro (pause/reprise, visualiseur temps réel) et exportez en WAV, WebM/OGG ou MP3 100 % localement.",
     module: () => import('./tools/voice-recorder.js'),
   },
+  {
+    id: 'audio-converter',
+    name: "Convertisseur Audio",
+    category: 'audio',
+    icon: 'refresh-cw',
+    description: "Convertissez vos fichiers audio (MP3, WAV, OGG, M4A, FLAC) avec choix du débit et de la fréquence, aperçu inclus, 100 % localement.",
+    module: () => import('./tools/audio-converter.js'),
+  },
 ];
