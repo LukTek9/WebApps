@@ -597,8 +597,10 @@ body:has(#home-view:not([hidden])) {
   position: relative;
   display: grid;
   min-height: 300px;
+  padding-block: var(--hero-float-gap);
   place-items: center;
   perspective: 900px;
+  --hero-float-gap: calc(var(--space-12) + var(--space-3));
 }
 
 .hero__visual-glow {
@@ -672,8 +674,8 @@ body:has(#home-view:not([hidden])) {
 
 .hero__float-card svg { width: 16px; height: 16px; color: #ed6b71; }
 .hero__float-card svg:last-child:not(:first-child) { width: 14px; color: #35a879; }
-.hero__float-card--top { top: 16%; right: -2%; animation: home-float 5s ease-in-out -1s infinite; }
-.hero__float-card--bottom { bottom: 13%; left: -1%; animation: home-float 5.5s ease-in-out -2.5s infinite; }
+.hero__float-card--top { top: 0; right: -2%; animation: home-float 5s ease-in-out -1s infinite; }
+.hero__float-card--bottom { bottom: 0; left: -1%; animation: home-float 5.5s ease-in-out -2.5s infinite; }
 .hero__float-card--bottom svg { color: #d99a31; }
 
 .catalog { padding-bottom: 2.5rem; }
@@ -813,13 +815,13 @@ body:has(#home-view:not([hidden])) {
   .tool-search { min-height: 54px; gap: 0.55rem; padding-left: 0.8rem; }
   .tool-search input { font-size: 0.88rem; }
   .hero__trust { gap: 0.55rem 1rem; margin-top: 0.9rem; font-size: 0.7rem; }
-  .hero__visual { min-height: 250px; margin-top: 0.1rem; }
+  .hero__visual { min-height: 250px; margin-top: 0.1rem; --hero-float-gap: calc(var(--space-12) + var(--space-2)); }
   .hero__showcase { width: min(78%, 280px); padding: 1rem; }
   .hero__orbit { width: 220px; height: 220px; }
   .hero__orbit--inner { width: 174px; height: 174px; }
   .hero__float-card { padding: 0.58rem 0.68rem; font-size: 0.66rem; }
-  .hero__float-card--top { top: 12%; right: 0; }
-  .hero__float-card--bottom { bottom: 9%; left: 0; }
+  .hero__float-card--top { top: 0; right: 0; }
+  .hero__float-card--bottom { bottom: 0; left: 0; }
   .catalog__heading { align-items: center; }
   .catalog__count { flex: 0 0 auto; }
   .tools-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 0.75rem; }
