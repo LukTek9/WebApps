@@ -17,6 +17,7 @@ const els = {
   searchInput: $('tool-search-input'),
   searchClear: $('tool-search-clear'),
   resultsCount: $('results-count'),
+  catalogTitle: $('catalog-title'),
   heroToolCount: $('hero-tool-count'),
   empty: $('tools-empty'),
   reset: $('tools-reset'),
@@ -49,6 +50,10 @@ function renderFilters() {
       state.category = cat.id;
       renderFilters();
       renderGrid();
+      window.scrollTo({
+        top: 0,
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      });
     });
     els.filters.appendChild(btn);
   }
@@ -57,6 +62,11 @@ function renderFilters() {
 /* ---------- Grille ---------- */
 function renderGrid() {
   els.grid.innerHTML = '';
+  const activeCategory = categories.find((cat) => cat.id === state.category);
+  els.home.classList.toggle('is-category-view', state.category !== 'all');
+  els.catalogTitle.textContent = state.category === 'all'
+    ? 'Explorez les outils'
+    : `Outils ${activeCategory?.label ?? ''}`.trim();
   const normalize = (value) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr');
   const query = normalize(state.query.trim());
   // Tri stable par ordre des catégories (config) ; ordre relatif conservé dans chaque catégorie
@@ -103,6 +113,9 @@ function renderGrid() {
   }
   const resultLabel = visible.length === 1 ? 'outil' : 'outils';
   els.resultsCount.textContent = `${visible.length} ${resultLabel}`;
+  els.heroToolCount.textContent = state.category === 'all' && !query
+    ? `${tools.length} outils gratuits`
+    : `${visible.length} ${resultLabel} ${state.category === 'all' ? 'trouvés' : 'dans cette catégorie'}`;
   els.empty.hidden = visible.length > 0;
   els.grid.hidden = visible.length === 0;
   refreshIcons();
@@ -191,7 +204,6 @@ document.addEventListener('keydown', (event) => {
 });
 
 renderFilters();
-els.heroToolCount.textContent = `${tools.length} outils gratuits`;
 renderGrid();
 
 // Deep link : index.html#<tool-id>
