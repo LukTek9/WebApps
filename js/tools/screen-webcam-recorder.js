@@ -15,7 +15,9 @@
  */
 
 /* ---------- Constantes ---------- */
-const TIMESLICE_MS = 1000;
+const TIMESLICE_MS = 500;           // chunks émis en continu pendant l'enregistrement (pas seulement au stop)
+const FLUSH_MS = 250;               // attente après rec.stop() avant d'arrêter les pistes : dernier flush ondataavailable
+const DATA_WATCHDOG_MS = 2500;      // aucun chunk reçu après ce délai → repli sur le MediaRecorder par défaut du navigateur
 const COUNTDOWN_S = 3;
 const STOP_FALLBACK_MS = 1500;    // filet de sécurité : finalize() garanti même si l'événement « stop » ne vient jamais (Firefox)
 const FIX_DURATION_TIMEOUT_MS = 1000; // correction de durée WebM : jamais bloquante
@@ -23,6 +25,8 @@ const PIP_MIN_INTERVAL_MS = 20;   // évite un double dessin rAF + Worker
 const PIP_TICK_MS = 33;           // cadence de repli quand l'onglet est masqué (rAF suspendu)
 const LOAD_TIMEOUT_MS = 90000;    // Worker FFmpeg bloqué (Firefox) → échec explicite au lieu d'une attente infinie
 const MIME_CANDIDATES = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'];
+/* Flux sans piste audio : pas de codec opus dans le type MIME (Firefox ne émet aucune donnée sinon) */
+const MIME_VIDEO_ONLY = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
 const QUALITY = { native: null, '1080': { w: 1920, h: 1080 }, '720': { w: 1280, h: 720 } };
 const BITRATE = { native: 8_000_000, '1080': 8_000_000, '720': 4_000_000 };
 const LBL_PAUSE = '⏸ Pause';
@@ -80,10 +84,10 @@ function raceLoad(promise, signal, ms) {
   });
 }
 
-function pickMime() {
+function pickMime(hasAudio = true) {
   const MR = window.MediaRecorder;
   if (!MR || typeof MR.isTypeSupported !== 'function') return '';
-  return MIME_CANDIDATES.find((m) => MR.isTypeSupported(m)) || '';
+  return (hasAudio ? MIME_CANDIDATES : MIME_VIDEO_ONLY).find((m) => MR.isTypeSupported(m)) || '';
 }
 
 const extFromMime = (m) => (/mp4/i.test(m) ? 'mp4' : 'webm');
@@ -370,9 +374,14 @@ async function setupPip(st) {
 /* ==========================================================================
    Audio : micro + audio système (mixés si les deux)
    ========================================================================== */
+/** Première piste audio réellement vivante d'un flux (null sinon). */
+const liveAudio = (stream) => stream?.getAudioTracks().find((t) => t.readyState === 'live') || null;
+
 function buildAudio(st) {
-  const sys = st.cfg.sys ? st.display?.getAudioTracks()[0] : null;
-  const mic = st.mic?.getAudioTracks()[0];
+  const sys = st.cfg.sys ? liveAudio(st.display) : null;
+  const mic = liveAudio(st.mic);
+  // Aucune piste audio vivante : null → enregistrement vidéo seule, sans AudioContext ni destination vide (bloque MediaRecorder Firefox)
+  if (!sys && !mic) return null;
   if (sys && mic) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (AC) {
@@ -556,21 +565,26 @@ function stopClock() {
   s.clockRaf = 0;
 }
 
-function beginRecorder(st) {
-  const mime = pickMime();
-  let rec;
-  try {
+/** Coupe proprement un recorder (handlers retirés : aucun finalize déclenché). */
+function detachRecorder(rec) {
+  rec.ondataavailable = null; rec.onstop = null; rec.onerror = null;
+  try { if (rec.state !== 'inactive') rec.stop(); } catch { /* déjà arrêté */ }
+}
+
+/** Crée + démarre un MediaRecorder. useDefault=true : type MIME / débit laissés au navigateur. Lance en cas d'échec. */
+function openRecorder(st, useDefault) {
+  let rec, mime = '';
+  if (useDefault) {
+    rec = new MediaRecorder(st.stream);
+  } else {
+    mime = pickMime(st.stream.getAudioTracks().length > 0);
     const opts = { videoBitsPerSecond: BITRATE[st.cfg.quality] };
     if (mime) opts.mimeType = mime;
     rec = new MediaRecorder(st.stream, opts);
-  } catch (e) {
-    releaseCapture(); setState('idle');
-    setStatus(`Enregistrement impossible : ${e?.message || 'format vidéo non pris en charge'}.`, 'error');
-    return;
   }
-  st.rec = rec; st.chunks = []; st.finalized = false;
+  st.rec = rec;
   st.mime = rec.mimeType || mime || 'video/webm';
-  rec.ondataavailable = (e) => { if (s === st && !st.finalized && e.data && e.data.size) st.chunks.push(e.data); };
+  rec.ondataavailable = (e) => { if (s === st && !st.sealed && e.data && e.data.size) st.chunks.push(e.data); };
   rec.onerror = (e) => {
     if (s !== st) return;
     st.endNote = `Erreur d'enregistrement (${e?.error?.message || 'inconnue'}).`;
@@ -578,11 +592,44 @@ function beginRecorder(st) {
   };
   rec.onstop = () => { finalize(st); };
   try { rec.start(TIMESLICE_MS); }
-  catch (e) {
-    st.rec = null; releaseCapture(); setState('idle');
-    setStatus(`Démarrage impossible : ${e?.message || 'erreur inconnue'}.`, 'error');
-    return;
+  catch (e) { detachRecorder(rec); st.rec = null; throw e; }
+  return rec;
+}
+
+/** Aucun chunk après DATA_WATCHDOG_MS : relance avec le MediaRecorder par défaut du navigateur (une seule fois). */
+function dataWatchdog(st) {
+  st.dataTimer = 0;
+  if (s !== st || st.sealed || st.usedDefault || st.chunks.length) return;
+  if (st.state !== 'recording' && st.state !== 'paused') return;
+  const old = st.rec; st.rec = null;
+  if (old) detachRecorder(old);
+  try {
+    st.usedDefault = true;
+    const rec = openRecorder(st, true);
+    if (st.state === 'paused') { try { rec.pause(); } catch { /* ignoré */ } }
+  } catch (e) {
+    st.endNote = `Enregistreur indisponible (${e?.message || 'erreur inconnue'}).`;
+    stopRecording();
   }
+}
+
+function beginRecorder(st) {
+  st.chunks = []; st.finalized = false; st.sealed = false; st.usedDefault = false;
+  try {
+    openRecorder(st, false);
+  } catch (e1) {
+    // Type MIME / débit refusé : repli immédiat sur le MediaRecorder par défaut
+    try {
+      st.usedDefault = true;
+      openRecorder(st, true);
+    } catch (e) {
+      st.rec = null; releaseCapture(); setState('idle');
+      setStatus(`Enregistrement impossible : ${e?.message || e1?.message || 'format vidéo non pris en charge'}.`, 'error');
+      return;
+    }
+  }
+  clearTimeout(st.dataTimer);
+  st.dataTimer = setTimeout(() => dataWatchdog(st), DATA_WATCHDOG_MS);
   st.accum = 0; st.t0 = performance.now();
   q('time').textContent = fmtClock(0);
   setState('recording');
@@ -612,6 +659,7 @@ function stopRecording() {
   setState('processing');
   setStatus('Finalisation…');
   // Filet de sécurité : finalize() s'exécute quoi qu'il arrive (idempotent)
+  clearTimeout(st.dataTimer); st.dataTimer = 0;
   clearTimeout(st.stopTimer);
   st.stopTimer = setTimeout(() => finalize(st), STOP_FALLBACK_MS);
   // Ordre : flush des données, puis stop() du recorder ; les pistes ne sont arrêtées qu'ensuite (dans finalize)
@@ -633,12 +681,27 @@ function finalize(st) {
   clearTimeout(st.stopTimer); st.stopTimer = 0;
   if (st.state === 'recording') st.accum += performance.now() - st.t0; // arrêt automatique du recorder
   stopClock();
-  const rec = st.rec; st.rec = null;
-  if (rec) {
-    rec.ondataavailable = null; rec.onstop = null; rec.onerror = null;
-    try { if (rec.state !== 'inactive') rec.stop(); } catch { /* déjà arrêté */ }
+  clearTimeout(st.dataTimer); st.dataTimer = 0;
+  if (st.state !== 'processing') setState('processing');
+  const rec = st.rec;
+  if (rec && rec.state !== 'inactive') {
+    // Recorder encore actif (filet de 1500 ms, arrêt auto) : flush + stop, puis 250 ms avant d'arrêter les pistes
+    try { rec.requestData(); } catch { /* non supporté / en pause */ }
+    try { rec.stop(); } catch { /* déjà arrêté */ }
+    st.flushTimer = setTimeout(() => completeFinalize(st), FLUSH_MS);
+  } else {
+    completeFinalize(st); // « stop » déjà reçu : le dernier chunk est livré (dataavailable précède stop)
   }
-  releaseCapture(); // pistes arrêtées seulement après stop() du recorder
+}
+
+/** Assemble le résultat après le dernier flush ; arrête ensuite seulement les pistes. */
+function completeFinalize(st) {
+  clearTimeout(st.flushTimer); st.flushTimer = 0;
+  if (s !== st || st.state !== 'processing') return; // reset / unmount entre-temps (déjà nettoyé)
+  st.sealed = true;
+  const rec = st.rec; st.rec = null;
+  if (rec) detachRecorder(rec);
+  releaseCapture(); // pistes arrêtées seulement après stop() + flush du recorder
   const chunks = st.chunks; st.chunks = [];
   const note = st.endNote; st.endNote = '';
   if (!chunks.length) {
@@ -673,6 +736,8 @@ function hardStop() {
   if (!s) return;
   s.abort?.abort(); s.abort = null;
   clearTimeout(s.stopTimer); s.stopTimer = 0;
+  clearTimeout(s.dataTimer); s.dataTimer = 0;
+  clearTimeout(s.flushTimer); s.flushTimer = 0;
   cancelCountdown();
   const rec = s.rec; s.rec = null;
   if (rec) {
@@ -958,7 +1023,7 @@ export function mount(container, ctx) {
     display: null, cam: null, mic: null, canvasStream: null, mixTrack: null, ac: null, stream: null, pip: null,
     rec: null, chunks: [], mime: '', accum: 0, t0: 0, clockRaf: 0, cd: null,
     blob: null, blobUrl: null, mp4Url: null, baseName: '', endNote: '', note: '', abort: null,
-    stopTimer: 0, finalized: false,
+    stopTimer: 0, dataTimer: 0, flushTimer: 0, finalized: false, sealed: false, usedDefault: false,
     listeners: new AbortController(),
   };
   const opt = { signal: s.listeners.signal };
