@@ -204,4 +204,12 @@ export const tools = [
     description: "Découpez vos fichiers audio (MP3, WAV, OGG, M4A) avec fondus et aperçu, export WAV ou MP3 100 % localement.",
     module: () => import('./tools/audio-trimmer.js'),
   },
+  {
+    id: 'voice-recorder',
+    name: "Enregistreur Vocal",
+    category: 'audio',
+    icon: 'mic',
+    description: "Enregistrez votre voix au micro (pause/reprise, visualiseur temps réel) et exportez en WAV, WebM/OGG ou MP3 100 % localement.",
+    module: () => import('./tools/voice-recorder.js'),
+  },
 ];
