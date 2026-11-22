@@ -243,4 +243,12 @@ export const tools = [
     description: "Ajustez les basses et les aigus (10 bandes), amplifiez le volume avec limiteur anti-saturation et exportez en WAV ou MP3, 100 % localement.",
     module: () => import('./tools/audio-equalizer.js'),
   },
+  {
+    id: 'audio-metadata',
+    name: "Éditeur de métadonnées ID3",
+    category: 'audio',
+    icon: 'tags',
+    description: "Lisez et modifiez les tags ID3 de vos MP3 (titre, artiste, album, pochette…) sans ré-encodage, 100 % localement.",
+    module: () => import('./tools/audio-metadata.js'),
+  },
 ];
