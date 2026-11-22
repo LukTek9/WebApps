@@ -1,4 +1,4 @@
-import { createToolModule } from './shared/tool-runtime.js';
+import { createToolModule } from '../shared/tool-runtime.js';
 const tool = createToolModule('text-encoding');
 export const mount = tool.mount;
 export const unmount = tool.unmount;

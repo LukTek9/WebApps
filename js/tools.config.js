@@ -442,6 +442,23 @@ const additions = [
   ['aspect-ratio-calculator', 'Calculateur de ratio d’aspect', 'calc', 'ratio', 'Trouvez un ratio et calculez des dimensions proportionnelles sans déformation.'],
 ];
 
+const dedicatedTextModules = {
+  'word-counter': () => import('./tools/text/word-counter.js'),
+  'text-diff': () => import('./tools/text/text-diff.js'),
+  'case-converter': () => import('./tools/text/case-converter.js'),
+  'duplicate-line-remover': () => import('./tools/text/duplicate-line-remover.js'),
+  'text-cleaner': () => import('./tools/text/text-cleaner.js'),
+  'lorem-ipsum': () => import('./tools/text/lorem-ipsum.js'),
+  'markdown-to-html': () => import('./tools/text/markdown-to-html.js'),
+  'html-to-markdown': () => import('./tools/text/html-to-markdown.js'),
+  'text-reverser': () => import('./tools/text/text-reverser.js'),
+  'list-sorter': () => import('./tools/text/list-sorter.js'),
+  'text-to-slug': () => import('./tools/text/text-to-slug.js'),
+  'text-encoding': () => import('./tools/text/text-encoding.js'),
+  'line-numberer': () => import('./tools/text/line-numberer.js'),
+  'word-frequency': () => import('./tools/text/word-frequency.js'),
+};
+
 const dedicatedDevModules = {
   'json-formatter': () => import('./tools/dev/json-formatter.js'),
   'json-to-csv-xml': () => import('./tools/dev/json-to-csv-xml.js'),
@@ -458,16 +475,16 @@ const dedicatedDevModules = {
 };
 
 const dedicatedSecurityModules = {
-  'password-generator': () => import('./tools/password-generator.js'),
-  'hash-generator': () => import('./tools/hash-generator.js'),
-  'password-strength': () => import('./tools/password-strength.js'),
-  'uuid-generator': () => import('./tools/uuid-generator.js'),
-  'aes-encryptor': () => import('./tools/aes-encryptor.js'),
-  'jwt-decoder': () => import('./tools/jwt-decoder.js'),
-  'base-ascii-converter': () => import('./tools/base-ascii-converter.js'),
-  'rsa-key-generator': () => import('./tools/rsa-key-generator.js'),
-  'file-checksum': () => import('./tools/file-checksum.js'),
-  'totp-generator': () => import('./tools/totp-generator.js'),
+  'password-generator': () => import('./tools/security/password-generator.js'),
+  'hash-generator': () => import('./tools/security/hash-generator.js'),
+  'password-strength': () => import('./tools/security/password-strength.js'),
+  'uuid-generator': () => import('./tools/security/uuid-generator.js'),
+  'aes-encryptor': () => import('./tools/security/aes-encryptor.js'),
+  'jwt-decoder': () => import('./tools/security/jwt-decoder.js'),
+  'base-ascii-converter': () => import('./tools/security/base-ascii-converter.js'),
+  'rsa-key-generator': () => import('./tools/security/rsa-key-generator.js'),
+  'file-checksum': () => import('./tools/security/file-checksum.js'),
+  'totp-generator': () => import('./tools/security/totp-generator.js'),
 };
 
 const dedicatedUtilityModules = {
@@ -522,5 +539,5 @@ const dedicatedCalcModules = {
 };
 
 for (const [id, name, category, icon, description] of additions) {
-  tools.push({ id, name, category, icon, description: `${description} Traitement 100 % local.`, module: dedicatedCalcModules[id] || dedicatedDataModules[id] || dedicatedDesignModules[id] || dedicatedUtilityModules[id] || dedicatedSecurityModules[id] || dedicatedDevModules[id] || (() => import(`./tools/${id}.js`)) });
+  tools.push({ id, name, category, icon, description: `${description} Traitement 100 % local.`, module: dedicatedTextModules[id] || dedicatedCalcModules[id] || dedicatedDataModules[id] || dedicatedDesignModules[id] || dedicatedUtilityModules[id] || dedicatedSecurityModules[id] || dedicatedDevModules[id] || (() => import(`./tools/${id}.js`)) });
 }

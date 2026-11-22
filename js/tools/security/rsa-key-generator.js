@@ -1,4 +1,4 @@
-import { createSecurityUI, showError } from './shared/security-tool-ui.js';
+import { createSecurityUI, showError } from '../shared/security-tool-ui.js';
 
 let ui;
 let publicPem = '';
