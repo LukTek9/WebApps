@@ -235,4 +235,12 @@ export const tools = [
     description: "Générez des bruits (blanc, rose, brun) et des fréquences pures (sinus, carré, scie, triangle) avec lecture en direct et export WAV, 100 % localement.",
     module: () => import('./tools/sound-generator.js'),
   },
+  {
+    id: 'audio-equalizer',
+    name: "Égaliseur & Amplificateur",
+    category: 'audio',
+    icon: 'sliders-vertical',
+    description: "Ajustez les basses et les aigus (10 bandes), amplifiez le volume avec limiteur anti-saturation et exportez en WAV ou MP3, 100 % localement.",
+    module: () => import('./tools/audio-equalizer.js'),
+  },
 ];
