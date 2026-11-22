@@ -1,4 +1,4 @@
-import { createSecurityUI, escapeHtml } from './security-tool-ui.js';
+import { createSecurityUI, escapeHtml } from './shared/security-tool-ui.js';
 
 const RATES = [
   ['20', '20 % — taux normal'],

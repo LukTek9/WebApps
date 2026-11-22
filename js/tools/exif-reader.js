@@ -1,5 +1,5 @@
-import { bindDropzone, createDropzone, createSecurityUI, escapeHtml } from './security-tool-ui.js';
-import { readJpegExif } from './exif-utils.js';
+import { bindDropzone, createDropzone, createSecurityUI, escapeHtml } from './shared/security-tool-ui.js';
+import { readJpegExif } from './shared/exif-utils.js';
 
 let ui;
 let report = '';

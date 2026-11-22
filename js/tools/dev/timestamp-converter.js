@@ -1,4 +1,4 @@
-import { createWorkspace, setStats } from './tool-kit.js';
+import { createWorkspace, setStats } from '../shared/dev-tool-kit.js';
 
 let view;
 const CONTROLS = '<label class="dev-tools__field">Valeur source<select class="dev-tools__select" data-mode><option value="epoch">Timestamp Unix</option><option value="date">Date / ISO 8601</option></select></label><label class="dev-tools__field">Unité Unix<select class="dev-tools__select" data-unit><option value="s">Secondes</option><option value="ms">Millisecondes</option></select></label><label class="dev-tools__field">Affichage<select class="dev-tools__select" data-zone><option value="local">Heure locale</option><option value="utc">UTC</option></select></label>';

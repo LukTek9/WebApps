@@ -1,4 +1,4 @@
-import { createWorkspace, setStats } from './tool-kit.js';
+import { createWorkspace, setStats } from '../shared/dev-tool-kit.js';
 
 let view;
 const FILE = 'json-formate.json';

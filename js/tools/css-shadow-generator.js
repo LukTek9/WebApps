@@ -1,5 +1,5 @@
-import { createSecurityUI } from './security-tool-ui.js';
-import { hexToRgb, themeColorHex } from './color-utils.js';
+import { createSecurityUI } from './shared/security-tool-ui.js';
+import { hexToRgb, themeColorHex } from './shared/color-utils.js';
 
 let ui;
 let output = '';

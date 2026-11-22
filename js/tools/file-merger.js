@@ -1,4 +1,4 @@
-import { bindDropzone, createDropzone, createSecurityUI, escapeHtml } from './security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI, escapeHtml } from './shared/security-tool-ui.js';
 
 const MAX_FILES = 200;
 const MAX_TOTAL_BYTES = 500 * 1024 * 1024;

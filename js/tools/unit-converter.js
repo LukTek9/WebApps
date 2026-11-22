@@ -1,5 +1,5 @@
-import { createSecurityUI, escapeHtml } from './security-tool-ui.js';
-import { bindResultActions, formatNumber, parseNumber, updateResult } from './calculation-utils.js';
+import { createSecurityUI, escapeHtml } from './shared/security-tool-ui.js';
+import { bindResultActions, formatNumber, parseNumber, updateResult } from './shared/calculation-utils.js';
 
 const GROUPS = {
   length: { label: 'Longueur', units: [['mm', 'Millimètre', 0.001], ['cm', 'Centimètre', 0.01], ['m', 'Mètre', 1], ['km', 'Kilomètre', 1000], ['in', 'Pouce', 0.0254], ['ft', 'Pied', 0.3048], ['mi', 'Mile', 1609.344]], from: 'm', to: 'km' },

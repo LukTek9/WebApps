@@ -1,4 +1,4 @@
-import { createSecurityUI, escapeHtml } from './security-tool-ui.js';
+import { createSecurityUI, escapeHtml } from './shared/security-tool-ui.js';
 
 const ACTIVITY = [
   ['1.2', 'Sédentaire (peu ou pas d’exercice)'],

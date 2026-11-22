@@ -1,4 +1,4 @@
-import { createSecurityUI, escapeHtml } from './security-tool-ui.js';
+import { createSecurityUI, escapeHtml } from './shared/security-tool-ui.js';
 
 const STANDARD_RATIOS = [
   [1, 1, 'Carré (1:1)'],

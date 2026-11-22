@@ -1,4 +1,4 @@
-import { createSecurityUI, escapeHtml } from './security-tool-ui.js';
+import { createSecurityUI, escapeHtml } from './shared/security-tool-ui.js';
 
 /** Valeur de chaque unité exprimée en bits. */
 const UNITS = [

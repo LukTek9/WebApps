@@ -1,4 +1,4 @@
-import { bindDropzone, createDropzone, createSecurityUI, showError } from './security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI, showError } from './shared/security-tool-ui.js';
 
 let ui;
 let file = null;

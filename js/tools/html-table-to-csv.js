@@ -1,4 +1,4 @@
-import { createSecurityUI, escapeHtml } from './security-tool-ui.js';
+import { createSecurityUI, escapeHtml } from './shared/security-tool-ui.js';
 
 const MAX_SOURCE_LENGTH = 5000000;
 const MAX_TABLES = 100;

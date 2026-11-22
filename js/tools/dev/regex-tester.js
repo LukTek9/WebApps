@@ -1,4 +1,4 @@
-import { createWorkspace, setStats } from './tool-kit.js';
+import { createWorkspace, setStats } from '../shared/dev-tool-kit.js';
 
 let view;
 const CONTROLS = '<label class="dev-tools__field dev-tools__field--grow">Expression régulière<input class="dev-tools__input" data-pattern value="(\\w+)" placeholder="Votre motif, sans délimiteurs"></label><label class="dev-tools__field">Drapeaux<input class="dev-tools__input" data-flags value="gi" aria-label="Drapeaux de l’expression régulière"></label><label class="dev-tools__field">Action<select class="dev-tools__select" data-mode><option value="matches">Afficher les correspondances</option><option value="replace">Remplacer</option></select></label><label class="dev-tools__field dev-tools__field--grow">Remplacement<input class="dev-tools__input" data-replacement placeholder="$1"></label>';

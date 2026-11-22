@@ -1,4 +1,4 @@
-import { bindDropzone, createDropzone, createSecurityUI } from './security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI } from './shared/security-tool-ui.js';
 
 let ui;
 let cameraStream = null;

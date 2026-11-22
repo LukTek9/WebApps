@@ -1,4 +1,4 @@
-import { createWorkspace, setStats } from './tool-kit.js';
+import { createWorkspace, setStats } from '../shared/dev-tool-kit.js';
 
 let view;
 const CONTROLS = '<label class="dev-tools__field">Séparateur<select class="dev-tools__select" data-delimiter><option value=",">Virgule</option><option value=";">Point-virgule</option><option value="\\t">Tabulation</option></select></label><label class="dev-tools__check"><input type="checkbox" data-header checked> Première ligne = en-têtes</label><label class="dev-tools__check"><input type="checkbox" data-infer checked> Déduire nombres et booléens</label>';

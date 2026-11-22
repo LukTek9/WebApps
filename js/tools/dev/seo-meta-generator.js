@@ -1,4 +1,4 @@
-import { createWorkspace, setStats } from './tool-kit.js';
+import { createWorkspace, setStats } from '../shared/dev-tool-kit.js';
 
 let view;
 const CONTROLS = '<label class="dev-tools__field dev-tools__field--grow">Titre<input class="dev-tools__input" data-title maxlength="70" value="Ma page web"></label><label class="dev-tools__field dev-tools__field--grow">URL canonique<input class="dev-tools__input" data-url type="url" placeholder="https://exemple.fr/page"></label><label class="dev-tools__field dev-tools__field--grow">Image de partage<input class="dev-tools__input" data-image type="url" placeholder="https://exemple.fr/apercu.jpg"></label><label class="dev-tools__field">Langue<select class="dev-tools__select" data-locale><option value="fr_FR">Français</option><option value="en_US">Anglais</option><option value="es_ES">Espagnol</option></select></label><label class="dev-tools__field dev-tools__field--grow">Description<input class="dev-tools__input" data-description maxlength="160" value="Une description claire de votre page web."></label>';

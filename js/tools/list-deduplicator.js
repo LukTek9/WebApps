@@ -1,4 +1,4 @@
-import { createSecurityUI } from './security-tool-ui.js';
+import { createSecurityUI } from './shared/security-tool-ui.js';
 
 let ui;
 let output = '';

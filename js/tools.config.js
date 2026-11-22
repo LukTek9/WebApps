@@ -31,7 +31,7 @@ export const tools = [
     category: 'image',
     icon: 'image', // nom d'icône Lucide
     description: 'Convertissez facilement vos images (PNG, JPG, WEBP, BMP, ICO) 100 % localement dans votre navigateur.',
-    module: () => import('./tools/image-converter.js'),
+    module: () => import('./tools/image/image-converter.js'),
   },
   {
     id: 'qr-generator',
@@ -56,7 +56,7 @@ export const tools = [
     category: 'image',
     icon: 'scaling',
     description: 'Redimensionnez vos images en pixels ou en pourcentage tout en conservant leur qualité, 100 % localement.',
-    module: () => import('./tools/image-resizer.js'),
+    module: () => import('./tools/image/image-resizer.js'),
   },
   {
     id: 'image-cropper',
@@ -64,7 +64,7 @@ export const tools = [
     category: 'image',
     icon: 'crop',
     description: 'Rognez vos images facilement selon des ratios prédéfinis (1:1, 16:9, 4:3) ou librement, 100 % localement.',
-    module: () => import('./tools/image-cropper.js'),
+    module: () => import('./tools/image/image-cropper.js'),
   },
   {
     id: 'image-redactor',
@@ -72,7 +72,7 @@ export const tools = [
     category: 'image',
     icon: 'shield-alert',
     description: "Masquez ou floutez les données sensibles d'une image (rectangle noir, pixellisation, flou) 100 % localement.",
-    module: () => import('./tools/image-redactor.js'),
+    module: () => import('./tools/image/image-redactor.js'),
   },
   {
     id: 'image-to-svg',
@@ -80,7 +80,7 @@ export const tools = [
     category: 'image',
     icon: 'shapes',
     description: "Vectorisez vos images matricielles (PNG, JPG, WEBP) en tracés SVG (noir & blanc / contours) 100 % localement.",
-    module: () => import('./tools/image-to-svg.js'),
+    module: () => import('./tools/image/image-to-svg.js'),
   },
   {
     id: 'favicon-generator',
@@ -88,7 +88,7 @@ export const tools = [
     category: 'image',
     icon: 'globe',
     description: "Générez vos fichiers favicon.ico multi-tailles et icônes PWA/Apple 100 % localement.",
-    module: () => import('./tools/favicon-generator.js'),
+    module: () => import('./tools/image/favicon-generator.js'),
   },
   {
     id: 'color-extractor',
@@ -96,7 +96,7 @@ export const tools = [
     category: 'image',
     icon: 'pipette',
     description: "Prélevez des couleurs à la pipette et extrayez la palette dominante de vos images 100 % localement.",
-    module: () => import('./tools/color-extractor.js'),
+    module: () => import('./tools/image/color-extractor.js'),
   },
   {
     id: 'image-watermark',
@@ -104,7 +104,7 @@ export const tools = [
     category: 'image',
     icon: 'stamp',
     description: "Ajoutez un texte ou un logo en filigrane (opacité, position, motif répétitif) 100 % localement sur vos images.",
-    module: () => import('./tools/image-watermark.js'),
+    module: () => import('./tools/image/image-watermark.js'),
   },
   {
     id: 'image-rotator',
@@ -112,7 +112,7 @@ export const tools = [
     category: 'image',
     icon: 'rotate-cw',
     description: "Pivotez vos images (+90°, -90°, angle libre) et inversez-les en miroir horizontal/vertical 100 % localement.",
-    module: () => import('./tools/image-rotator.js'),
+    module: () => import('./tools/image/image-rotator.js'),
   },
   {
     id: 'image-ocr',
@@ -120,7 +120,7 @@ export const tools = [
     category: 'image',
     icon: 'scan-text',
     description: "Extrayez et numérisez le texte contenu dans vos images et documents (OCR 100 % local via Tesseract.js).",
-    module: () => import('./tools/image-ocr.js'),
+    module: () => import('./tools/image/image-ocr.js'),
   },
   {
     id: 'pdf-merger',
@@ -128,7 +128,7 @@ export const tools = [
     category: 'pdf',
     icon: 'files',
     description: "Combinez plusieurs fichiers PDF en un seul document dans l'ordre de votre choix, 100 % localement.",
-    module: () => import('./tools/pdf-merger.js'),
+    module: () => import('./tools/pdf/pdf-merger.js'),
   },
   {
     id: 'pdf-splitter',
@@ -136,7 +136,7 @@ export const tools = [
     category: 'pdf',
     icon: 'scissors',
     description: "Découpez, séparez ou extrayez les pages de vos fichiers PDF 100 % localement avec aperçu visuel.",
-    module: () => import('./tools/pdf-splitter.js'),
+    module: () => import('./tools/pdf/pdf-splitter.js'),
   },
   {
     id: 'pdf-organizer',
@@ -144,7 +144,7 @@ export const tools = [
     category: 'pdf',
     icon: 'move',
     description: "Réorganisez l'ordre des pages, pivotez leur orientation et supprimez des pages de vos PDF 100 % localement.",
-    module: () => import('./tools/pdf-organizer.js'),
+    module: () => import('./tools/pdf/pdf-organizer.js'),
   },
   {
     id: 'pdf-compressor',
@@ -152,7 +152,7 @@ export const tools = [
     category: 'pdf',
     icon: 'file-archive',
     description: "Réduisez le poids de vos fichiers PDF 100 % localement avec visionneuse comparative.",
-    module: () => import('./tools/pdf-compressor.js'),
+    module: () => import('./tools/pdf/pdf-compressor.js'),
   },
   {
     id: 'pdf-to-img',
@@ -160,7 +160,7 @@ export const tools = [
     category: 'pdf',
     icon: 'image',
     description: "Convertissez les pages de vos documents PDF en images PNG, JPG ou WebP 100 % localement.",
-    module: () => import('./tools/pdf-to-img.js'),
+    module: () => import('./tools/pdf/pdf-to-img.js'),
   },
   {
     id: 'img-to-pdf',
@@ -168,7 +168,7 @@ export const tools = [
     category: 'pdf',
     icon: 'file-up',
     description: "Convertissez et combinez vos images PNG, JPG ou WebP en un document PDF unique 100 % localement.",
-    module: () => import('./tools/img-to-pdf.js'),
+    module: () => import('./tools/pdf/img-to-pdf.js'),
   },
   {
     id: 'pdf-page-numbers',
@@ -176,7 +176,7 @@ export const tools = [
     category: 'pdf',
     icon: 'list-ordered',
     description: "Ajoutez une numérotation de pages à vos PDF (position, format, police, couleur) 100 % localement.",
-    module: () => import('./tools/pdf-page-numbers.js'),
+    module: () => import('./tools/pdf/pdf-page-numbers.js'),
   },
   {
     id: 'pdf-rotator',
@@ -184,7 +184,7 @@ export const tools = [
     category: 'pdf',
     icon: 'rotate-cw-square',
     description: "Pivotez les pages de vos PDF une par une ou en lot (toutes, paires, impaires) avec aperçu, 100 % localement.",
-    module: () => import('./tools/pdf-rotator.js'),
+    module: () => import('./tools/pdf/pdf-rotator.js'),
   },
   {
     id: 'pdf-protector',
@@ -192,7 +192,7 @@ export const tools = [
     category: 'pdf',
     icon: 'lock',
     description: "Chiffrez vos PDF par mot de passe et limitez l'impression, la copie ou la modification, 100 % localement.",
-    module: () => import('./tools/pdf-protector.js'),
+    module: () => import('./tools/pdf/pdf-protector.js'),
   },
   {
     id: 'pdf-unlocker',
@@ -200,7 +200,7 @@ export const tools = [
     category: 'pdf',
     icon: 'unlock',
     description: "Retirez le mot de passe et les restrictions de vos PDF (avec le bon mot de passe), 100 % localement.",
-    module: () => import('./tools/pdf-unlocker.js'),
+    module: () => import('./tools/pdf/pdf-unlocker.js'),
   },
   {
     id: 'audio-trimmer',
@@ -208,7 +208,7 @@ export const tools = [
     category: 'audio',
     icon: 'audio-waveform',
     description: "Découpez vos fichiers audio (MP3, WAV, OGG, M4A) avec fondus et aperçu, export WAV ou MP3 100 % localement.",
-    module: () => import('./tools/audio-trimmer.js'),
+    module: () => import('./tools/audio/audio-trimmer.js'),
   },
   {
     id: 'voice-recorder',
@@ -216,7 +216,7 @@ export const tools = [
     category: 'audio',
     icon: 'mic',
     description: "Enregistrez votre voix au micro (pause/reprise, visualiseur temps réel) et exportez en WAV, WebM/OGG ou MP3 100 % localement.",
-    module: () => import('./tools/voice-recorder.js'),
+    module: () => import('./tools/audio/voice-recorder.js'),
   },
   {
     id: 'audio-converter',
@@ -224,7 +224,7 @@ export const tools = [
     category: 'audio',
     icon: 'refresh-cw',
     description: "Convertissez vos fichiers audio (MP3, WAV, OGG, M4A, FLAC) avec choix du débit et de la fréquence, aperçu inclus, 100 % localement.",
-    module: () => import('./tools/audio-converter.js'),
+    module: () => import('./tools/audio/audio-converter.js'),
   },
   {
     id: 'audio-merger',
@@ -232,7 +232,7 @@ export const tools = [
     category: 'audio',
     icon: 'merge',
     description: "Assemblez plusieurs fichiers audio dans l'ordre de votre choix avec silences configurables, export WAV, MP3 ou OGG 100 % localement.",
-    module: () => import('./tools/audio-merger.js'),
+    module: () => import('./tools/audio/audio-merger.js'),
   },
   {
     id: 'sound-generator',
@@ -240,7 +240,7 @@ export const tools = [
     category: 'audio',
     icon: 'waves',
     description: "Générez des bruits (blanc, rose, brun) et des fréquences pures (sinus, carré, scie, triangle) avec lecture en direct et export WAV, 100 % localement.",
-    module: () => import('./tools/sound-generator.js'),
+    module: () => import('./tools/audio/sound-generator.js'),
   },
   {
     id: 'audio-equalizer',
@@ -248,7 +248,7 @@ export const tools = [
     category: 'audio',
     icon: 'sliders-vertical',
     description: "Ajustez les basses et les aigus (10 bandes), amplifiez le volume avec limiteur anti-saturation et exportez en WAV ou MP3, 100 % localement.",
-    module: () => import('./tools/audio-equalizer.js'),
+    module: () => import('./tools/audio/audio-equalizer.js'),
   },
   {
     id: 'audio-metadata',
@@ -256,7 +256,7 @@ export const tools = [
     category: 'audio',
     icon: 'tags',
     description: "Lisez et modifiez les tags ID3 de vos MP3 (titre, artiste, album, pochette…) sans ré-encodage, 100 % localement.",
-    module: () => import('./tools/audio-metadata.js'),
+    module: () => import('./tools/audio/audio-metadata.js'),
   },
   {
     id: 'audio-reverser',
@@ -264,7 +264,7 @@ export const tools = [
     category: 'audio',
     icon: 'rewind',
     description: "Lisez vos sons à l'envers : inversion instantanée, forme d'onde, comparaison A/B et export WAV, MP3 ou OGG, 100 % localement.",
-    module: () => import('./tools/audio-reverser.js'),
+    module: () => import('./tools/audio/audio-reverser.js'),
   },
   {
     id: 'metronome',
@@ -272,7 +272,7 @@ export const tools = [
     category: 'audio',
     icon: 'timer',
     description: "Métronome de haute précision : tempo 30–300 BPM, tap tempo, mesures, subdivisions et accents personnalisables, 100 % localement.",
-    module: () => import('./tools/metronome.js'),
+    module: () => import('./tools/audio/metronome.js'),
   },
   {
     id: 'audio-visualizer',
@@ -280,7 +280,7 @@ export const tools = [
     category: 'audio',
     icon: 'audio-lines',
     description: "Visualisez vos fichiers audio ou votre micro en temps réel (barres, oscilloscope, spectre circulaire), capture PNG et enregistrement vidéo WebM, 100 % localement.",
-    module: () => import('./tools/audio-visualizer.js'),
+    module: () => import('./tools/audio/audio-visualizer.js'),
   },
   {
     id: 'video-converter',
@@ -288,7 +288,7 @@ export const tools = [
     category: 'video',
     icon: 'film',
     description: "Convertissez vos vidéos (MP4, WEBM, MOV, AVI) avec choix de la résolution et de la qualité, aperçu inclus, 100 % localement via FFmpeg.wasm.",
-    module: () => import('./tools/video-converter.js'),
+    module: () => import('./tools/video/video-converter.js'),
   },
   {
     id: 'video-cropper',
@@ -296,7 +296,7 @@ export const tools = [
     category: 'video',
     icon: 'crop',
     description: "Recadrez vos vidéos avec un cadre interactif, ratios prédéfinis (16:9, 9:16, 1:1, 4:5, 4:3) et mise à l'échelle, export MP4 ou WEBM 100 % localement via FFmpeg.wasm.",
-    module: () => import('./tools/video-cropper.js'),
+    module: () => import('./tools/video/video-cropper.js'),
   },
   {
     id: 'video-trimmer',
@@ -304,7 +304,7 @@ export const tools = [
     category: 'video',
     icon: 'scissors',
     description: "Découpez vos vidéos (MP4, WEBM, MOV, AVI, MKV) : mode rapide sans perte ou précis à l'image près, aperçu du segment, 100 % localement via FFmpeg.wasm.",
-    module: () => import('./tools/video-trimmer.js'),
+    module: () => import('./tools/video/video-trimmer.js'),
   },
   {
     id: 'video-compressor',
@@ -312,7 +312,7 @@ export const tools = [
     category: 'video',
     icon: 'shrink',
     description: "Réduisez le poids de vos vidéos (MP4, WEBM, MOV, AVI, MKV) avec niveaux de compression, résolution maximale et comparaison avant/après, 100 % localement via FFmpeg.wasm.",
-    module: () => import('./tools/video-compressor.js'),
+    module: () => import('./tools/video/video-compressor.js'),
   },
   {
     id: 'video-to-audio',
@@ -320,7 +320,7 @@ export const tools = [
     category: 'video',
     icon: 'audio-lines',
     description: "Extrayez la piste audio de vos vidéos (MP4, WEBM, MOV, AVI, MKV) en MP3, WAV, M4A ou OGG avec choix du débit, 100 % localement via FFmpeg.wasm.",
-    module: () => import('./tools/video-to-audio.js'),
+    module: () => import('./tools/video/video-to-audio.js'),
   },
   {
     id: 'video-to-gif',
@@ -328,7 +328,7 @@ export const tools = [
     category: 'video',
     icon: 'image-play',
     description: "Transformez un extrait de vidéo (MP4, WEBM, MOV, AVI, MKV) en GIF animé : plage, largeur, FPS, palette 256 couleurs et boucle, 100 % localement via FFmpeg.wasm.",
-    module: () => import('./tools/video-to-gif.js'),
+    module: () => import('./tools/video/video-to-gif.js'),
   },
   {
     id: 'video-frame-grabber',
@@ -336,7 +336,7 @@ export const tools = [
     category: 'video',
     icon: 'camera',
     description: "Capturez des images de vos vidéos (MP4, WEBM, MOV, AVI, MKV) en PNG, JPEG ou WebP à la résolution native, manuellement ou à intervalle, export ZIP, 100 % localement.",
-    module: () => import('./tools/video-frame-grabber.js'),
+    module: () => import('./tools/video/video-frame-grabber.js'),
   },
   {
     id: 'video-merger',
@@ -344,7 +344,7 @@ export const tools = [
     category: 'video',
     icon: 'combine',
     description: "Fusionnez plusieurs vidéos (MP4, WEBM, MOV, AVI, MKV) dans l'ordre de votre choix, avec résolution normalisée et sortie MP4 ou WEBM, 100 % localement via FFmpeg.wasm.",
-    module: () => import('./tools/video-merger.js'),
+    module: () => import('./tools/video/video-merger.js'),
   },
   {
     id: 'video-speed-reverse',
@@ -352,7 +352,7 @@ export const tools = [
     category: 'video',
     icon: 'gauge',
     description: "Accélérez, ralentissez ou inversez vos vidéos (0.25× à 4×) avec audio ajusté, export MP4 ou WEBM, 100 % localement via FFmpeg.wasm.",
-    module: () => import('./tools/video-speed-reverse.js'),
+    module: () => import('./tools/video/video-speed-reverse.js'),
   },
   {
     id: 'screen-webcam-recorder',
@@ -360,7 +360,7 @@ export const tools = [
     category: 'video',
     icon: 'monitor-dot',
     description: "Enregistrez votre écran, votre webcam ou les deux en incrustation (PiP), avec micro et audio système, export WEBM natif ou MP4, 100 % localement.",
-    module: () => import('./tools/screen-webcam-recorder.js'),
+    module: () => import('./tools/video/screen-webcam-recorder.js'),
   },
 ];
 

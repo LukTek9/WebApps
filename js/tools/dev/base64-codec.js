@@ -1,4 +1,4 @@
-import { createWorkspace, setStats } from './tool-kit.js';
+import { createWorkspace, setStats } from '../shared/dev-tool-kit.js';
 
 let view;
 const CONTROLS = '<label class="dev-tools__field">Opération<select class="dev-tools__select" data-mode><option value="encode">Encoder en Base64</option><option value="decode">Décoder du Base64</option></select></label>';

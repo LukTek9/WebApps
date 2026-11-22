@@ -1,4 +1,4 @@
-import { bindDropzone, createDropzone, createSecurityUI, escapeHtml } from './security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI, escapeHtml } from './shared/security-tool-ui.js';
 
 const MAX_PARTS = 1000;
 let ui;

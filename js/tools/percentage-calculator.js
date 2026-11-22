@@ -1,5 +1,5 @@
-import { createSecurityUI } from './security-tool-ui.js';
-import { bindResultActions, formatNumber, parseNumber, updateResult } from './calculation-utils.js';
+import { createSecurityUI } from './shared/security-tool-ui.js';
+import { bindResultActions, formatNumber, parseNumber, updateResult } from './shared/calculation-utils.js';
 
 let ui;
 let report = '';

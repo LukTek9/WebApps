@@ -1,4 +1,4 @@
-import { createWorkspace, setStats } from './tool-kit.js';
+import { createWorkspace, setStats } from '../shared/dev-tool-kit.js';
 
 let view;
 const CONTROLS = '<label class="dev-tools__field">Langage<select class="dev-tools__select" data-kind><option value="html">HTML</option><option value="xml">XML</option><option value="sql">SQL</option></select></label><label class="dev-tools__field">Indentation<select class="dev-tools__select" data-indent><option value="2">2 espaces</option><option value="4">4 espaces</option><option value="tab">Tabulation</option></select></label>';

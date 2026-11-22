@@ -1,5 +1,5 @@
-import { createSecurityUI } from './security-tool-ui.js';
-import { bindResultActions, updateResult } from './calculation-utils.js';
+import { createSecurityUI } from './shared/security-tool-ui.js';
+import { bindResultActions, updateResult } from './shared/calculation-utils.js';
 
 const DIGITS = '0123456789abcdefghijklmnopqrstuvwxyz';
 const BASE_NAMES = { 2: 'binaire', 8: 'octal', 10: 'décimal', 16: 'hexadécimal' };

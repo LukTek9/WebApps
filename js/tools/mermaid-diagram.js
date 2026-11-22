@@ -1,4 +1,4 @@
-import { createSecurityUI } from './security-tool-ui.js';
+import { createSecurityUI } from './shared/security-tool-ui.js';
 
 const MAX_SOURCE_LENGTH = 100000;
 const RENDER_DELAY_MS = 350;

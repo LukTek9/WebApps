@@ -1,4 +1,4 @@
-import { createWorkspace, setStats } from './tool-kit.js';
+import { createWorkspace, setStats } from '../shared/dev-tool-kit.js';
 
 let view;
 const CONTROLS = '<label class="dev-tools__field">Fichier à générer<select class="dev-tools__select" data-kind><option value="gitignore">.gitignore</option><option value="env">.env.example</option></select></label><label class="dev-tools__check"><input type="checkbox" data-node checked> Node.js</label><label class="dev-tools__check"><input type="checkbox" data-python> Python</label><label class="dev-tools__check"><input type="checkbox" data-macos checked> macOS</label><label class="dev-tools__check"><input type="checkbox" data-vscode> VS Code</label><label class="dev-tools__field">Nom de l’application<input class="dev-tools__input" data-app value="mon-application"></label><label class="dev-tools__field">Port<input class="dev-tools__input" data-port type="number" min="1" max="65535" value="3000"></label><label class="dev-tools__field">URL d’API<input class="dev-tools__input" data-api value="http://localhost:3000/api"></label>';

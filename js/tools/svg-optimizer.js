@@ -1,5 +1,5 @@
-import { bindDropzone, createDropzone, createSecurityUI } from './security-tool-ui.js';
-import { sanitizeSvg, serializeSvg } from './svg-utils.js';
+import { bindDropzone, createDropzone, createSecurityUI } from './shared/security-tool-ui.js';
+import { sanitizeSvg, serializeSvg } from './shared/svg-utils.js';
 
 let ui;
 let output = '';

@@ -1,4 +1,4 @@
-import { createWorkspace, setStats } from './tool-kit.js';
+import { createWorkspace, setStats } from '../shared/dev-tool-kit.js';
 
 let view;
 const CONTROLS = '<label class="dev-tools__field">Contenu<select class="dev-tools__select" data-kind><option value="url-component">Composant URL</option><option value="url-full">URL complète</option><option value="html">Entités HTML</option></select></label><label class="dev-tools__field">Opération<select class="dev-tools__select" data-mode><option value="encode">Encoder</option><option value="decode">Décoder</option></select></label>';
