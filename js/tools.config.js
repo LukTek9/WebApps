@@ -316,4 +316,12 @@ export const tools = [
     description: "Transformez un extrait de vidéo (MP4, WEBM, MOV, AVI, MKV) en GIF animé : plage, largeur, FPS, palette 256 couleurs et boucle, 100 % localement via FFmpeg.wasm.",
     module: () => import('./tools/video-to-gif.js'),
   },
+  {
+    id: 'video-frame-grabber',
+    name: "Capture d'images Vidéo",
+    category: 'video',
+    icon: 'camera',
+    description: "Capturez des images de vos vidéos (MP4, WEBM, MOV, AVI, MKV) en PNG, JPEG ou WebP à la résolution native, manuellement ou à intervalle, export ZIP, 100 % localement.",
+    module: () => import('./tools/video-frame-grabber.js'),
+  },
 ];
