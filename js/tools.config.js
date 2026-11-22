@@ -285,6 +285,14 @@ export const tools = [
     module: () => import('./tools/video-converter.js'),
   },
   {
+    id: 'video-cropper',
+    name: "Recadreur Vidéo",
+    category: 'video',
+    icon: 'crop',
+    description: "Recadrez vos vidéos avec un cadre interactif, ratios prédéfinis (16:9, 9:16, 1:1, 4:5, 4:3) et mise à l'échelle, export MP4 ou WEBM 100 % localement via FFmpeg.wasm.",
+    module: () => import('./tools/video-cropper.js'),
+  },
+  {
     id: 'video-trimmer',
     name: "Découpeur Vidéo",
     category: 'video',
