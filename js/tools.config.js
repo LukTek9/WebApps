@@ -220,4 +220,12 @@ export const tools = [
     description: "Convertissez vos fichiers audio (MP3, WAV, OGG, M4A, FLAC) avec choix du débit et de la fréquence, aperçu inclus, 100 % localement.",
     module: () => import('./tools/audio-converter.js'),
   },
+  {
+    id: 'audio-merger',
+    name: "Fusionneur Audio",
+    category: 'audio',
+    icon: 'merge',
+    description: "Assemblez plusieurs fichiers audio dans l'ordre de votre choix avec silences configurables, export WAV, MP3 ou OGG 100 % localement.",
+    module: () => import('./tools/audio-merger.js'),
+  },
 ];
