@@ -10,7 +10,6 @@
 /** Catégories (filtres du header). `all` = pas de filtre. */
 export const categories = [
   { id: 'all',   label: 'Tout',  color: 'var(--cat-default)' },
-  { id: 'video', label: 'Vidéo', color: 'var(--cat-video)' },
   { id: 'audio', label: 'Audio', color: 'var(--cat-audio)' },
   { id: 'image', label: 'Image', icon: 'image', color: 'var(--cat-image)' },
   { id: 'utility', label: 'Utilitaire', icon: 'qr-code', color: 'var(--cat-utility)' },

@@ -133,6 +133,6 @@ els.brand.addEventListener('click', closeTool);
 renderFilters();
 renderGrid();
 
-// Deep link : index.html#youtube-converter
+// Deep link : index.html#<tool-id>
 const hashId = location.hash.slice(1);
 if (hashId) openTool(hashId);
