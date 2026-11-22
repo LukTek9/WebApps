@@ -348,4 +348,12 @@ export const tools = [
     description: "Accélérez, ralentissez ou inversez vos vidéos (0.25× à 4×) avec audio ajusté, export MP4 ou WEBM, 100 % localement via FFmpeg.wasm.",
     module: () => import('./tools/video-speed-reverse.js'),
   },
+  {
+    id: 'screen-webcam-recorder',
+    name: "Enregistreur Écran & Webcam",
+    category: 'video',
+    icon: 'monitor-dot',
+    description: "Enregistrez votre écran, votre webcam ou les deux en incrustation (PiP), avec micro et audio système, export WEBM natif ou MP4, 100 % localement.",
+    module: () => import('./tools/screen-webcam-recorder.js'),
+  },
 ];
