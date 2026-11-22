@@ -7,6 +7,7 @@ WebApp Tools est une boîte à outils web en français regroupant **110 outils**
 - **Traitement local** : les fichiers restent sur l'appareil et sont traités dans le navigateur.
 - **Chargement paresseux** : les modules des outils sont chargés uniquement à leur ouverture.
 - **Recherche et filtres** : recherche en temps réel avec filtres par catégorie.
+- **Accueil dynamique** : l'arrière-plan évolue subtilement avec la catégorie visible au défilement.
 - **Thème centralisé** : couleurs, espacements et mises en page sont définis dans `css/theme.css`.
 - **Routage par URL** : un outil peut être ouvert directement avec une ancre, par exemple `#pdf-merger`.
 - **Sans backend ni base de données** : le projet est composé uniquement de HTML, CSS et JavaScript.

@@ -1,7 +1,96 @@
 import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
+
+let categoryScrollEntries = [];
 
 function prefersReducedMotion() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+}
+
+function getCategoryColor(section) {
+  const color = getComputedStyle(section).getPropertyValue('--category-color').trim();
+  const probe = document.createElement('span');
+  probe.style.color = color;
+  probe.style.position = 'fixed';
+  probe.style.visibility = 'hidden';
+  document.body.append(probe);
+  const resolvedColor = getComputedStyle(probe).color;
+  probe.remove();
+  const srgb = resolvedColor.match(/^color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\)$/);
+  if (!srgb) return resolvedColor;
+  const [red, green, blue] = srgb.slice(1, 4).map((channel) => Math.round(Number(channel) * 255));
+  return `rgba(${red},${green},${blue},${srgb[4] ?? 1})`;
+}
+
+function resetCategoryScrollBg(background) {
+  if (!background) return;
+  gsap.killTweensOf(background);
+  background.classList.remove('is-active');
+  delete background.dataset.activeCategory;
+  if (prefersReducedMotion()) {
+    gsap.set(background, { '--scroll-bg-color': 'transparent' });
+    return;
+  }
+  gsap.to(background, {
+    '--scroll-bg-color': 'transparent',
+    duration: 0.45,
+    ease: 'power2.out',
+    overwrite: true,
+  });
+}
+
+export function initCategoryScrollBg(container) {
+  categoryScrollEntries.forEach(({ trigger }) => trigger.kill());
+  categoryScrollEntries = [];
+
+  const background = document.getElementById('scroll-bg');
+  if (!background) {
+    ScrollTrigger.refresh();
+    return;
+  }
+  gsap.killTweensOf(background);
+  background.classList.remove('is-active');
+  delete background.dataset.activeCategory;
+  gsap.set(background, { '--scroll-bg-color': 'transparent' });
+
+  const sections = [...(container?.querySelectorAll('.category-section[data-category]') ?? [])];
+  sections.forEach((section, index) => {
+    const category = section.dataset.category;
+    const color = getCategoryColor(section);
+    const activate = () => {
+      gsap.killTweensOf(background);
+      background.classList.add('is-active');
+      background.dataset.activeCategory = category;
+      if (prefersReducedMotion()) {
+        gsap.set(background, { '--scroll-bg-color': color });
+        return;
+      }
+      gsap.to(background, {
+        '--scroll-bg-color': color,
+        duration: 0.75,
+        ease: 'power2.out',
+        overwrite: true,
+      });
+    };
+
+    const trigger = ScrollTrigger.create({
+      trigger: section,
+      start: 'top 68%',
+      onEnter: activate,
+      onEnterBack: activate,
+      onLeaveBack: index === 0 ? () => resetCategoryScrollBg(background) : undefined,
+    });
+    categoryScrollEntries.push({ trigger, activate });
+  });
+  ScrollTrigger.refresh();
+
+  let currentEntry = null;
+  categoryScrollEntries.forEach((entry) => {
+    if (entry.trigger.start <= window.scrollY) currentEntry = entry;
+  });
+  if (currentEntry) currentEntry.activate();
 }
 
 function animateGroups(groups) {

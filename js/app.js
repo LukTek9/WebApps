@@ -2,7 +2,13 @@
  * app.js — Pilotage UI : grille de cartes, filtres, workspace, lazy loading des outils.
  */
 import { categories, tools } from './tools.config.js';
-import { animateHeroAndGrid, animateHomeEnter, animateToolContent, animateWorkspaceEnter } from './animations.js';
+import {
+  animateHeroAndGrid,
+  animateHomeEnter,
+  animateToolContent,
+  animateWorkspaceEnter,
+  initCategoryScrollBg,
+} from './animations.js';
 
 const $ = (id) => document.getElementById(id);
 const els = {
@@ -79,6 +85,32 @@ function motionForTool(id) {
   return toolMotions[hash % toolMotions.length];
 }
 
+function createToolCard(tool) {
+  const card = document.createElement('button');
+  card.type = 'button';
+  card.className = 'tool-card';
+  card.style.setProperty('--tool-color', catColor(tool.category));
+  card.dataset.motion = motionForTool(tool.id);
+
+  const icon = document.createElement('span');
+  icon.className = 'tool-card__icon';
+  const iconElement = document.createElement('i');
+  iconElement.setAttribute('data-lucide', tool.icon);
+  icon.appendChild(iconElement);
+
+  const title = document.createElement('span');
+  title.className = 'tool-card__title';
+  title.textContent = tool.name;
+
+  const desc = document.createElement('span');
+  desc.className = 'tool-card__desc';
+  desc.textContent = tool.description;
+
+  card.append(icon, title, desc);
+  card.addEventListener('click', () => openTool(tool.id));
+  return card;
+}
+
 /* ---------- Grille ---------- */
 function renderGrid() {
   els.grid.innerHTML = '';
@@ -105,31 +137,37 @@ function renderGrid() {
     .sort((a, b) => catRank(a.t.category) - catRank(b.t.category) || a.i - b.i)
     .map(({ t }) => t);
 
-  for (const tool of visible) {
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = 'tool-card';
-    card.style.setProperty('--tool-color', catColor(tool.category));
-    card.dataset.motion = motionForTool(tool.id);
+  if (state.category === 'all') {
+    for (const category of categories.filter(({ id }) => id !== 'all')) {
+      const categoryTools = visible.filter((tool) => tool.category === category.id);
+      if (!categoryTools.length) continue;
 
-    // textContent : pas d'injection HTML depuis la config
-    const icon = document.createElement('span');
-    icon.className = 'tool-card__icon';
-    const i = document.createElement('i');
-    i.setAttribute('data-lucide', tool.icon);
-    icon.appendChild(i);
+      const section = document.createElement('section');
+      section.className = 'category-section';
+      section.dataset.category = category.id;
+      section.style.setProperty('--category-color', category.color);
 
-    const title = document.createElement('span');
-    title.className = 'tool-card__title';
-    title.textContent = tool.name;
+      const heading = document.createElement('div');
+      heading.className = 'category-section__heading';
+      const title = document.createElement('h3');
+      title.className = 'category-section__title';
+      title.textContent = category.label;
+      const count = document.createElement('span');
+      count.className = 'category-section__count';
+      count.textContent = `${categoryTools.length} ${categoryTools.length === 1 ? 'outil' : 'outils'}`;
+      heading.append(title, count);
 
-    const desc = document.createElement('span');
-    desc.className = 'tool-card__desc';
-    desc.textContent = tool.description;
-
-    card.append(icon, title, desc);
-    card.addEventListener('click', () => openTool(tool.id));
-    els.grid.appendChild(card);
+      const grid = document.createElement('div');
+      grid.className = 'tools-grid';
+      categoryTools.forEach((tool) => grid.appendChild(createToolCard(tool)));
+      section.append(heading, grid);
+      els.grid.appendChild(section);
+    }
+  } else {
+    const grid = document.createElement('div');
+    grid.className = 'tools-grid';
+    visible.forEach((tool) => grid.appendChild(createToolCard(tool)));
+    els.grid.appendChild(grid);
   }
   const resultLabel = visible.length === 1 ? 'outil' : 'outils';
   els.resultsCount.textContent = `${visible.length} ${resultLabel}`;
@@ -140,6 +178,7 @@ function renderGrid() {
   els.grid.hidden = visible.length === 0;
   refreshIcons();
   animateHeroAndGrid(els.home);
+  initCategoryScrollBg(state.category === 'all' ? els.home : null);
 }
 
 /* ---------- Workspace ---------- */
@@ -158,6 +197,7 @@ async function openTool(id) {
   setActiveThemeColor(tool.category);
   els.home.hidden = true;
   els.workspace.hidden = false;
+  initCategoryScrollBg(null);
   animateWorkspaceEnter(els.workspace);
   els.title.textContent = tool.name;
   showStatus('Chargement…');
@@ -188,6 +228,7 @@ function closeTool() {
   els.workspace.hidden = true;
   els.home.hidden = false;
   animateHomeEnter(els.home);
+  initCategoryScrollBg(state.category === 'all' ? els.home : null);
   history.replaceState(null, '', location.pathname);
 }
 
