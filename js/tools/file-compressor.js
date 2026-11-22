@@ -48,6 +48,7 @@ const TEMPLATE = `
         <option value="max">Max (poids minimal)</option>
       </select>
     </label>
+    <button class="fcmp-btn" id="fcmp-copy" type="button" disabled><i data-lucide="copy"></i> Copier le résultat sélectionné</button>
     <button class="fcmp-btn primary" id="fcmp-run" disabled><i data-lucide="zap"></i> Compresser</button>
   </div>
   <div class="fcmp-progress"><div id="fcmp-bar"></div></div>
@@ -109,7 +110,10 @@ async function compressImage(file, level) {
     canvas.width = bmp.width;
     canvas.height = bmp.height;
     const g = canvas.getContext('2d');
-    if (mime === 'image/jpeg') { g.fillStyle = '#fff'; g.fillRect(0, 0, canvas.width, canvas.height); }
+    if (mime === 'image/jpeg') {
+      g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim();
+      g.fillRect(0, 0, canvas.width, canvas.height);
+    }
     g.drawImage(bmp, 0, 0);
     const blob = await canvasBlob(canvas, mime, level.q);
     canvas.width = canvas.height = 0; // libère le buffer
@@ -126,13 +130,14 @@ async function compressJson(file) {
   return new Blob([JSON.stringify(JSON.parse(text.replace(/^\uFEFF/, '')))], { type: file.type || 'application/json' });
 }
 
-async function processItem(item, level) {
+async function processItem(item, level, session) {
   const { file } = item;
   releaseOutput(item);
   let out = null;
   if (item.route === 'image') out = await compressImage(file, level);
   else if (item.route === 'json') out = await compressJson(file);
 
+  if (s !== session) return false;
   if (item.route === 'none' || !out) {
     item.out = file;
     item.status = 'nocomp';
@@ -144,6 +149,7 @@ async function processItem(item, level) {
     item.status = 'done';
   }
   item.url = URL.createObjectURL(item.out);
+  return true;
 }
 
 /* ------------------------------ Mémoire ------------------------------- */
@@ -170,6 +176,8 @@ function render() {
   q('table').hidden = s.items.length === 0;
   q('run').disabled = s.busy || !s.items.length;
   q('level').disabled = s.busy;
+  const selected = s.items.find((item) => item.id === s.viewId);
+  q('copy').disabled = s.busy || !selected?.out || !['image', 'json'].includes(selected.route);
   q('rows').innerHTML = s.items.map((it) => {
     const gain = it.out ? Math.round((1 - it.out.size / it.file.size) * 100) : null;
     const gainTxt = gain === null ? '—' : gain > 0 ? `-${gain} %` : '0 %';
@@ -263,9 +271,10 @@ function removeItem(id) {
 
 async function runAll() {
   if (s.busy || !s.items.length) return;
-  s.busy = true;
+  const session = s;
+  session.busy = true;
   const level = LEVELS[q('level').value] ?? LEVELS.balanced;
-  const todo = [...s.items];
+  const todo = [...session.items];
   q('bar').style.width = '0%';
   for (let i = 0; i < todo.length; i++) {
     const it = todo[i];
@@ -274,18 +283,54 @@ async function runAll() {
     setStatus(`Compression ${i + 1}/${todo.length} : ${it.file.name}`);
     render();
     try {
-      await processItem(it, level);
+      await processItem(it, level, session);
     } catch (e) {
+      if (s !== session) return;
       releaseOutput(it);
       it.status = 'error';
       it.error = e instanceof SyntaxError ? 'JSON invalide' : (e?.message ?? 'échec');
     }
-    if (!s) return; // démonté pendant le traitement
+    if (s !== session) return;
     q('bar').style.width = Math.round(((i + 1) / todo.length) * 100) + '%';
   }
-  s.busy = false;
+  session.busy = false;
   setStatus('Compression terminée.');
   render();
+}
+
+async function copySelected() {
+  const session = s;
+  const item = session?.items.find((entry) => entry.id === session.viewId);
+  if (!item?.out || !['image', 'json'].includes(item.route)) return;
+  try {
+    if (item.route === 'json') {
+      const text = await item.out.text();
+      if (s !== session) return;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        if (s !== session) return;
+        const field = document.createElement('textarea');
+        field.value = text;
+        field.setAttribute('readonly', '');
+        field.style.position = 'fixed';
+        field.style.opacity = '0';
+        session.root.append(field);
+        field.select();
+        let copied = false;
+        try { copied = document.execCommand('copy'); } finally { field.remove(); }
+        if (!copied) throw new Error('Autorisez le presse-papiers dans ce navigateur.');
+      }
+    } else {
+      if (!navigator.clipboard?.write || typeof ClipboardItem !== 'function') {
+        throw new Error('La copie d’image n’est pas prise en charge ici. Téléchargez le fichier à la place.');
+      }
+      await navigator.clipboard.write([new ClipboardItem({ [item.out.type]: item.out })]);
+    }
+    if (s === session) setStatus('Résultat copié dans le presse-papiers.');
+  } catch (error) {
+    if (s === session) setStatus(`Copie impossible : ${error.message}`, true);
+  }
 }
 
 /* ------------------------------ Contrat ------------------------------- */
@@ -293,15 +338,17 @@ async function runAll() {
 export function mount(container, ctx) {
   if (s) unmount();
   container.innerHTML = TEMPLATE;
-  s = { root: container, ctx, items: [], busy: false };
+  const controller = new AbortController();
+  s = { root: container, ctx, items: [], busy: false, controller };
 
   const drop = q('drop');
-  const on = (el, ev, fn) => el.addEventListener(ev, fn);
+  const on = (el, ev, fn) => el.addEventListener(ev, fn, { signal: controller.signal });
   on(q('input'), 'change', (e) => { addFiles(e.target.files); e.target.value = ''; });
   ['dragenter', 'dragover'].forEach((ev) => on(drop, ev, (e) => { e.preventDefault(); drop.classList.add('is-over'); }));
   ['dragleave', 'drop'].forEach((ev) => on(drop, ev, (e) => { e.preventDefault(); drop.classList.remove('is-over'); }));
   on(drop, 'drop', (e) => addFiles(e.dataTransfer?.files));
   on(q('run'), 'click', runAll);
+  on(q('copy'), 'click', copySelected);
   on(q('rows'), 'click', (e) => {
     const b = e.target.closest('[data-remove]');
     if (b) return removeItem(Number(b.dataset.remove));
@@ -314,6 +361,7 @@ export function mount(container, ctx) {
 
 export function unmount() {
   if (!s) return;
+  s.controller.abort();
   releaseAll();
   s.root.innerHTML = '';
   s = null;

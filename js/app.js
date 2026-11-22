@@ -9,6 +9,8 @@ const els = {
   home: $('home-view'),
   grid: $('tools-grid'),
   filters: $('filters'),
+  filtersToggle: $('filters-toggle'),
+  filtersToggleLabel: $('filters-toggle-label'),
   workspace: $('workspace'),
   title: $('workspace-title'),
   body: $('workspace-body'),
@@ -25,6 +27,7 @@ const els = {
 };
 
 const state = { category: 'all', query: '', activeModule: null, loaded: new Map() };
+const toolMotions = ['tilt', 'bounce', 'spin', 'pulse', 'swing', 'flip'];
 
 /** Rafraîchit les icônes Lucide (no-op si CDN indisponible). */
 const refreshIcons = () => window.lucide?.createIcons();
@@ -42,6 +45,7 @@ function setActiveThemeColor(categoryId) {
 /* ---------- Filtres ---------- */
 function renderFilters() {
   els.filters.innerHTML = '';
+  els.filtersToggleLabel.textContent = categories.find((category) => category.id === state.category)?.label ?? 'Tout';
   for (const cat of categories) {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -57,6 +61,7 @@ function renderFilters() {
     btn.addEventListener('click', () => {
       state.category = cat.id;
       setActiveThemeColor(state.category);
+      closeFilters(true);
       renderFilters();
       renderGrid();
       window.scrollTo({
@@ -66,6 +71,32 @@ function renderFilters() {
     });
     els.filters.appendChild(btn);
   }
+  requestAnimationFrame(updateFilterOverflow);
+}
+
+function closeFilters(returnFocus = false) {
+  els.filters.classList.remove('is-open');
+  els.filtersToggle.setAttribute('aria-expanded', 'false');
+  if (returnFocus && getComputedStyle(els.filtersToggle).display !== 'none') {
+    els.filtersToggle.focus({ preventScroll: true });
+  }
+}
+
+function updateFilterOverflow() {
+  if (els.filters.classList.contains('is-open')) return;
+  const wasCollapsed = els.filters.classList.contains('has-overflow');
+  if (wasCollapsed) els.filters.style.display = 'flex';
+  const hasOverflow = els.filters.scrollWidth > els.filters.clientWidth;
+  els.filters.style.removeProperty('display');
+  els.filters.classList.toggle('has-overflow', hasOverflow);
+  els.filtersToggle.hidden = !hasOverflow;
+  if (!hasOverflow) closeFilters();
+}
+
+function motionForTool(id) {
+  let hash = 0;
+  for (const character of id) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  return toolMotions[hash % toolMotions.length];
 }
 
 /* ---------- Grille ---------- */
@@ -99,6 +130,7 @@ function renderGrid() {
     card.type = 'button';
     card.className = 'tool-card';
     card.style.setProperty('--tool-color', catColor(tool.category));
+    card.dataset.motion = motionForTool(tool.id);
 
     // textContent : pas d'injection HTML depuis la config
     const icon = document.createElement('span');
@@ -180,6 +212,14 @@ function closeTool() {
 
 /* ---------- Init ---------- */
 setActiveThemeColor(state.category);
+window.addEventListener('resize', updateFilterOverflow);
+els.filtersToggle.addEventListener('click', () => {
+  const isOpen = els.filters.classList.toggle('is-open');
+  els.filtersToggle.setAttribute('aria-expanded', String(isOpen));
+});
+document.addEventListener('click', (event) => {
+  if (!els.filters.contains(event.target) && !els.filtersToggle.contains(event.target)) closeFilters();
+});
 els.back.addEventListener('click', closeTool);
 els.brand.addEventListener('click', closeTool);
 els.search.addEventListener('submit', (event) => event.preventDefault());
@@ -206,6 +246,10 @@ els.reset.addEventListener('click', () => {
   els.searchInput.focus();
 });
 document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && els.filters.classList.contains('is-open')) {
+    closeFilters(true);
+    return;
+  }
   const target = event.target;
   const isTyping = target instanceof HTMLElement
     && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));

@@ -404,20 +404,20 @@ const additions = [
   ['kanban-board', 'Tableau Kanban', 'utils', 'kanban', 'Ajoutez, modifiez et déplacez vos tâches entre colonnes, enregistrées localement.'],
   ['system-inspector', 'Inspecteur système', 'utils', 'monitor', 'Consultez les informations et capacités exposées localement par votre navigateur.'],
   ['typing-speed-test', 'Test de vitesse de frappe', 'utils', 'keyboard', 'Mesurez votre vitesse réelle, votre précision et vos erreurs pendant un test chronométré.'],
-  ['color-converter', 'Convertisseur de couleurs', 'color', 'palette', 'Convertissez HEX, RGB, HSL, HSV et CMYK.'],
-  ['css-gradient-generator', 'Générateur de dégradés CSS', 'color', 'blend', 'Composez et copiez des dégradés CSS.'],
-  ['css-shadow-generator', 'Générateur d’ombres CSS', 'color', 'square-dashed', 'Réglez et prévisualisez les ombres CSS.'],
-  ['wcag-contrast-checker', 'Vérificateur de contraste WCAG', 'color', 'contrast', 'Mesurez le contraste et les seuils WCAG.'],
-  ['css-pattern-generator', 'Générateur de motifs CSS', 'color', 'grid-2x2', 'Créez des motifs CSS répétitifs.'],
-  ['css-border-radius', 'Générateur de border-radius', 'color', 'square', 'Créez des formes arrondies et blobs CSS.'],
-  ['colorblind-simulator', 'Simulateur de daltonisme', 'color', 'eye', 'Prévisualisez différentes perceptions des couleurs.'],
-  ['palette-generator', 'Générateur de palettes', 'color', 'swatch-book', 'Créez des palettes harmonieuses exportables.'],
-  ['svg-to-raster', 'Convertisseur SVG vers PNG / WebP', 'color', 'image-down', 'Rasterisez un SVG localement dans le navigateur.'],
-  ['svg-optimizer', 'Optimiseur SVG', 'color', 'file-scan', 'Nettoyez et optimisez le balisage SVG.'],
-  ['list-deduplicator', 'Déduplicateur de listes', 'data', 'list-x', 'Dédupliquez des listes et fichiers texte/CSV.'],
-  ['csv-viewer', 'Visualiseur et analyseur CSV', 'data', 'table-properties', 'Explorez un CSV et calculez des statistiques de colonnes.'],
-  ['exif-reader', 'Lecteur de métadonnées EXIF', 'data', 'camera', 'Lisez les métadonnées EXIF d’images JPEG locales.'],
-  ['file-splitter', 'Découpeur de fichiers', 'data', 'files', 'Divisez un fichier local en plusieurs morceaux.'],
+  ['color-converter', 'Convertisseur de couleurs', 'color', 'palette', 'Convertissez HEX, RGB, HSL, HSV et CMYK avec aperçu des nuances.'],
+  ['css-gradient-generator', 'Générateur de dégradés CSS', 'color', 'blend', 'Composez des dégradés CSS à plusieurs couleurs avec aperçu direct.'],
+  ['css-shadow-generator', 'Générateur d’ombres CSS', 'color', 'square-dashed', 'Réglez décalage, flou, extension et opacité avec aperçu.'],
+  ['wcag-contrast-checker', 'Vérificateur de contraste WCAG', 'color', 'contrast', 'Mesurez le contraste et vérifiez les seuils WCAG AA et AAA.'],
+  ['css-pattern-generator', 'Générateur de motifs CSS', 'color', 'grid-2x2', 'Créez des rayures, points, grilles et damiers personnalisés.'],
+  ['css-border-radius', 'Générateur de border-radius', 'color', 'square', 'Réglez les quatre coins et prévisualisez des formes personnalisées.'],
+  ['colorblind-simulator', 'Simulateur de daltonisme', 'color', 'eye', 'Comparez une image locale avec quatre simulations de vision des couleurs.'],
+  ['palette-generator', 'Générateur de palettes', 'color', 'swatch-book', 'Créez des harmonies colorées et exportez les variables CSS.'],
+  ['svg-to-raster', 'Convertisseur SVG vers PNG / WebP', 'color', 'image-down', 'Rasterisez un SVG localement avec choix du format et de l’échelle.'],
+  ['svg-optimizer', 'Optimiseur SVG', 'color', 'file-scan', 'Assainissez les références et éléments actifs, retirez les métadonnées et optimisez la géométrie SVG.'],
+  ['list-deduplicator', 'Déduplicateur de listes', 'data', 'list-x', 'Supprimez les doublons en conservant l’ordre et choisissez les règles de comparaison.'],
+  ['csv-viewer', 'Visualiseur et analyseur CSV', 'data', 'table-properties', 'Filtrez, triez, analysez et exportez les données CSV localement.'],
+  ['exif-reader', 'Lecteur de métadonnées EXIF', 'data', 'camera', 'Consultez les métadonnées et coordonnées GPS d’images JPEG locales.'],
+  ['file-splitter', 'Découpeur de fichiers', 'data', 'files', 'Découpez un fichier local en parties de taille définie et téléchargeables séparément.'],
   ['text-to-slug', 'Générateur de slug', 'text', 'text', 'Créez des slugs URL à partir du texte.'],
   ['text-encoding', 'Convertisseur d’encodage texte', 'text', 'binary', 'Affichez du texte en UTF-8, hexadécimal ou binaire.'],
   ['line-numberer', 'Numéroteur de lignes', 'text', 'list-ordered', 'Ajoutez ou retirez les numéros de ligne.'],
@@ -426,13 +426,13 @@ const additions = [
   ['html-validator', 'Vérificateur HTML', 'dev', 'badge-check', 'Repérez les problèmes HTML courants localement.'],
   ['random-generator', 'Générateur aléatoire sécurisé', 'security', 'dices', 'Tirez des entiers sans biais ou des décimaux avec crypto.getRandomValues.'],
   ['pomodoro-timer', 'Minuteur Pomodoro', 'utils', 'timer', 'Personnalisez les durées de concentration, de pause et les cycles Pomodoro.'],
-  ['unit-converter', 'Convertisseur d’unités', 'calc', 'ruler', 'Convertissez distances, masses et températures.'],
-  ['percentage-calculator', 'Calculateur de pourcentages', 'calc', 'percent', 'Calculez pourcentages, variations et proportions.'],
-  ['rule-of-three', 'Règle de trois', 'calc', 'equal', 'Résolvez une proportion simple.'],
-  ['loan-calculator', 'Calculateur de prêt', 'calc', 'landmark', 'Estimez mensualité et coût total d’un prêt.'],
-  ['bmi-calculator', 'Calculateur IMC', 'calc', 'heart-pulse', 'Calculez l’indice de masse corporelle.'],
-  ['age-calculator', 'Calculateur d’âge', 'calc', 'cake', 'Calculez un âge exact depuis une date de naissance.'],
-  ['number-base-converter', 'Convertisseur de bases', 'calc', 'binary', 'Convertissez les nombres entre bases usuelles.'],
+  ['unit-converter', 'Convertisseur d’unités', 'calc', 'ruler', 'Convertissez longueur, masse, température, volume, surface et vitesse avec aperçu.'],
+  ['percentage-calculator', 'Calculateur de pourcentages', 'calc', 'percent', 'Calculez une part, une proportion ou une variation relative en direct.'],
+  ['rule-of-three', 'Règle de trois', 'calc', 'equal', 'Résolvez A / B = C / D en choisissant la valeur inconnue.'],
+  ['loan-calculator', 'Calculateur de prêt', 'calc', 'landmark', 'Estimez mensualité, coût des intérêts et échéancier d’un prêt à taux fixe.'],
+  ['bmi-calculator', 'Calculateur IMC', 'calc', 'heart-pulse', 'Calculez un IMC indicatif et visualisez les repères adultes.'],
+  ['age-calculator', 'Calculateur d’âge', 'calc', 'cake', 'Calculez un âge exact, les jours vécus et le délai jusqu’au prochain anniversaire.'],
+  ['number-base-converter', 'Convertisseur de bases', 'calc', 'binary', 'Convertissez sans perte de précision entre les bases 2 à 36.'],
 ];
 
 const dedicatedDevModules = {
@@ -477,6 +477,36 @@ const dedicatedUtilityModules = {
   'pomodoro-timer': () => import('./tools/pomodoro-timer.js'),
 };
 
+const dedicatedDesignModules = {
+  'color-converter': () => import('./tools/color-converter.js'),
+  'css-gradient-generator': () => import('./tools/css-gradient-generator.js'),
+  'css-shadow-generator': () => import('./tools/css-shadow-generator.js'),
+  'wcag-contrast-checker': () => import('./tools/wcag-contrast-checker.js'),
+  'css-pattern-generator': () => import('./tools/css-pattern-generator.js'),
+  'css-border-radius': () => import('./tools/css-border-radius.js'),
+  'colorblind-simulator': () => import('./tools/colorblind-simulator.js'),
+  'palette-generator': () => import('./tools/palette-generator.js'),
+  'svg-to-raster': () => import('./tools/svg-to-raster.js'),
+  'svg-optimizer': () => import('./tools/svg-optimizer.js'),
+};
+
+const dedicatedDataModules = {
+  'list-deduplicator': () => import('./tools/list-deduplicator.js'),
+  'csv-viewer': () => import('./tools/csv-viewer.js'),
+  'exif-reader': () => import('./tools/exif-reader.js'),
+  'file-splitter': () => import('./tools/file-splitter.js'),
+};
+
+const dedicatedCalcModules = {
+  'unit-converter': () => import('./tools/unit-converter.js'),
+  'percentage-calculator': () => import('./tools/percentage-calculator.js'),
+  'rule-of-three': () => import('./tools/rule-of-three.js'),
+  'loan-calculator': () => import('./tools/loan-calculator.js'),
+  'bmi-calculator': () => import('./tools/bmi-calculator.js'),
+  'age-calculator': () => import('./tools/age-calculator.js'),
+  'number-base-converter': () => import('./tools/number-base-converter.js'),
+};
+
 for (const [id, name, category, icon, description] of additions) {
-  tools.push({ id, name, category, icon, description: `${description} Traitement 100 % local.`, module: dedicatedUtilityModules[id] || dedicatedSecurityModules[id] || dedicatedDevModules[id] || (() => import(`./tools/${id}.js`)) });
+  tools.push({ id, name, category, icon, description: `${description} Traitement 100 % local.`, module: dedicatedCalcModules[id] || dedicatedDataModules[id] || dedicatedDesignModules[id] || dedicatedUtilityModules[id] || dedicatedSecurityModules[id] || dedicatedDevModules[id] || (() => import(`./tools/${id}.js`)) });
 }

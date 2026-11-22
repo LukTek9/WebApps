@@ -16,6 +16,12 @@
         <span class="brand__logo"><i data-lucide="wrench"></i></span>
         <span class="brand__name">WebApp Tools</span>
       </button>
+      <button class="filters-toggle" id="filters-toggle" type="button" aria-controls="filters" aria-expanded="false" hidden>
+        <i data-lucide="layers" aria-hidden="true"></i>
+        <span class="sr-only">Catégories : </span>
+        <span id="filters-toggle-label">Tout</span>
+        <i class="filters-toggle__chevron" data-lucide="chevron-down" aria-hidden="true"></i>
+      </button>
       <nav class="filters" id="filters" aria-label="Catégories"></nav>
     </div>
   </header>
@@ -24,20 +30,45 @@
     <section id="home-view">
       <div class="container">
         <div class="hero">
-          <p class="hero__eyebrow"><span aria-hidden="true"></span> Votre boîte à outils, en un seul endroit</p>
-          <h1>Les bons outils.<br><span>Le bon résultat.</span></h1>
-          <p class="hero__intro">Gagnez du temps avec des outils simples et efficaces, directement dans votre navigateur.</p>
-          <form class="tool-search" id="tool-search" role="search">
-            <i data-lucide="search" aria-hidden="true"></i>
-            <label class="sr-only" for="tool-search-input">Rechercher un outil</label>
-            <input id="tool-search-input" type="search" placeholder="Que souhaitez-vous faire ?" autocomplete="off">
-            <button class="tool-search__clear" id="tool-search-clear" type="button" aria-label="Effacer la recherche" hidden>
-              <i data-lucide="x" aria-hidden="true"></i>
-            </button>
-          </form>
-          <div class="hero__trust">
-            <span><i data-lucide="shield-check" aria-hidden="true"></i> Fichiers traités sur votre appareil</span>
-            <span class="hero__tool-count" id="hero-tool-count"></span>
+          <div class="hero__content">
+            <p class="hero__eyebrow"><span aria-hidden="true"></span> Votre boîte à outils, en un seul endroit</p>
+            <h1>Moins de clics.<br><span>Plus de possibilités.</span></h1>
+            <p class="hero__intro">Les bons outils pour vos idées, vos fichiers et vos projets — sans quitter votre navigateur.</p>
+            <form class="tool-search" id="tool-search" role="search">
+              <i data-lucide="search" aria-hidden="true"></i>
+              <label class="sr-only" for="tool-search-input">Rechercher un outil</label>
+              <input id="tool-search-input" type="search" placeholder="Que souhaitez-vous faire ?" autocomplete="off">
+              <button class="tool-search__clear" id="tool-search-clear" type="button" aria-label="Effacer la recherche" hidden>
+                <i data-lucide="x" aria-hidden="true"></i>
+              </button>
+            </form>
+            <div class="hero__trust">
+              <span><i data-lucide="shield-check" aria-hidden="true"></i> Fichiers traités sur votre appareil</span>
+              <span class="hero__tool-count" id="hero-tool-count"></span>
+            </div>
+          </div>
+          <div class="hero__visual" aria-hidden="true">
+            <div class="hero__visual-glow"></div>
+            <div class="hero__orbit hero__orbit--outer"></div>
+            <div class="hero__orbit hero__orbit--inner"></div>
+            <div class="hero__showcase">
+              <div class="hero__showcase-top">
+                <span class="hero__showcase-mark"><i data-lucide="sparkles"></i></span>
+                <span class="hero__showcase-dots"><i></i><i></i><i></i></span>
+              </div>
+              <p>Un espace, mille idées</p>
+              <div class="hero__showcase-icons">
+                <span><i data-lucide="image"></i></span>
+                <span><i data-lucide="file-text"></i></span>
+                <span><i data-lucide="wand-sparkles"></i></span>
+                <span><i data-lucide="code-2"></i></span>
+              </div>
+              <div class="hero__showcase-line"></div>
+              <div class="hero__showcase-line hero__showcase-line--short"></div>
+              <div class="hero__showcase-caption"><i data-lucide="lock-keyhole"></i> Privé. Simple. Instantané.</div>
+            </div>
+            <div class="hero__float-card hero__float-card--top"><i data-lucide="image"></i><span>Image parfaite</span><i data-lucide="check"></i></div>
+            <div class="hero__float-card hero__float-card--bottom"><i data-lucide="zap"></i><span>Prêt en un clic</span></div>
           </div>
         </div>
         <section class="catalog" aria-label="Catalogue des outils">
