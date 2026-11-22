@@ -1,20 +1,15 @@
 # WebApp Tools
 
-WebApp Tools est une boîte à outils web en français, organisée comme une grille
-de cartes avec un espace de travail dédié à chaque outil.
+WebApp Tools est une boîte à outils web en français regroupant **42 outils** dans une interface responsive. Chaque outil s'ouvre dans un espace de travail dédié sans quitter la page.
 
 ## Fonctionnalités
 
-- **100 % client** : HTML, CSS et JavaScript sans backend ni base de données.
-- **Traitement local** : les fichiers sont traités dans le navigateur avec les
-  API File, Canvas, Web Audio, Web Workers et les Web APIs du navigateur.
-- **Chargement paresseux** : chaque outil est enregistré dans
-  `js/tools.config.js` et chargé uniquement lorsqu'il est ouvert.
-- **Bibliothèques à la demande** : les dépendances lourdes (PDF.js, pdf-lib,
-  Tesseract.js, FFmpeg.wasm, etc.) sont récupérées depuis des CDN lorsqu'elles
-  sont nécessaires.
-- **Profils responsive et thème centralisé** : les styles sont regroupés dans
-  `css/theme.css`, avec variables CSS partagées.
+- **Traitement local** : les fichiers restent sur l'appareil et sont traités dans le navigateur.
+- **Chargement paresseux** : les modules des outils sont chargés uniquement à leur ouverture.
+- **Recherche et filtres** : recherche en temps réel avec filtres par catégorie.
+- **Thème centralisé** : couleurs, espacements et mises en page sont définis dans `css/theme.css`.
+- **Routage par URL** : un outil peut être ouvert directement avec une ancre, par exemple `#pdf-merger`.
+- **Sans backend ni base de données** : le projet est composé uniquement de HTML, CSS et JavaScript.
 
 ## Outils disponibles
 
@@ -37,12 +32,12 @@ de cartes avec un espace de travail dédié à chaque outil.
 - Diviseur de PDF
 - Rotateur et réorganisateur de PDF
 - Compresseur de PDF
-- Conversion PDF vers images
-- Conversion images vers PDF
-- Numérotation des pages
-- Rotation des pages
-- Protection par mot de passe
-- Suppression du mot de passe
+- PDF vers images
+- Images vers PDF
+- Numéroteur de pages PDF
+- Rotation de pages PDF
+- Protecteur de PDF
+- Suppresseur de mot de passe PDF
 
 ### Audio (10)
 
@@ -57,38 +52,48 @@ de cartes avec un espace de travail dédié à chaque outil.
 - Métronome numérique
 - Visualiseur de spectre audio
 
-### Vidéo (1)
+### Vidéo (10)
 
-- Convertisseur vidéo local via FFmpeg.wasm
+- Convertisseur vidéo local
+- Recadreur vidéo
+- Découpeur vidéo
+- Compresseur de vidéo
+- Extracteur audio depuis une vidéo
+- Vidéo vers GIF
+- Capture d'images depuis une vidéo
+- Fusionneur de vidéos
+- Contrôle de vitesse et inversion vidéo
+- Enregistreur d'écran et webcam
 
 ### Utilitaires (2)
 
 - Générateur de QR code
 - Compresseur d'images et minificateur JSON
 
-## Confidentialité et fonctionnement hors ligne
+## Confidentialité et connexion
 
-Les fichiers ouverts dans un outil ne sont pas envoyés à un serveur par
-l'application. Toutefois, certaines fonctionnalités utilisent une connexion
-pour charger Lucide, leurs bibliothèques CDN ou les ressources WebAssembly
-requises. Elles peuvent donc être indisponibles hors ligne ou dans un
-environnement bloquant les CDN.
+Les fichiers ouverts dans les outils ne sont pas envoyés à un serveur par l'application. Certaines bibliothèques sont chargées depuis des CDN à la demande :
 
-Le lancement via `file://` n'est pas recommandé : les modules ES et certains
-workers peuvent être bloqués par les règles du navigateur. Servez le dossier
-avec un serveur HTTP local.
+- Lucide pour les icônes
+- GSAP pour les animations
+- PDF.js, pdf-lib et Tesseract.js selon l'outil
+- FFmpeg.wasm pour les traitements vidéo
+
+Une connexion réseau peut donc être nécessaire lors du premier chargement de ces dépendances. Les ressources disponibles hors ligne dépendent du navigateur et de son cache.
 
 ## Démarrage
 
-Depuis la racine du dépôt :
+Le lancement via `file://` n'est pas recommandé : les modules ES et certains workers peuvent être bloqués par les règles du navigateur.
+
+Depuis la racine du dépôt, lancez un serveur HTTP :
 
 ```powershell
 py -m http.server 8000
 ```
 
-Puis ouvrir <http://localhost:8000/>.
+Puis ouvrez <http://localhost:8000/>.
 
-Autres options possibles :
+Autres options :
 
 ```powershell
 python -m http.server 8000
@@ -98,40 +103,40 @@ python -m http.server 8000
 npx serve .
 ```
 
-Un outil peut aussi être ouvert directement via son identifiant avec une URL du
-type `http://localhost:8000/#pdf-merger`.
+Pour ouvrir un outil directement :
+
+```text
+http://localhost:8000/#pdf-merger
+http://localhost:8000/#image-converter
+http://localhost:8000/#audio-visualizer
+```
 
 ## Structure du projet
 
 ```text
 index.html              Page principale et workspace
 css/theme.css           Variables, thème et mise en page
-js/app.js               Grille, filtres, navigation et chargement des modules
-js/tools.config.js      Registre des catégories et outils
+js/app.js               Recherche, filtres, navigation et lazy loading
+js/animations.js        Animations GSAP
+js/tools.config.js      Registre des catégories et des 42 outils
 js/tools/               Modules indépendants des outils
-liste outils.txt        Liste d'idées ou d'outils envisagés
-update_and_push.ps1     Script de mise à jour d'état et de synchronisation Git
+update_and_push.ps1     Mise à jour de l'état du projet et synchronisation Git
+UPDATE_AND_PUSH.bat     Lanceur Windows du script PowerShell
+Project_State.txt       Inventaire généré de l'architecture du projet
+liste_outils.txt        Liste d'outils envisagés
 ```
 
 ## Ajouter un outil
 
 1. Créer `js/tools/<id>.js`.
-2. Exporter `mount(container, ctx)` et, si nécessaire, `unmount()`.
-3. Ajouter une entrée dans `tools` de `js/tools.config.js`, avec son nom,
-   catégorie, icône Lucide, description et une fonction d'import dynamique.
+2. Exporter `mount(container, ctx)` et, si nécessaire, `unmount()` pour nettoyer les workers, objets Blob ou écouteurs.
+3. Ajouter une entrée dans `js/tools.config.js` avec son identifiant, nom, catégorie, icône Lucide, description et fonction d'import dynamique.
 4. Réutiliser les variables et composants visuels de `css/theme.css`.
 
-Chaque module est chargé uniquement à l'ouverture de sa carte. Le nettoyage des
-workers, objets Blob ou écouteurs doit être effectué dans `unmount()` lorsqu'il
-est nécessaire.
+## Limites connues
 
-## Limites importantes
-
-- Le compresseur PDF rasterise les pages en JPEG : le texte devient une partie
-  de l'image et n'est plus sélectionnable ou recherchable.
-- Le compresseur d'images conserve JPEG, PNG ou WebP ; le JSON est minifié
-  directement.
-- Les formats et qualités disponibles dépendent du navigateur et des codecs
-  locaux.
-- FFmpeg.wasm et certaines bibliothèques nécessitent des ressources réseau et
-  suffisamment de mémoire pour traiter les fichiers volumineux.
+- Le compresseur PDF utilise une rasterisation JPEG : le texte des pages compressées n'est plus sélectionnable ou recherchable.
+- Les outils PDF protégés nécessitent le mot de passe pour retirer une restriction connue.
+- Les formats disponibles, leurs qualités d'encodage et les codecs dépendent du navigateur.
+- Certains traitements FFmpeg.wasm nécessitent une quantité importante de mémoire pour les fichiers volumineux.
+- Le support hors ligne complet dépend des ressources déjà mises en cache par le navigateur.
