@@ -1,4 +1,4 @@
-import { createSecurityUI } from './security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI } from './security-tool-ui.js';
 import { sanitizeSvg, serializeSvg } from './svg-utils.js';
 
 let ui;
@@ -8,7 +8,7 @@ let fileName = 'image.svg';
 const CONTENT = `
   <div class="security-tools__layout">
     <section class="security-tools__panel">
-      <label class="security-tools__field">Importer un SVG<input data-file type="file" accept=".svg,image/svg+xml"></label>
+      ${createDropzone({ id: 'svg', title: 'Glissez-déposez un SVG ici', hint: 'ou cliquez pour parcourir · fichier .svg', accept: '.svg,image/svg+xml', label: 'Importer un SVG' })}
       <label class="security-tools__field">Code SVG<textarea class="security-tools__textarea color-tools__svg-source" data-source rows="13" spellcheck="false" placeholder="Collez votre balisage <svg>…"></textarea></label>
       <div class="security-tools__actions"><button class="btn-primary" data-action="optimize" type="button">Optimiser le SVG</button><button class="btn-secondary" data-action="copy" type="button">Copier le SVG</button><button class="btn-secondary" data-action="download" type="button">Télécharger le SVG</button></div>
       <p class="security-tools__hint" data-size>Les éléments actifs et références externes sont retirés avec les commentaires et métadonnées.</p>
@@ -79,20 +79,20 @@ export function mount(container) {
   });
   fileName = 'image.svg';
   output = '';
-  ui.on('change', async (event) => {
-    if (!event.target.matches('[data-file]')) return;
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const activeUi = ui;
-    try {
-      const source = await file.text();
-      if (!activeUi.isActive()) return;
-      fileName = file.name.replace(/[\\/:*?"<>|]/g, '-') || 'image.svg';
-      activeUi.query('[data-source]').value = source;
-      render();
-    } catch (error) {
-      if (activeUi.isActive()) activeUi.setStatus(`Lecture du fichier impossible : ${error.message}`, 'error');
-    }
+  bindDropzone(ui, {
+    id: 'svg',
+    onFiles: async ([file]) => {
+      const activeUi = ui;
+      try {
+        const source = await file.text();
+        if (!activeUi.isActive()) return;
+        fileName = file.name.replace(/[\\/:*?"<>|]/g, '-') || 'image.svg';
+        activeUi.query('[data-source]').value = source;
+        render();
+      } catch (error) {
+        if (activeUi.isActive()) activeUi.setStatus(`Lecture du fichier impossible : ${error.message}`, 'error');
+      }
+    },
   });
   ui.on('click', async (event) => {
     const action = event.target.closest('[data-action]')?.dataset.action;

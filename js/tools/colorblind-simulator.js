@@ -1,4 +1,4 @@
-import { createSecurityUI } from './security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI } from './security-tool-ui.js';
 
 let ui;
 let imageFile = null;
@@ -25,7 +25,7 @@ const MODE_LABELS = {
 const CONTENT = `
   <div class="security-tools__layout">
     <section class="security-tools__panel">
-      <label class="security-tools__field">Image à simuler<input data-file type="file" accept="image/*"></label>
+      ${createDropzone({ id: 'image', title: 'Glissez-déposez une image ici', hint: 'ou cliquez pour parcourir · PNG, JPEG, WebP…', accept: 'image/*', label: 'Choisir une image à simuler' })}
       <label class="security-tools__field">Type de perception<select data-mode><option value="protanopia">Protanopie</option><option value="deuteranopia">Deutéranopie</option><option value="tritanopia">Tritanopie</option><option value="achromatopsia">Achromatopsie</option></select></label>
       <p class="security-tools__hint">L’image est traitée uniquement dans votre navigateur. La simulation est indicative et ne remplace pas un test de vision professionnel.</p>
       <div class="security-tools__actions"><button class="btn-secondary" data-action="copy" type="button" disabled>Copier le rapport</button><button class="btn-secondary" data-action="download" type="button" disabled>Télécharger l’image</button></div>
@@ -109,12 +109,10 @@ export function mount(container) {
   resultBlob = null;
   report = '';
   generation = 0;
-  ui.on('change', (event) => {
-    if (event.target.matches('[data-file]')) {
-      const file = event.target.files?.[0] || null;
-      if (!file) return;
+  bindDropzone(ui, {
+    id: 'image',
+    onFiles: ([file]) => {
       if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
-        event.target.value = '';
         ui.setStatus('Choisissez une image matricielle valide (PNG, JPEG, WebP…).', 'error');
         return;
       }
@@ -143,7 +141,9 @@ export function mount(container) {
       ui.query('[data-result]').hidden = true;
       ui.query('[data-dimensions]').textContent = 'Simulation en cours…';
       simulate();
-    }
+    },
+  });
+  ui.on('change', (event) => {
     if (event.target.matches('[data-mode]')) simulate();
   });
   ui.on('click', async (event) => {

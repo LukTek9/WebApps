@@ -1,4 +1,4 @@
-import { createSecurityUI } from './security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI } from './security-tool-ui.js';
 import { sanitizeSvg, serializeSvg, svgDimensions } from './svg-utils.js';
 
 let ui;
@@ -10,7 +10,7 @@ let fileName = 'image';
 const CONTENT = `
   <div class="security-tools__layout">
     <section class="security-tools__panel">
-      <label class="security-tools__field">Importer un SVG<input data-file type="file" accept=".svg,image/svg+xml"></label>
+      ${createDropzone({ id: 'svg', title: 'Glissez-déposez un SVG ici', hint: 'ou cliquez pour parcourir · fichier .svg', accept: '.svg,image/svg+xml', label: 'Importer un SVG' })}
       <label class="security-tools__field">Code SVG<textarea class="security-tools__textarea color-tools__svg-source" data-source rows="12" spellcheck="false" placeholder="Collez votre balisage <svg>…"></textarea></label>
       <div class="security-tools__controls">
         <label class="security-tools__field">Format<select data-format><option value="image/png">PNG</option><option value="image/webp">WebP</option></select></label>
@@ -124,23 +124,25 @@ export function mount(container) {
       ui.setStatus('Source modifiée : rasterisez à nouveau pour actualiser l’aperçu.', 'muted');
     }
   });
-  ui.on('change', async (event) => {
+  ui.on('change', (event) => {
     if (event.target.matches('[data-format], [data-scale]')) rasterize();
-    if (!event.target.matches('[data-file]')) return;
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const activeUi = ui;
-    try {
-      if (file.size > 10000000) throw new Error('Le fichier SVG dépasse la limite de 10 Mo.');
-      const source = await file.text();
-      if (!activeUi.isActive()) return;
-      fileName = file.name.replace(/\.svg$/i, '').replace(/[\\/:*?"<>|]/g, '-') || 'image';
-      activeUi.query('[data-source]').value = source;
-      invalidateResult();
-      rasterize();
-    } catch (error) {
-      if (activeUi.isActive()) activeUi.setStatus(`Lecture du SVG impossible : ${error.message}`, 'error');
-    }
+  });
+  bindDropzone(ui, {
+    id: 'svg',
+    onFiles: async ([file]) => {
+      const activeUi = ui;
+      try {
+        if (file.size > 10000000) throw new Error('Le fichier SVG dépasse la limite de 10 Mo.');
+        const source = await file.text();
+        if (!activeUi.isActive()) return;
+        fileName = file.name.replace(/\.svg$/i, '').replace(/[\\/:*?"<>|]/g, '-') || 'image';
+        activeUi.query('[data-source]').value = source;
+        invalidateResult();
+        rasterize();
+      } catch (error) {
+        if (activeUi.isActive()) activeUi.setStatus(`Lecture du SVG impossible : ${error.message}`, 'error');
+      }
+    },
   });
   ui.on('click', async (event) => {
     const action = event.target.closest('[data-action]')?.dataset.action;

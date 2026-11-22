@@ -1,4 +1,4 @@
-import { createSecurityUI } from './security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI } from './security-tool-ui.js';
 
 let ui;
 let cameraStream = null;
@@ -11,7 +11,7 @@ let result = '';
 const CONTENT = `
   <div class="security-tools__layout">
     <section class="security-tools__panel">
-      <label class="security-tools__field">Image QR<input data-image type="file" accept="image/*"></label>
+      ${createDropzone({ id: 'image', title: 'Glissez-déposez une image QR ici', hint: 'ou cliquez pour parcourir · PNG, JPEG, WebP…', accept: 'image/*', label: 'Choisir une image QR' })}
       <div class="security-tools__actions"><button class="btn-primary" data-action="camera-start" type="button">Démarrer la caméra</button><button class="btn-secondary" data-action="camera-stop" type="button" disabled>Arrêter la caméra</button></div>
       <div class="utility-tools__scanner-stage"><img data-preview alt="Aperçu de l’image sélectionnée" hidden><video data-video playsinline muted hidden></video></div>
       <p class="security-tools__hint">Le décodage utilise l’API BarcodeDetector du navigateur. La caméra nécessite votre autorisation et une connexion sécurisée (HTTPS ou localhost).</p>
@@ -92,33 +92,33 @@ export function mount(container) {
   });
   detector = null;
   result = '';
-  ui.on('change', async (event) => {
-    if (!event.target.matches('[data-image]')) return;
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const activeUi = ui;
-    stopCamera();
-    clearPreview();
-    result = '';
-    ui.query('[data-result]').textContent = 'Analyse de l’image…';
-    try {
-      previewUrl = URL.createObjectURL(file);
-      const preview = ui.query('[data-preview]');
-      preview.src = previewUrl;
-      preview.hidden = false;
-      const fileDetector = detector || await createDetector();
-      if (!activeUi.isActive()) return;
-      detector = fileDetector;
-      const image = await createImageBitmap(file);
-      if (!activeUi.isActive()) { image.close(); return; }
+  bindDropzone(ui, {
+    id: 'image',
+    onFiles: async ([file]) => {
+      const activeUi = ui;
+      stopCamera();
+      clearPreview();
+      result = '';
+      ui.query('[data-result]').textContent = 'Analyse de l’image…';
       try {
-        const codes = await fileDetector.detect(image);
-        if (activeUi.isActive()) setResult(codes);
+        previewUrl = URL.createObjectURL(file);
+        const preview = ui.query('[data-preview]');
+        preview.src = previewUrl;
+        preview.hidden = false;
+        const fileDetector = detector || await createDetector();
+        if (!activeUi.isActive()) return;
+        detector = fileDetector;
+        const image = await createImageBitmap(file);
+        if (!activeUi.isActive()) { image.close(); return; }
+        try {
+          const codes = await fileDetector.detect(image);
+          if (activeUi.isActive()) setResult(codes);
+        }
+        finally { image.close(); }
+      } catch (error) {
+        if (activeUi.isActive()) activeUi.setStatus(`Impossible de lire cette image : ${error.message}`, 'error');
       }
-      finally { image.close(); }
-    } catch (error) {
-      if (activeUi.isActive()) activeUi.setStatus(`Impossible de lire cette image : ${error.message}`, 'error');
-    }
+    },
   });
   ui.on('click', async (event) => {
     const action = event.target.closest('[data-action]')?.dataset.action;
