@@ -1,4 +1,4 @@
-import { createSecurityUI, escapeHtml } from './security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI, escapeHtml } from './security-tool-ui.js';
 
 const MAX_SOURCE_LENGTH = 5000000;
 const MAX_RENDERED_ROWS = 250;
@@ -13,7 +13,7 @@ let sortDirection = 1;
 
 const CONTENT = `
   <div class="security-tools__panel">
-    <label class="security-tools__field">Importer un fichier CSV<input data-file type="file" accept=".csv,text/csv,text/plain"></label>
+    ${createDropzone({ id: 'csv', title: 'Glissez-déposez un fichier CSV ici', hint: 'ou cliquez pour parcourir · .csv, texte', accept: '.csv,text/csv,text/plain', label: 'Importer un fichier CSV' })}
     <label class="security-tools__field">Données CSV<textarea class="security-tools__textarea" data-source rows="12" spellcheck="false" placeholder="Collez un CSV avec séparateur virgule, point-virgule, tabulation ou barre verticale…"></textarea></label>
     <div class="security-tools__controls">
       <label class="security-tools__field">Séparateur
@@ -241,7 +241,7 @@ export function mount(container) {
       showParseError(ui, error);
     }
   });
-  ui.on('change', async (event) => {
+  ui.on('change', (event) => {
     if (event.target.matches('[data-delimiter], [data-header]')) {
       try { render(); ui.setStatus('Analyse actualisée localement.', 'success'); }
       catch (error) {
@@ -249,23 +249,25 @@ export function mount(container) {
       }
       return;
     }
-    if (!event.target.matches('[data-file]')) return;
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const activeUi = ui;
-    try {
-      if (file.size > MAX_SOURCE_LENGTH) throw new Error('Le fichier CSV dépasse la limite de 5 Mo.');
-      const source = await file.text();
-      if (!activeUi.isActive()) return;
-      fileName = file.name.replace(/\.csv$/i, '').replace(/[\\/:*?"<>|]/g, '-') || 'donnees';
-      sortColumn = -1;
-      sortDirection = 1;
-      activeUi.query('[data-source]').value = source;
-      render();
-      activeUi.setStatus(`${file.name} analysé localement.`, 'success');
-    } catch (error) {
-      showParseError(activeUi, new Error(`Lecture ou analyse impossible : ${error.message}`));
-    }
+  });
+  bindDropzone(ui, {
+    id: 'csv',
+    onFiles: async ([file]) => {
+      const activeUi = ui;
+      try {
+        if (file.size > MAX_SOURCE_LENGTH) throw new Error('Le fichier CSV dépasse la limite de 5 Mo.');
+        const source = await file.text();
+        if (!activeUi.isActive()) return;
+        fileName = file.name.replace(/\.csv$/i, '').replace(/[\\/:*?"<>|]/g, '-') || 'donnees';
+        sortColumn = -1;
+        sortDirection = 1;
+        activeUi.query('[data-source]').value = source;
+        render();
+        activeUi.setStatus(`${file.name} analysé localement.`, 'success');
+      } catch (error) {
+        showParseError(activeUi, new Error(`Lecture ou analyse impossible : ${error.message}`));
+      }
+    },
   });
   ui.on('click', async (event) => {
     const sortButton = event.target.closest('[data-sort]');

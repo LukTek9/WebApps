@@ -1,4 +1,4 @@
-import { createSecurityUI, escapeHtml } from './security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI, escapeHtml } from './security-tool-ui.js';
 
 const MAX_FILES = 200;
 const MAX_TOTAL_BYTES = 500 * 1024 * 1024;
@@ -12,7 +12,7 @@ let lastResult = null;
 
 const CONTENT = `
   <div class="security-tools__panel">
-    <label class="security-tools__field">Ajouter des fichiers (glisser-déposer possible)<input data-file type="file" multiple></label>
+    ${createDropzone({ id: 'files', title: 'Glissez-déposez vos fichiers ici', hint: 'ou cliquez pour parcourir · plusieurs fichiers possibles', multiple: true, label: 'Ajouter des fichiers à fusionner' })}
     <div class="security-tools__controls">
       <label class="security-tools__field">Mode de fusion
         <select data-mode>
@@ -181,13 +181,17 @@ export function mount(container) {
   objectUrls = new Set();
   revokeTimers = new Set();
   lastResult = null;
-  ui.on('change', (event) => {
-    if (event.target.matches('[data-file]')) {
-      addFiles(event.target.files || []);
-      event.target.value = '';
+  bindDropzone(ui, {
+    id: 'files',
+    multiple: true,
+    onFiles: (list) => {
+      addFiles(list);
       releaseResult();
       render();
-    } else if (event.target.matches('[data-mode], [data-separator], [data-name]')) {
+    },
+  });
+  ui.on('change', (event) => {
+    if (event.target.matches('[data-mode], [data-separator], [data-name]')) {
       releaseResult();
       render();
     }
@@ -195,6 +199,7 @@ export function mount(container) {
   ui.on('dragover', (event) => { event.preventDefault(); });
   ui.on('drop', (event) => {
     event.preventDefault();
+    if (event.target.closest('[data-dropzone]')) return; // géré par bindDropzone (évite le double ajout)
     if (event.dataTransfer?.files?.length) { releaseResult(); addFiles(event.dataTransfer.files); }
   });
   ui.on('click', async (event) => {

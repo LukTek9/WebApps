@@ -1,4 +1,4 @@
-import { createSecurityUI, escapeHtml } from './security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI, escapeHtml } from './security-tool-ui.js';
 import { readJpegExif } from './exif-utils.js';
 
 let ui;
@@ -8,7 +8,7 @@ let fileName = 'metadonnees.json';
 const CONTENT = `
   <div class="security-tools__layout">
     <section class="security-tools__panel">
-      <label class="security-tools__field">Image JPEG locale<input data-file type="file" accept=".jpg,.jpeg,image/jpeg"></label>
+      ${createDropzone({ id: 'image', title: 'Glissez-déposez une image JPEG ici', hint: 'ou cliquez pour parcourir · .jpg, .jpeg', accept: '.jpg,.jpeg,image/jpeg', label: 'Choisir une image JPEG' })}
       <p class="security-tools__hint">Seuls les fichiers JPEG sont pris en charge. La lecture se fait sur cet appareil; les données de localisation restent visibles dans les résultats.</p>
       <div class="security-tools__actions">
         <button class="btn-secondary" data-action="copy" type="button" disabled>Copier les métadonnées JSON</button>
@@ -68,29 +68,29 @@ export function mount(container) {
   });
   report = '';
   fileName = 'metadonnees.json';
-  ui.on('change', async (event) => {
-    if (!event.target.matches('[data-file]')) return;
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const activeUi = ui;
-    report = '';
-    activeUi.query('[data-action="copy"]').disabled = true;
-    activeUi.query('[data-action="download"]').disabled = true;
-    activeUi.query('[data-table]').hidden = true;
-    activeUi.query('[data-output]').hidden = true;
-    try {
-      if (file.size > 50000000) throw new Error('Le fichier dépasse la limite de 50 Mo.');
-      if (file.type && file.type !== 'image/jpeg' && !/\.jpe?g$/i.test(file.name)) {
-        throw new Error('Choisissez un fichier JPEG valide.');
+  bindDropzone(ui, {
+    id: 'image',
+    onFiles: async ([file]) => {
+      const activeUi = ui;
+      report = '';
+      activeUi.query('[data-action="copy"]').disabled = true;
+      activeUi.query('[data-action="download"]').disabled = true;
+      activeUi.query('[data-table]').hidden = true;
+      activeUi.query('[data-output]').hidden = true;
+      try {
+        if (file.size > 50000000) throw new Error('Le fichier dépasse la limite de 50 Mo.');
+        if (file.type && file.type !== 'image/jpeg' && !/\.jpe?g$/i.test(file.name)) {
+          throw new Error('Choisissez un fichier JPEG valide.');
+        }
+        const parsed = readJpegExif(await file.arrayBuffer());
+        if (!activeUi.isActive()) return;
+        fileName = `${file.name.replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]/g, '-') || 'image'}-metadonnees.json`;
+        showResult(file, parsed);
+        activeUi.setStatus(`${parsed.metadata.length} champ(s) EXIF lu(s) localement.`, 'success');
+      } catch (error) {
+        if (activeUi.isActive()) activeUi.setStatus(error.message, 'error');
       }
-      const parsed = readJpegExif(await file.arrayBuffer());
-      if (!activeUi.isActive()) return;
-      fileName = `${file.name.replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]/g, '-') || 'image'}-metadonnees.json`;
-      showResult(file, parsed);
-      activeUi.setStatus(`${parsed.metadata.length} champ(s) EXIF lu(s) localement.`, 'success');
-    } catch (error) {
-      if (activeUi.isActive()) activeUi.setStatus(error.message, 'error');
-    }
+    },
   });
   ui.on('click', async (event) => {
     const action = event.target.closest('[data-action]')?.dataset.action;

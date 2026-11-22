@@ -1,4 +1,4 @@
-import { createSecurityUI, escapeHtml } from './security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI, escapeHtml } from './security-tool-ui.js';
 
 const MAX_PARTS = 1000;
 let ui;
@@ -9,7 +9,7 @@ let safeBaseName = 'fichier';
 const CONTENT = `
   <div class="security-tools__layout">
     <section class="security-tools__panel">
-      <label class="security-tools__field">Fichier à découper<input data-file type="file"></label>
+      ${createDropzone({ id: 'file', title: 'Glissez-déposez un fichier ici', hint: 'ou cliquez pour parcourir · tous formats', label: 'Choisir un fichier à découper' })}
       <div class="security-tools__controls">
         <label class="security-tools__field">Taille maximale d’une partie (Mo)
           <input data-size type="number" min="0.1" max="1024" step="0.1" value="10">
@@ -102,12 +102,7 @@ export function mount(container) {
   sourceFile = null;
   chunks = [];
   safeBaseName = 'fichier';
-  ui.on('change', (event) => {
-    if (event.target.matches('[data-file]')) {
-      sourceFile = event.target.files?.[0] ?? null;
-      safeBaseName = sourceFile?.name.replace(/[\\/:*?"<>|]/g, '-') || 'fichier';
-    }
-    if (!event.target.matches('[data-file], [data-size]')) return;
+  const recompute = () => {
     try {
       render();
       if (sourceFile) ui.setStatus('Découpage calculé localement.', 'success');
@@ -119,6 +114,17 @@ export function mount(container) {
       ui.query('[data-action="manifest"]').disabled = true;
       ui.setStatus(error.message, 'error');
     }
+  };
+  bindDropzone(ui, {
+    id: 'file',
+    onFiles: ([file]) => {
+      sourceFile = file;
+      safeBaseName = file.name.replace(/[\\/:*?"<>|]/g, '-') || 'fichier';
+      recompute();
+    },
+  });
+  ui.on('change', (event) => {
+    if (event.target.matches('[data-size]')) recompute();
   });
   ui.on('click', async (event) => {
     const partButton = event.target.closest('[data-part]');

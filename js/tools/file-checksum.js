@@ -1,4 +1,4 @@
-import { createSecurityUI, showError } from './security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI, showError } from './security-tool-ui.js';
 
 let ui;
 let file = null;
@@ -8,7 +8,7 @@ let revision = 0;
 const CONTENT = `
   <div class="security-tools__layout">
     <section class="security-tools__panel">
-      <label class="tool-dropzone security-tools__drop">Choisir un fichier à analyser<input data-file type="file"></label>
+      ${createDropzone({ id: 'file', title: 'Glissez-déposez un fichier ici', hint: 'ou cliquez pour parcourir · tous formats', label: 'Choisir un fichier à analyser' })}
       <div class="security-tools__controls">
         <label class="security-tools__field">Algorithme<select data-algorithm><option>SHA-256</option><option>SHA-384</option><option>SHA-512</option><option>SHA-1</option></select></label>
         <label class="security-tools__field">Empreinte de référence<input data-expected type="text" spellcheck="false" placeholder="Facultatif"></label>
@@ -73,11 +73,14 @@ export function mount(container) {
   file = null;
   checksum = '';
   revision = 0;
-  ui.on('change', (event) => {
-    if (event.target.matches('[data-file]')) {
-      file = event.target.files?.[0] || null;
+  bindDropzone(ui, {
+    id: 'file',
+    onFiles: ([selected]) => {
+      file = selected;
       update();
-    }
+    },
+  });
+  ui.on('change', (event) => {
     if (event.target.matches('[data-algorithm]')) update();
   });
   ui.on('input', (event) => { if (event.target.matches('[data-expected]')) compare(); });
