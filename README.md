@@ -1,6 +1,6 @@
 # WebApp Tools
 
-WebApp Tools est une boîte à outils web en français regroupant **42 outils** dans une interface responsive. Chaque outil s'ouvre dans un espace de travail dédié sans quitter la page.
+WebApp Tools est une boîte à outils web en français regroupant **110 outils** dans une interface responsive. Chaque outil s'ouvre dans un espace de travail dédié sans quitter la page.
 
 ## Fonctionnalités
 
@@ -65,10 +65,96 @@ WebApp Tools est une boîte à outils web en français regroupant **42 outils** 
 - Contrôle de vitesse et inversion vidéo
 - Enregistreur d'écran et webcam
 
-### Utilitaires (2)
+### Texte & Rédaction (14)
 
-- Générateur de QR code
-- Compresseur d'images et minificateur JSON
+- Compteur de mots et caractères
+- Comparateur de texte
+- Convertisseur de casse
+- Suppresseur de doublons
+- Nettoyeur de texte
+- Générateur de Lorem Ipsum
+- Convertisseur Markdown vers HTML
+- Convertisseur HTML vers Markdown
+- Inverseur de texte
+- Trieur de listes
+- Générateur de slug
+- Convertisseur d'encodage texte
+- Numéroteur de lignes
+- Analyseur de fréquence des mots
+
+### Développement & Web (12)
+
+- Formateur JSON
+- Convertisseur JSON vers CSV/XML
+- Convertisseur CSV vers JSON
+- Encodeur et décodeur Base64
+- Encodeur URL et HTML
+- Testeur d'expressions régulières
+- Minificateur CSS et JavaScript
+- Générateur de meta tags SEO
+- Générateur .gitignore et .env
+- Formateur SQL, HTML et XML
+- Convertisseur de timestamps
+- Vérificateur HTML
+
+### Sécurité & Crypto (11)
+
+- Générateur de mots de passe
+- Générateur de hash
+- Testeur de force de mot de passe
+- Générateur UUID/GUID
+- Chiffreur et déchiffreur AES
+- Décodeur JWT
+- Convertisseur ASCII, hexadécimal et binaire
+- Générateur de clés RSA/ECDSA
+- Calculateur de checksum
+- Générateur de codes TOTP
+- Générateur aléatoire sécurisé
+
+### Utilitaires & Productivité (11, avec le générateur QR)
+
+- Lecteur et scanneur QR
+- Générateur de codes-barres
+- Chronomètre et minuteur
+- Calculateur de différence de dates
+- Horloges mondiales
+- Bloc-notes local
+- Tableau Kanban
+- Inspecteur système
+- Test de vitesse de frappe
+- Minuteur Pomodoro
+- Générateur QR Code (outil existant)
+
+### Couleur & Design (10)
+
+- Convertisseur de couleurs
+- Générateur de dégradés CSS
+- Générateur d'ombres CSS
+- Vérificateur de contraste WCAG
+- Générateur de motifs CSS
+- Générateur de border-radius
+- Simulateur de daltonisme
+- Générateur de palettes
+- Convertisseur SVG vers PNG/WebP
+- Optimiseur SVG
+
+### Données & Fichiers (5, avec le compresseur existant)
+
+- Déduplicateur de listes et fichiers
+- Visualiseur et analyseur CSV
+- Lecteur de métadonnées EXIF
+- Découpeur de fichiers
+- Compresseur d'images et minificateur JSON (outil existant)
+
+### Calculs & Conversions (7)
+
+- Convertisseur d'unités
+- Calculateur de pourcentages
+- Règle de trois
+- Calculateur de prêt
+- Calculateur IMC
+- Calculateur d'âge
+- Convertisseur de bases numériques
 
 ## Confidentialité et connexion
 
@@ -78,6 +164,7 @@ Les fichiers ouverts dans les outils ne sont pas envoyés à un serveur par l'ap
 - GSAP pour les animations
 - PDF.js, pdf-lib et Tesseract.js selon l'outil
 - FFmpeg.wasm pour les traitements vidéo
+- jsQR comme solution de repli du lecteur QR
 
 Une connexion réseau peut donc être nécessaire lors du premier chargement de ces dépendances. Les ressources disponibles hors ligne dépendent du navigateur et de son cache.
 
@@ -118,8 +205,8 @@ index.html              Page principale et workspace
 css/theme.css           Variables, thème et mise en page
 js/app.js               Recherche, filtres, navigation et lazy loading
 js/animations.js        Animations GSAP
-js/tools.config.js      Registre des catégories et des 42 outils
-js/tools/               Modules indépendants des outils
+js/tools.config.js      Registre des catégories et des 110 outils
+js/tools/               Modules indépendants et runtime partagé des outils
 update_and_push.ps1     Mise à jour de l'état du projet et synchronisation Git
 UPDATE_AND_PUSH.bat     Lanceur Windows du script PowerShell
 Project_State.txt       Inventaire généré de l'architecture du projet

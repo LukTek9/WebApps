@@ -44,6 +44,13 @@
   --cat-image: #10b981;
   --cat-utility: #3b82f6;
   --cat-default: #7a736f;
+  --cat-text: color-mix(in srgb, var(--cat-image) 72%, var(--color-text));
+  --cat-dev: color-mix(in srgb, var(--cat-audio) 72%, var(--color-text));
+  --cat-security: color-mix(in srgb, var(--cat-video) 78%, var(--color-text));
+  --cat-utils: color-mix(in srgb, var(--cat-utility) 82%, var(--color-text));
+  --cat-color: color-mix(in srgb, var(--cat-image) 48%, var(--cat-video));
+  --cat-data: color-mix(in srgb, var(--cat-pdf) 62%, var(--cat-audio));
+  --cat-calc: color-mix(in srgb, var(--cat-default) 55%, var(--cat-audio));
 
   /* --- Typographie --- */
   --font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
@@ -115,7 +122,6 @@
   --font-base: var(--font-family);
   --danger: var(--color-error);
   --success: var(--color-success);
-  --cat-color: var(--cat-default);
 }
 
 /* ---------- Reset / base ---------- */
@@ -465,6 +471,40 @@ select option {
 .status-error { color: var(--color-error); }
 .status-success { color: var(--color-success); }
 .status-muted { color: var(--color-text-muted); }
+
+/* ---------- Workspace partagé des outils ---------- */
+.tool-panel {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+.tool-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.tool-textarea, .tool-code {
+  width: 100%;
+  min-height: 10rem;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  background: var(--color-surface-alt);
+  font: inherit;
+}
+.tool-code { overflow: auto; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; }
+.tool-field { display: grid; gap: var(--space-2); min-width: 0; color: var(--color-text); }
+.tool-row { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-3); }
+.tool-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: var(--space-3); }
+.tool-stat-card { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.tool-badge { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill); color: var(--theme-accent); background: var(--color-surface-alt); }
+.tool-preview-box { overflow: auto; padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.tool-dropzone { display: grid; place-items: center; gap: var(--space-2); padding: var(--space-6); border: 1px dashed var(--color-border); border-radius: var(--radius-lg); color: var(--color-text-muted); text-align: center; cursor: pointer; }
+.tool-dropzone:focus-within, .tool-dropzone:hover { border-color: var(--theme-accent); }
+.tool-table { width: 100%; border-collapse: collapse; }
+.tool-table th, .tool-table td { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-border); text-align: left; }
+.tool-copy-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+@media (max-width: 700px) { .tool-split { grid-template-columns: 1fr; } .tool-panel { padding: var(--space-4); } }
 
 /* Utilitaires espacement / icônes */
 .u-mt-4 { margin-top: var(--space-4); }
