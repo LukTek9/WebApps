@@ -418,21 +418,28 @@ const additions = [
   ['csv-viewer', 'Visualiseur et analyseur CSV', 'data', 'table-properties', 'Filtrez, triez, analysez et exportez les données CSV localement.'],
   ['exif-reader', 'Lecteur de métadonnées EXIF', 'data', 'camera', 'Consultez les métadonnées et coordonnées GPS d’images JPEG locales.'],
   ['file-splitter', 'Découpeur de fichiers', 'data', 'files', 'Découpez un fichier local en parties de taille définie et téléchargeables séparément.'],
+  ['file-merger', 'Fusionneur de fichiers', 'data', 'merge', 'Assemblez plusieurs fichiers en un seul (binaire, texte ou CSV) et réordonnez-les avant fusion.'],
+  ['url-extractor', 'Extracteur d’URL', 'data', 'link', 'Repérez et exportez tous les liens d’un texte, d’un e-mail ou d’une page HTML.'],
+  ['email-extractor', 'Extracteur d’e-mails', 'data', 'at-sign', 'Extrayez les adresses e-mail d’un texte ou d’un fichier, avec filtres par domaine et export CSV.'],
+  ['html-table-to-csv', 'HTML (tableau) vers CSV', 'data', 'table-2', 'Convertissez les tableaux HTML en CSV ou JSON, cellules fusionnées comprises.'],
+  ['mermaid-diagram', 'Éditeur de diagrammes Mermaid', 'data', 'git-fork', 'Écrivez du code Mermaid et exportez le diagramme en SVG ou PNG avec aperçu instantané.'],
   ['text-to-slug', 'Générateur de slug', 'text', 'text', 'Créez des slugs URL à partir du texte.'],
   ['text-encoding', 'Convertisseur d’encodage texte', 'text', 'binary', 'Affichez du texte en UTF-8, hexadécimal ou binaire.'],
   ['line-numberer', 'Numéroteur de lignes', 'text', 'list-ordered', 'Ajoutez ou retirez les numéros de ligne.'],
   ['word-frequency', 'Analyseur de fréquence des mots', 'text', 'chart-no-axes-column', 'Classez les mots les plus fréquents.'],
   ['timestamp-converter', 'Convertisseur de timestamps', 'dev', 'clock-3', 'Convertissez timestamps Unix et dates ISO.'],
   ['html-validator', 'Vérificateur HTML', 'dev', 'badge-check', 'Repérez les problèmes HTML courants localement.'],
-  ['random-generator', 'Générateur aléatoire sécurisé', 'security', 'dices', 'Tirez des entiers sans biais ou des décimaux avec crypto.getRandomValues.'],
   ['pomodoro-timer', 'Minuteur Pomodoro', 'utils', 'timer', 'Personnalisez les durées de concentration, de pause et les cycles Pomodoro.'],
   ['unit-converter', 'Convertisseur d’unités', 'calc', 'ruler', 'Convertissez longueur, masse, température, volume, surface et vitesse avec aperçu.'],
+  ['data-unit-converter', 'Convertisseur d’unités de données', 'calc', 'hard-drive', 'Convertissez bits, octets, Mo/Go/To (décimal) et Mio/Gio/Tio (binaire) avec tableau complet.'],
   ['percentage-calculator', 'Calculateur de pourcentages', 'calc', 'percent', 'Calculez une part, une proportion ou une variation relative en direct.'],
-  ['rule-of-three', 'Règle de trois', 'calc', 'equal', 'Résolvez A / B = C / D en choisissant la valeur inconnue.'],
   ['loan-calculator', 'Calculateur de prêt', 'calc', 'landmark', 'Estimez mensualité, coût des intérêts et échéancier d’un prêt à taux fixe.'],
-  ['bmi-calculator', 'Calculateur IMC', 'calc', 'heart-pulse', 'Calculez un IMC indicatif et visualisez les repères adultes.'],
-  ['age-calculator', 'Calculateur d’âge', 'calc', 'cake', 'Calculez un âge exact, les jours vécus et le délai jusqu’au prochain anniversaire.'],
+  ['vat-calculator', 'Calculateur de TVA', 'calc', 'receipt', 'Passez du HT au TTC avec quantité, remise et taux de TVA personnalisable.'],
   ['number-base-converter', 'Convertisseur de bases', 'calc', 'binary', 'Convertissez sans perte de précision entre les bases 2 à 36.'],
+  ['bmi-calorie-calculator', 'Calculateur IMC & calories', 'calc', 'heart-pulse', 'Calculez IMC, métabolisme de base et besoins caloriques selon votre activité.'],
+  ['random-generator', 'Générateur aléatoire sécurisé', 'calc', 'dices', 'Tirez des entiers sans biais ou des décimaux avec crypto.getRandomValues.'],
+  ['download-time-calculator', 'Calculateur de temps de téléchargement', 'calc', 'download', 'Estimez la durée d’un téléchargement selon la taille, le débit et le rendement réel.'],
+  ['aspect-ratio-calculator', 'Calculateur de ratio d’aspect', 'calc', 'ratio', 'Trouvez un ratio et calculez des dimensions proportionnelles sans déformation.'],
 ];
 
 const dedicatedDevModules = {
@@ -461,7 +468,6 @@ const dedicatedSecurityModules = {
   'rsa-key-generator': () => import('./tools/rsa-key-generator.js'),
   'file-checksum': () => import('./tools/file-checksum.js'),
   'totp-generator': () => import('./tools/totp-generator.js'),
-  'random-generator': () => import('./tools/random-generator.js'),
 };
 
 const dedicatedUtilityModules = {
@@ -495,16 +501,24 @@ const dedicatedDataModules = {
   'csv-viewer': () => import('./tools/csv-viewer.js'),
   'exif-reader': () => import('./tools/exif-reader.js'),
   'file-splitter': () => import('./tools/file-splitter.js'),
+  'file-merger': () => import('./tools/file-merger.js'),
+  'url-extractor': () => import('./tools/url-extractor.js'),
+  'email-extractor': () => import('./tools/email-extractor.js'),
+  'html-table-to-csv': () => import('./tools/html-table-to-csv.js'),
+  'mermaid-diagram': () => import('./tools/mermaid-diagram.js'),
 };
 
 const dedicatedCalcModules = {
   'unit-converter': () => import('./tools/unit-converter.js'),
+  'data-unit-converter': () => import('./tools/data-unit-converter.js'),
   'percentage-calculator': () => import('./tools/percentage-calculator.js'),
-  'rule-of-three': () => import('./tools/rule-of-three.js'),
   'loan-calculator': () => import('./tools/loan-calculator.js'),
-  'bmi-calculator': () => import('./tools/bmi-calculator.js'),
-  'age-calculator': () => import('./tools/age-calculator.js'),
+  'vat-calculator': () => import('./tools/vat-calculator.js'),
   'number-base-converter': () => import('./tools/number-base-converter.js'),
+  'bmi-calorie-calculator': () => import('./tools/bmi-calorie-calculator.js'),
+  'random-generator': () => import('./tools/random-generator.js'),
+  'download-time-calculator': () => import('./tools/download-time-calculator.js'),
+  'aspect-ratio-calculator': () => import('./tools/aspect-ratio-calculator.js'),
 };
 
 for (const [id, name, category, icon, description] of additions) {
