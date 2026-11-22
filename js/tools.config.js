@@ -259,4 +259,12 @@ export const tools = [
     description: "Lisez vos sons à l'envers : inversion instantanée, forme d'onde, comparaison A/B et export WAV, MP3 ou OGG, 100 % localement.",
     module: () => import('./tools/audio-reverser.js'),
   },
+  {
+    id: 'metronome',
+    name: "Métronome numérique",
+    category: 'audio',
+    icon: 'timer',
+    description: "Métronome de haute précision : tempo 30–300 BPM, tap tempo, mesures, subdivisions et accents personnalisables, 100 % localement.",
+    module: () => import('./tools/metronome.js'),
+  },
 ];

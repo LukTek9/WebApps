@@ -1521,3 +1521,48 @@ select option {
 .audrev-result { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-4); border: 1px dashed var(--color-success); border-radius: var(--radius-lg); background: var(--color-surface); }
 .audrev-audio { width: 100%; }
 .audrev-link { align-self: flex-start; text-decoration: none; }
+
+/* ===== Outil : Métronome numérique (.metro-*) — token catégorie : --cat-audio ===== */
+.metro { display: flex; flex-direction: column; gap: var(--space-4); max-width: 760px; margin: 0 auto; width: 100%; color: var(--color-text); }
+.metro-display { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: var(--space-6) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.metro-readout { display: flex; align-items: baseline; gap: var(--space-2); }
+.metro-bpm-big { font-size: clamp(3.5rem, 12vw, 5.5rem); font-weight: var(--font-weight-bold); line-height: 1; font-variant-numeric: tabular-nums; color: var(--cat-audio); }
+.metro-unit { font-size: var(--font-size-lg); font-weight: var(--font-weight-medium); color: var(--color-text-muted); }
+.metro-mark { min-height: 1.5em; font-size: var(--font-size-lg); font-style: italic; color: var(--color-text-muted); }
+.metro-beats { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); padding: var(--space-2) 0; }
+.metro-beat { display: grid; place-items: center; width: 52px; height: 52px; padding: 0; border: 2px solid var(--cat-audio); border-radius: 50%; background: var(--color-surface-alt); color: var(--cat-audio); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; transition: transform 90ms ease, box-shadow 90ms ease, background var(--transition), color var(--transition), border-color var(--transition); }
+.metro-beat:hover { background: color-mix(in srgb, var(--cat-audio) 12%, var(--color-surface-alt)); }
+.metro-beat.is-accent { background: var(--cat-audio); border-color: var(--cat-audio); color: var(--color-text-on-primary); }
+.metro-beat.is-normal { background: color-mix(in srgb, var(--cat-audio) 28%, var(--color-surface-alt)); color: var(--color-text); }
+.metro-beat.is-mute { border-style: dashed; border-color: var(--color-border); background: transparent; color: var(--color-text-muted); }
+.metro-beat.is-current { transform: scale(1.18); box-shadow: 0 0 0 4px color-mix(in srgb, var(--cat-audio) 35%, transparent); }
+.metro-beat:focus-visible, .metro-step:focus-visible, .metro-num:focus-visible, .metro-range:focus-visible, .metro-field select:focus-visible, .metro-field input:focus-visible { outline: 2px solid var(--cat-audio); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .metro-beat { transition: none; } .metro-beat.is-current { transform: none; } }
+.metro-hint { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.metro-panel { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.metro-bpm-row { display: flex; align-items: center; justify-content: center; gap: var(--space-2); flex-wrap: wrap; }
+.metro-step { width: 48px; height: 40px; font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; }
+.metro-step:hover:not(:disabled) { background: color-mix(in srgb, var(--cat-audio) 10%, transparent); color: var(--cat-audio); border-color: var(--cat-audio); }
+.metro-step:disabled { opacity: 0.4; cursor: not-allowed; }
+.metro-num { width: 92px; height: 40px; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); color: var(--color-text); font: inherit; font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); text-align: center; font-variant-numeric: tabular-nums; }
+.metro-range { width: 100%; accent-color: var(--cat-audio); }
+.metro-tap-row { display: flex; align-items: center; justify-content: center; gap: var(--space-3); }
+.metro-tap { min-width: 180px; }
+.metro-tap:active { background: color-mix(in srgb, var(--cat-audio) 20%, transparent); }
+.metro-tap-count { min-width: 5em; font-size: var(--font-size-sm); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.metro-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); }
+.metro-field { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-muted); }
+.metro-field select { width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); color: var(--color-text); font: inherit; }
+.metro-field input[type="range"] { width: 100%; accent-color: var(--cat-audio); }
+.metro-val { float: right; font-weight: var(--font-weight-regular); color: var(--color-text); font-variant-numeric: tabular-nums; }
+.metro-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-4); }
+.metro-play { min-width: 220px; padding-block: var(--space-4); font-size: var(--font-size-lg); }
+.metro .btn-primary { background: var(--cat-audio); color: var(--color-text-on-primary); }
+.metro .btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--cat-audio) 85%, var(--color-text)); }
+.metro .btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--cat-audio) 10%, transparent); color: var(--cat-audio); }
+.metro[data-state="playing"] .metro-play { background: var(--color-surface); color: var(--color-error); border: 1px solid var(--color-error); }
+.metro[data-state="playing"] .metro-play:hover:not(:disabled) { background: color-mix(in srgb, var(--color-error) 10%, var(--color-surface)); }
+.metro[data-state="playing"] .metro-display { border-color: var(--cat-audio); }
+.metro-key { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.metro-key kbd { padding: 2px var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface-alt); color: var(--color-text); font: inherit; font-size: var(--font-size-sm); box-shadow: var(--shadow-sm); }
+.metro-status { min-height: 1.3em; margin: 0; text-align: center; font-size: var(--font-size-sm); }
