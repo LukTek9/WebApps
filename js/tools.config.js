@@ -267,4 +267,12 @@ export const tools = [
     description: "Métronome de haute précision : tempo 30–300 BPM, tap tempo, mesures, subdivisions et accents personnalisables, 100 % localement.",
     module: () => import('./tools/metronome.js'),
   },
+  {
+    id: 'audio-visualizer',
+    name: "Visualiseur de spectre audio",
+    category: 'audio',
+    icon: 'audio-lines',
+    description: "Visualisez vos fichiers audio ou votre micro en temps réel (barres, oscilloscope, spectre circulaire), capture PNG et enregistrement vidéo WebM, 100 % localement.",
+    module: () => import('./tools/audio-visualizer.js'),
+  },
 ];

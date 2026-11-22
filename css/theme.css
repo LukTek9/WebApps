@@ -1566,3 +1566,49 @@ select option {
 .metro-key { font-size: var(--font-size-sm); color: var(--color-text-muted); }
 .metro-key kbd { padding: 2px var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface-alt); color: var(--color-text); font: inherit; font-size: var(--font-size-sm); box-shadow: var(--shadow-sm); }
 .metro-status { min-height: 1.3em; margin: 0; text-align: center; font-size: var(--font-size-sm); }
+
+/* ===== Outil : Visualiseur de spectre audio (.audvis-*) — token catégorie : --cat-audio ===== */
+.audvis { display: flex; flex-direction: column; gap: var(--space-4); max-width: 960px; margin: 0 auto; width: 100%; color: var(--color-text); }
+.audvis-tabs { display: flex; gap: var(--space-1); padding: var(--space-1); border: 1px solid var(--color-border); border-radius: var(--radius-pill); background: var(--color-surface-alt); }
+.audvis-tab { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-text-muted); font-weight: var(--font-weight-medium); transition: background var(--transition), color var(--transition); }
+.audvis-tab:hover { color: var(--cat-audio); }
+.audvis-tab.is-active { background: var(--cat-audio); color: var(--color-text-on-primary); box-shadow: var(--shadow-sm); }
+.audvis-tab:focus-visible, .audvis-drop:focus-visible { outline: 2px solid var(--cat-audio); outline-offset: 2px; }
+.audvis-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); min-height: 200px; padding: var(--space-8) var(--space-4); text-align: center; cursor: pointer; border: 2px dashed var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); transition: border-color var(--transition), background var(--transition); }
+.audvis-drop:hover, .audvis.is-over .audvis-drop { border-color: var(--cat-audio); background: color-mix(in srgb, var(--cat-audio) 6%, transparent); }
+.audvis-drop svg { color: var(--cat-audio); }
+.audvis-drop strong { font-size: var(--font-size-lg); }
+.audvis-drop small { color: var(--color-text-muted); }
+.audvis-player { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.audvis.is-over .audvis-player { border-color: var(--cat-audio); }
+.audvis-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.audvis-file { display: flex; flex-direction: column; min-width: 0; }
+.audvis-name { font-weight: var(--font-weight-bold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
+.audvis-meta { font-size: var(--font-size-sm); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.audvis-transport { display: flex; align-items: center; gap: var(--space-3); }
+.audvis-seek { flex: 1; min-width: 0; accent-color: var(--cat-audio); }
+.audvis-time { flex: none; font-size: var(--font-size-sm); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.audvis-micbox { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.audvis-note { flex: 1 1 240px; margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.audvis-stage { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.audvis.is-over .audvis-stage { border-color: var(--cat-audio); }
+.audvis-scope { position: relative; width: 100%; aspect-ratio: 16 / 9; min-height: 220px; max-height: 70vh; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.audvis-canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
+.audvis-scope:fullscreen { width: 100vw; height: 100vh; max-height: none; aspect-ratio: auto; border: 0; border-radius: 0; }
+.audvis-scope:-webkit-full-screen { width: 100vw; height: 100vh; max-height: none; aspect-ratio: auto; border: 0; border-radius: 0; }
+.audvis-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.audvis-field { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-muted); }
+.audvis-field select { width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); color: var(--color-text); font: inherit; }
+.audvis-field input[type="range"] { width: 100%; accent-color: var(--cat-audio); }
+.audvis-field select:focus-visible, .audvis-field input:focus-visible, .audvis-seek:focus-visible { outline: 2px solid var(--cat-audio); outline-offset: 2px; }
+.audvis-field select:disabled, .audvis-field input:disabled { opacity: 0.5; cursor: not-allowed; }
+.audvis-val { float: right; font-weight: var(--font-weight-regular); color: var(--color-text); font-variant-numeric: tabular-nums; }
+.audvis-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.audvis-rectime { min-width: 5em; font-size: var(--font-size-sm); color: var(--color-error); font-variant-numeric: tabular-nums; }
+.audvis .btn-primary { background: var(--cat-audio); color: var(--color-text-on-primary); }
+.audvis .btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--cat-audio) 85%, var(--color-text)); }
+.audvis .btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--cat-audio) 10%, transparent); color: var(--cat-audio); }
+.audvis[data-rec="on"] #audvis-vrec { background: var(--color-surface); color: var(--color-error); border: 1px solid var(--color-error); }
+.audvis-status { min-height: 1.3em; margin: 0; font-size: var(--font-size-sm); }
+.audvis-download { padding: var(--space-4); border: 1px dashed var(--color-success); border-radius: var(--radius-md); text-align: center; }
+.audvis-download a { text-decoration: none; }
