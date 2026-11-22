@@ -72,7 +72,7 @@ function renderGrid() {
     title.className = 'tool-card__title';
     title.textContent = tool.name;
 
-    const desc = document.createElement('p');
+    const desc = document.createElement('span');
     desc.className = 'tool-card__desc';
     desc.textContent = tool.description;
 
