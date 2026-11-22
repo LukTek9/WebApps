@@ -292,4 +292,12 @@ export const tools = [
     description: "Découpez vos vidéos (MP4, WEBM, MOV, AVI, MKV) : mode rapide sans perte ou précis à l'image près, aperçu du segment, 100 % localement via FFmpeg.wasm.",
     module: () => import('./tools/video-trimmer.js'),
   },
+  {
+    id: 'video-compressor',
+    name: "Compresseur de Vidéo",
+    category: 'video',
+    icon: 'shrink',
+    description: "Réduisez le poids de vos vidéos (MP4, WEBM, MOV, AVI, MKV) avec niveaux de compression, résolution maximale et comparaison avant/après, 100 % localement via FFmpeg.wasm.",
+    module: () => import('./tools/video-compressor.js'),
+  },
 ];
