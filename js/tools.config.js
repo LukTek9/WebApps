@@ -11,6 +11,7 @@
 export const categories = [
   { id: 'all',   label: 'Tout',  color: 'var(--cat-default)' },
   { id: 'audio', label: 'Audio', color: 'var(--cat-audio)' },
+  { id: 'video', label: 'Vidéo', icon: 'video', color: 'var(--cat-video)' },
   { id: 'image', label: 'Image', icon: 'image', color: 'var(--cat-image)' },
   { id: 'utility', label: 'Utilitaire', icon: 'qr-code', color: 'var(--cat-utility)' },
   { id: 'pdf', label: 'PDF & Documents', icon: 'file-text', color: 'var(--cat-pdf, #ef4444)' },
@@ -274,5 +275,13 @@ export const tools = [
     icon: 'audio-lines',
     description: "Visualisez vos fichiers audio ou votre micro en temps réel (barres, oscilloscope, spectre circulaire), capture PNG et enregistrement vidéo WebM, 100 % localement.",
     module: () => import('./tools/audio-visualizer.js'),
+  },
+  {
+    id: 'video-converter',
+    name: "Convertisseur Vidéo local",
+    category: 'video',
+    icon: 'film',
+    description: "Convertissez vos vidéos (MP4, WEBM, MOV, AVI) avec choix de la résolution et de la qualité, aperçu inclus, 100 % localement via FFmpeg.wasm.",
+    module: () => import('./tools/video-converter.js'),
   },
 ];
