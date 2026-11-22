@@ -457,7 +457,9 @@ async function startCapture() {
   try {
     if (cfg.mode !== 'webcam') {
       what = 'screen';
-      const d = await navigator.mediaDevices.getDisplayMedia({ video: videoConstraints(cfg.quality), audio: cfg.sys });
+      const dispOpts = { video: videoConstraints(cfg.quality), audio: cfg.sys };
+      if (cfg.sys) dispOpts.systemAudio = 'include'; // Chrome / Edge : pré-sélectionne le partage d'audio (ignoré ailleurs)
+      const d = await navigator.mediaDevices.getDisplayMedia(dispOpts);
       if (s !== st) { stopStream(d); return; }
       st.display = d;
       const vt = d.getVideoTracks()[0];
@@ -507,7 +509,9 @@ async function startCapture() {
   const aTrack = buildAudio(st);
   st.stream = new MediaStream(aTrack ? [vTrack, aTrack] : [vTrack]);
   st.note = cfg.sys && !st.display?.getAudioTracks().length
-    ? 'Audio système non fourni (cochez « Partager l\'audio » dans la fenêtre de partage ; indisponible sur certains navigateurs / systèmes).'
+    ? (/firefox/i.test(navigator.userAgent)
+      ? 'Audio système non capturé : Firefox ne prend pas en charge l\'audio système / d\'onglet. Utilisez Chrome ou Edge.'
+      : 'Audio système non capturé : dans la fenêtre du navigateur, choisissez « Onglet » (ou « Écran entier ») puis cochez « Partager l\'audio ». Impossible avec « Fenêtre ».')
     : '';
 
   // Aperçu en direct (muet : aucun retour sonore)
@@ -959,9 +963,10 @@ const TEMPLATE = `
 
     <div class="scrrec-checks">
       <label class="scrrec-check"><input type="checkbox" id="scrrec-mic"> Microphone</label>
-      <label class="scrrec-check"><input type="checkbox" id="scrrec-sys"> Audio système / onglet (si disponible)</label>
+      <label class="scrrec-check" title="Chrome / Edge uniquement : choisissez « Onglet » (ou « Écran entier ») et cochez « Partager l'audio » dans la fenêtre du navigateur. Non pris en charge par Firefox."><input type="checkbox" id="scrrec-sys"> Audio système / onglet (si disponible)</label>
       <label class="scrrec-check"><input type="checkbox" id="scrrec-countdown" checked> Compte à rebours de 3 s</label>
     </div>
+    <p class="scrrec-hint">Audio système : Chrome / Edge uniquement. Dans la fenêtre de partage, choisissez « Onglet » (ou « Écran entier ») et cochez « Partager l'audio ». Firefox ne le prend pas en charge.</p>
   </div>
 
   <div class="scrrec-stage" id="scrrec-stage">
