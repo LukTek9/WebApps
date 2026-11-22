@@ -1311,6 +1311,46 @@ select option {
 .vidconv-result { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-4); border: 1px dashed var(--color-success); border-radius: var(--radius-lg); background: var(--color-surface); }
 .vidconv-link { align-self: flex-start; text-decoration: none; }
 
+/* ===== Outil : Extracteur Audio (.vid2aud-*) — token catégorie : --cat-video ===== */
+.vid2aud { display: flex; flex-direction: column; gap: var(--space-4); max-width: 760px; margin: 0 auto; width: 100%; color: var(--color-text); }
+.vid2aud-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); min-height: 240px; padding: var(--space-8) var(--space-4); text-align: center; cursor: pointer; border: 2px dashed var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); transition: border-color var(--transition), background var(--transition); }
+.vid2aud-drop:hover, .vid2aud-drop.is-over, .vid2aud-drop:focus-visible { border-color: var(--cat-video); background: color-mix(in srgb, var(--cat-video) 6%, transparent); outline: none; }
+.vid2aud-drop svg { color: var(--cat-video); }
+.vid2aud-drop strong { font-size: var(--font-size-lg); }
+.vid2aud-drop small { color: var(--color-text-muted); }
+.vid2aud-editor { display: flex; flex-direction: column; gap: var(--space-4); }
+.vid2aud-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.vid2aud-file { display: flex; flex-direction: column; min-width: 0; }
+.vid2aud-name { font-weight: var(--font-weight-bold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
+.vid2aud-meta { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.vid2aud-video { display: block; width: 100%; max-height: 420px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-text); }
+.vid2aud-video[hidden] { display: none; }
+.vid2aud-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-3); }
+.vid2aud-stat { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.vid2aud-stat small { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.vid2aud-stat b { font-variant-numeric: tabular-nums; color: var(--cat-video); }
+.vid2aud-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-4); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.vid2aud-field { display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-muted); }
+.vid2aud-field select { width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); color: var(--color-text); font: inherit; }
+.vid2aud-field select:focus-visible { outline: 2px solid var(--cat-video); outline-offset: 1px; }
+.vid2aud-field select:disabled { opacity: 0.5; cursor: not-allowed; }
+.vid2aud-hint { grid-column: 1 / -1; margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.vid2aud-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.vid2aud .btn-primary { background: var(--cat-video); color: var(--color-text-on-primary); }
+.vid2aud .btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--cat-video) 85%, var(--color-text)); }
+.vid2aud .btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--cat-video) 10%, transparent); color: var(--cat-video); }
+.vid2aud-bar { height: 8px; border-radius: var(--radius-pill); background: var(--color-border); overflow: hidden; visibility: hidden; }
+.vid2aud-bar.is-on { visibility: visible; }
+.vid2aud-bar > i { display: block; height: 100%; width: 0; background: var(--cat-video); transition: width var(--transition); }
+.vid2aud-bar.is-indeterminate > i { width: 40%; animation: vid2aud-slide 1.1s infinite ease-in-out; }
+@keyframes vid2aud-slide { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
+@media (prefers-reduced-motion: reduce) { .vid2aud-bar.is-indeterminate > i { animation: none; } }
+.vid2aud-status { min-height: 1.3em; margin: var(--space-2) 0 0; font-size: var(--font-size-sm); }
+.vid2aud-result { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-4); border: 1px dashed var(--color-success); border-radius: var(--radius-lg); background: var(--color-surface); }
+.vid2aud-audio { display: block; width: 100%; }
+.vid2aud-audio[hidden] { display: none; }
+.vid2aud-link { align-self: flex-start; text-decoration: none; }
+
 /* ===== Outil : Compresseur de Vidéo (.vidcomp-*) — token catégorie : --cat-video ===== */
 .vidcomp { display: flex; flex-direction: column; gap: var(--space-4); max-width: 800px; margin: 0 auto; width: 100%; color: var(--color-text); }
 .vidcomp-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); min-height: 240px; padding: var(--space-8) var(--space-4); text-align: center; cursor: pointer; border: 2px dashed var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); transition: border-color var(--transition), background var(--transition); }

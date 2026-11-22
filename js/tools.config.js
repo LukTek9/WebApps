@@ -300,4 +300,12 @@ export const tools = [
     description: "Réduisez le poids de vos vidéos (MP4, WEBM, MOV, AVI, MKV) avec niveaux de compression, résolution maximale et comparaison avant/après, 100 % localement via FFmpeg.wasm.",
     module: () => import('./tools/video-compressor.js'),
   },
+  {
+    id: 'video-to-audio',
+    name: "Extracteur Audio",
+    category: 'video',
+    icon: 'audio-lines',
+    description: "Extrayez la piste audio de vos vidéos (MP4, WEBM, MOV, AVI, MKV) en MP3, WAV, M4A ou OGG avec choix du débit, 100 % localement via FFmpeg.wasm.",
+    module: () => import('./tools/video-to-audio.js'),
+  },
 ];
