@@ -284,4 +284,12 @@ export const tools = [
     description: "Convertissez vos vidéos (MP4, WEBM, MOV, AVI) avec choix de la résolution et de la qualité, aperçu inclus, 100 % localement via FFmpeg.wasm.",
     module: () => import('./tools/video-converter.js'),
   },
+  {
+    id: 'video-trimmer',
+    name: "Découpeur Vidéo",
+    category: 'video',
+    icon: 'scissors',
+    description: "Découpez vos vidéos (MP4, WEBM, MOV, AVI, MKV) : mode rapide sans perte ou précis à l'image près, aperçu du segment, 100 % localement via FFmpeg.wasm.",
+    module: () => import('./tools/video-trimmer.js'),
+  },
 ];
