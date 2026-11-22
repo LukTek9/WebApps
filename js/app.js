@@ -32,6 +32,13 @@ const refreshIcons = () => window.lucide?.createIcons();
 /** Couleur d'une catégorie (fallback neutre). */
 const catColor = (id) => categories.find((c) => c.id === id)?.color ?? 'var(--cat-default)';
 
+function setActiveThemeColor(categoryId) {
+  const color = categoryId === 'all'
+    ? 'var(--color-primary)'
+    : categories.find((category) => category.id === categoryId)?.color ?? 'var(--color-primary)';
+  document.documentElement.style.setProperty('--theme-accent', color);
+}
+
 /* ---------- Filtres ---------- */
 function renderFilters() {
   els.filters.innerHTML = '';
@@ -49,6 +56,7 @@ function renderFilters() {
     btn.append(label, count);
     btn.addEventListener('click', () => {
       state.category = cat.id;
+      setActiveThemeColor(state.category);
       renderFilters();
       renderGrid();
       window.scrollTo({
@@ -135,6 +143,7 @@ async function openTool(id) {
   const tool = tools.find((t) => t.id === id);
   if (!tool) return;
 
+  setActiveThemeColor(tool.category);
   els.home.hidden = true;
   els.workspace.hidden = false;
   animateWorkspaceEnter(els.workspace);
@@ -161,6 +170,7 @@ async function openTool(id) {
 function closeTool() {
   try { state.activeModule?.unmount?.(); } catch (err) { console.error(err); }
   state.activeModule = null;
+  setActiveThemeColor(state.category);
   els.body.innerHTML = '';
   els.workspace.hidden = true;
   els.home.hidden = false;
@@ -169,6 +179,7 @@ function closeTool() {
 }
 
 /* ---------- Init ---------- */
+setActiveThemeColor(state.category);
 els.back.addEventListener('click', closeTool);
 els.brand.addEventListener('click', closeTool);
 els.search.addEventListener('submit', (event) => event.preventDefault());
@@ -186,6 +197,7 @@ els.searchClear.addEventListener('click', () => {
 });
 els.reset.addEventListener('click', () => {
   state.category = 'all';
+  setActiveThemeColor(state.category);
   state.query = '';
   els.searchInput.value = '';
   els.searchClear.hidden = true;

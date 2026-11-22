@@ -3,12 +3,21 @@
    Modifier UNIQUEMENT :root pour une refonte graphique instantanée.
    ========================================================================== */
 
+@property --theme-accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #e5322d;
+}
+
 :root {
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --dur-fast: 140ms;
   --dur-med: 220ms;
   --dur-slow: 360ms;
+  --theme-accent: var(--color-primary);
+  --theme-transition: 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: --theme-accent var(--theme-transition);
 
   /* --- Couleurs de marque () --- */
   --color-primary: #e5322d;
@@ -115,11 +124,34 @@
 html { font-size: var(--font-size-base); scrollbar-gutter: stable; }
 
 body {
+  position: relative;
+  isolation: isolate;
   margin: 0;
   font-family: var(--font-family);
   line-height: var(--line-height);
   color: var(--color-text);
   background: var(--color-bg);
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(ellipse at 12% 18%, color-mix(in srgb, var(--theme-accent) 14%, transparent), transparent 38%),
+    radial-gradient(ellipse at 84% 12%, color-mix(in srgb, var(--theme-accent) 9%, transparent), transparent 34%),
+    radial-gradient(ellipse at 72% 82%, color-mix(in srgb, #8b5cf6 5%, transparent), transparent 42%),
+    repeating-linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 1.2%, transparent) 0 1px, transparent 1px 72px);
+  background-size: 140% 140%, 130% 130%, 140% 140%, auto;
+  animation: ambient-drift 36s ease-in-out infinite alternate;
+  transition: background var(--theme-transition);
+}
+
+@keyframes ambient-drift {
+  from { background-position: 0% 0%, 100% 0%, 100% 100%, 0 0; }
+  to { background-position: 18% 12%, 82% 18%, 72% 86%, 0 0; }
 }
 
 button { font: inherit; cursor: pointer; }
@@ -2538,3 +2570,128 @@ select option {
 .scrrec-video { display: block; width: 100%; max-height: 460px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-text); }
 .scrrec-info { font-size: var(--font-size-sm); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
 .scrrec-link { text-decoration: none; }
+
+/* ---------- Dynamic category theme ---------- */
+.site-header {
+  background: color-mix(in srgb, var(--theme-accent) 6%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--theme-accent) 18%, var(--color-border));
+  transition: background var(--theme-transition), border-color var(--theme-transition), box-shadow var(--theme-transition);
+}
+
+.brand__logo {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--theme-accent) 70%, white), var(--theme-accent) 68%);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--theme-accent) 28%, transparent);
+  transition: transform var(--dur-med) var(--ease-spring), background var(--theme-transition), box-shadow var(--theme-transition);
+}
+
+.brand:hover .brand__logo {
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--theme-accent) 36%, transparent);
+}
+
+.filter-btn {
+  transition: transform var(--dur-med) var(--ease-spring), background var(--theme-transition), border-color var(--theme-transition), box-shadow var(--theme-transition), color var(--theme-transition);
+}
+
+.filter-btn:hover {
+  background: color-mix(in srgb, var(--theme-accent) 9%, transparent);
+  color: var(--theme-accent);
+}
+
+.filter-btn.is-active {
+  border-color: color-mix(in srgb, var(--theme-accent) 65%, var(--color-text));
+  background: color-mix(in srgb, var(--theme-accent) 65%, var(--color-text));
+  color: var(--color-text-on-primary);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--theme-accent) 26%, transparent);
+}
+
+.hero::before {
+  background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent) 15%, transparent), transparent 68%);
+}
+
+.hero::after {
+  background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent) 8%, transparent), transparent 68%);
+}
+
+.hero__eyebrow,
+.catalog__eyebrow,
+.hero h1 span {
+  color: var(--theme-accent);
+  transition: color var(--theme-transition), background var(--theme-transition);
+}
+
+.hero__eyebrow > span {
+  background: var(--theme-accent);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--theme-accent) 14%, transparent);
+  transition: background-color var(--theme-transition), box-shadow var(--theme-transition);
+}
+
+.hero h1 span {
+  background-image: linear-gradient(100deg, var(--theme-accent) 10%, color-mix(in srgb, var(--theme-accent) 65%, #f07145) 85%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.tool-search:focus-within {
+  border-color: color-mix(in srgb, var(--theme-accent) 55%, var(--color-border));
+  box-shadow: 0 16px 42px rgba(51, 48, 46, 0.12), 0 0 0 4px color-mix(in srgb, var(--theme-accent) 14%, transparent);
+}
+
+.tool-search > svg { color: var(--theme-accent); }
+.tool-search__clear:hover { background: color-mix(in srgb, var(--theme-accent) 10%, transparent); color: var(--theme-accent); }
+
+.tool-card {
+  transition: transform var(--dur-med) var(--ease-spring), background var(--theme-transition), border-color var(--theme-transition), box-shadow var(--theme-transition), color var(--theme-transition);
+}
+
+.tool-card:hover,
+.tool-card:focus-visible {
+  border-color: color-mix(in srgb, var(--theme-accent) 45%, var(--color-border));
+  box-shadow: 0 16px 36px color-mix(in srgb, var(--theme-accent) 18%, rgba(51, 48, 46, 0.12));
+}
+
+.tool-card:hover::after,
+.tool-card:focus-visible::after {
+  background: color-mix(in srgb, var(--theme-accent) 12%, var(--color-surface));
+  color: var(--theme-accent);
+}
+
+.workspace__bar {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-accent) 22%, var(--color-border));
+  transition: border-color var(--theme-transition);
+}
+
+.workspace__back {
+  border-color: color-mix(in srgb, var(--theme-accent) 32%, var(--color-border));
+  background: color-mix(in srgb, var(--theme-accent) 7%, var(--color-surface));
+  color: var(--color-text);
+  transition: transform var(--dur-med) var(--ease-spring), background var(--theme-transition), border-color var(--theme-transition), box-shadow var(--theme-transition), color var(--theme-transition);
+}
+
+.workspace__back:hover {
+  border-color: color-mix(in srgb, var(--theme-accent) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--theme-accent) 12%, var(--color-surface));
+  color: var(--color-text);
+}
+
+.btn-primary {
+  background: color-mix(in srgb, var(--theme-accent) 65%, var(--color-text));
+  color: var(--color-text-on-primary);
+  transition: background var(--theme-transition), border-color var(--theme-transition), box-shadow var(--theme-transition), color var(--theme-transition);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--theme-accent) 55%, var(--color-text));
+}
+
+.tools-empty__icon {
+  background: color-mix(in srgb, var(--theme-accent) 12%, transparent);
+  color: var(--theme-accent);
+}
+
+.tools-empty__reset { background: color-mix(in srgb, var(--theme-accent) 65%, var(--color-text)); }
+.tools-empty__reset:hover { background: color-mix(in srgb, var(--theme-accent) 55%, var(--color-text)); }
+
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none; }
+}
