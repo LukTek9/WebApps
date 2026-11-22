@@ -435,6 +435,21 @@ const additions = [
   ['number-base-converter', 'Convertisseur de bases', 'calc', 'binary', 'Convertissez les nombres entre bases usuelles.'],
 ];
 
+const dedicatedDevModules = {
+  'json-formatter': () => import('./tools/dev/json-formatter.js'),
+  'json-to-csv-xml': () => import('./tools/dev/json-to-csv-xml.js'),
+  'csv-to-json': () => import('./tools/dev/csv-to-json.js'),
+  'base64-codec': () => import('./tools/dev/base64-codec.js'),
+  'url-html-codec': () => import('./tools/dev/url-html-codec.js'),
+  'regex-tester': () => import('./tools/dev/regex-tester.js'),
+  'css-js-minifier': () => import('./tools/dev/css-js-minifier.js'),
+  'seo-meta-generator': () => import('./tools/dev/seo-meta-generator.js'),
+  'gitignore-env-generator': () => import('./tools/dev/gitignore-env-generator.js'),
+  'code-formatter': () => import('./tools/dev/code-formatter.js'),
+  'timestamp-converter': () => import('./tools/dev/timestamp-converter.js'),
+  'html-validator': () => import('./tools/dev/html-validator.js'),
+};
+
 for (const [id, name, category, icon, description] of additions) {
-  tools.push({ id, name, category, icon, description: `${description} Traitement 100 % local.`, module: () => import(`./tools/${id}.js`) });
+  tools.push({ id, name, category, icon, description: `${description} Traitement 100 % local.`, module: dedicatedDevModules[id] || (() => import(`./tools/${id}.js`)) });
 }
