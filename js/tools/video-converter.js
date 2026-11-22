@@ -22,25 +22,27 @@ const FORMATS = {
   mp4: {
     ext: 'mp4', mime: 'video/mp4',
     vArgs: (qi) => ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', ['18', '23', '28'][qi], '-pix_fmt', 'yuv420p', '-movflags', '+faststart'],
-    aArgs: (qi) => ['-c:a', 'aac', '-b:a', ['192k', '128k', '96k'][qi]],
+    aCodecs: ['aac', 'libmp3lame'],
   },
   webm: {
     ext: 'webm', mime: 'video/webm',
-    vArgs: (qi) => ['-c:v', 'libvpx', '-deadline', 'realtime', '-cpu-used', '8', '-crf', ['10', '20', '30'][qi], '-b:v', ['8M', '3M', '1M'][qi]],
-    aArgs: (qi) => ['-c:a', 'libvorbis', '-b:a', ['192k', '128k', '96k'][qi]],
+    vArgs: (qi) => ['-c:v', 'libvpx', '-deadline', 'realtime', '-cpu-used', '4', '-pix_fmt', 'yuv420p', '-crf', ['10', '20', '30'][qi], '-b:v', ['8M', '3M', '1M'][qi]],
+    aCodecs: ['libvorbis', 'libopus'],
   },
   mov: {
     ext: 'mov', mime: 'video/quicktime',
     vArgs: (qi) => ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', ['18', '23', '28'][qi], '-pix_fmt', 'yuv420p'],
-    aArgs: (qi) => ['-c:a', 'aac', '-b:a', ['192k', '128k', '96k'][qi]],
+    aCodecs: ['aac', 'libmp3lame'],
   },
   avi: {
     ext: 'avi', mime: 'video/x-msvideo',
-    vArgs: (qi) => ['-c:v', 'mpeg4', '-q:v', ['2', '5', '10'][qi]],
-    aArgs: (qi) => ['-c:a', 'libmp3lame', '-b:a', ['192k', '128k', '96k'][qi]],
+    vArgs: (qi) => ['-c:v', 'mpeg4', '-pix_fmt', 'yuv420p', '-q:v', ['2', '5', '10'][qi]],
+    aCodecs: ['libmp3lame', 'aac'],
   },
 };
 const QUALITY_INDEX = { high: 0, balanced: 1, compact: 2 };
+const AUDIO_BITRATES = ['192k', '128k', '96k'];
+const LOAD_TIMEOUT_MS = 90000; // Worker FFmpeg bloqué (Firefox) → échec explicite au lieu d'une attente infinie
 
 /* FFmpeg.wasm : mêmes versions / schéma de chargement que audio-converter. */
 const FFMPEG_VERSION = '0.12.10';
@@ -63,6 +65,29 @@ const fmtMB = (b) => (b / 1048576).toFixed(1) + ' Mo';
 const sanitize = (n) => n.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').trim().slice(0, 120) || 'video';
 const icons = () => { try { window.lucide?.createIcons?.(); } catch { /* ignoré */ } };
 const extOf = (name) => (name.includes('.') ? name.split('.').pop().toLowerCase() : '');
+
+/** Message lisible pour tout rejet : Error, string, ErrorEvent / Event de Worker (sans .message), objet. */
+function errMsg(e) {
+  if (e == null) return 'erreur inconnue';
+  if (typeof e === 'string') return e || 'erreur inconnue';
+  if (e.message) return String(e.message);
+  if (e.filename) return `erreur Worker (${String(e.filename).split('/').pop()}:${e.lineno || 0})`;
+  if (e.type) return `événement « ${e.type} » (Worker bloqué ou script non chargé)`;
+  try { const j = JSON.stringify(e); if (j && j !== '{}') return j; } catch { /* circulaire */ }
+  return String(e) || 'erreur inconnue';
+}
+
+/** Course promesse / annulation / délai ; au délai ou à l'abandon, le Worker est terminé par l'appelant. */
+function raceLoad(promise, signal, ms) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => done(reject, new Error(`délai dépassé (${Math.round(ms / 1000)} s) au chargement de FFmpeg`)), ms);
+    const onAbort = () => done(reject, abortErr());
+    const done = (fn, v) => { clearTimeout(t); signal.removeEventListener('abort', onAbort); fn(v); };
+    if (signal.aborted) return done(reject, abortErr());
+    signal.addEventListener('abort', onAbort, { once: true });
+    promise.then((v) => done(resolve, v), (e) => done(reject, e instanceof Error ? e : new Error(errMsg(e))));
+  });
+}
 
 function fmtDuration(t) {
   const sec = Math.max(0, Number(t) || 0);
@@ -262,15 +287,28 @@ async function cdnBlobUrl(url, mime, signal, bag, onProgress) {
   return u;
 }
 
-/** Arguments FFmpeg selon format / résolution / qualité / mute. */
-function ffmpegArgs(inName, outName, fmt, height, qi, mute) {
-  const a = ['-i', inName, '-map_metadata', '0'];
+/**
+ * Variante ESM du cœur FFmpeg (Firefox) : le Worker module ne peut pas faire importScripts() ;
+ * il importe donc le cœur UMD via import() et attend un `export default`.
+ */
+async function cdnEsmCoreUrl(signal, bag) {
+  const res = await fetch(`${FFMPEG_CORE_CDN}/ffmpeg-core.js`, { signal });
+  if (!res.ok) throw new Error(`HTTP ${res.status} (ffmpeg-core.js)`);
+  const src = await res.text();
+  const u = URL.createObjectURL(new Blob([src, '\nexport default createFFmpegCore;\n'], { type: 'text/javascript' }));
+  bag.push(u);
+  return u;
+}
+
+/** Arguments FFmpeg selon format / résolution / qualité / mute ; piste audio optionnelle (`0:a:0?`). */
+function ffmpegArgs(inName, outName, fmt, height, qi, mute, aCodec) {
+  const a = ['-i', inName, '-map', '0:v:0', '-map', '0:a:0?', '-map_metadata', '0'];
   // Dimensions paires obligatoires (yuv420p) ; réduction uniquement (jamais d'agrandissement)
   if (height && (!s.meta || s.meta.height > height)) a.push('-vf', `scale=-2:${height}`);
   else a.push('-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2');
   a.push(...fmt.vArgs(qi));
-  if (mute) a.push('-an');
-  else a.push(...fmt.aArgs(qi));
+  if (mute || !aCodec) a.push('-an');
+  else a.push('-c:a', aCodec, '-b:a', AUDIO_BITRATES[qi], '-ac', '2');
   a.push(outName);
   return a;
 }
@@ -284,19 +322,36 @@ async function convertFfmpeg(fmt, height, qi, mute, signal) {
   const blobUrls = [];
   const inName = 'in.' + (extOf(s.file.name).replace(/[^a-z0-9]/g, '') || 'bin');
   const outName = 'out.' + fmt.ext;
-  let ffmpeg = null, onAbort = null, lastLog = '';
+  let ffmpeg = null, onAbort = null;
+  const logs = []; // tampon roulant des logs FFmpeg
+  const pushLog = (m) => { logs.push(String(m)); if (logs.length > 25) logs.shift(); };
+  const tail = () => (logs.length ? ' — ' + logs.slice(-6).join(' | ') : '');
   try {
     const workerURL = await cdnBlobUrl(`${FFMPEG_CDN}/${FFMPEG_WORKER_FILE}`, 'text/javascript', signal, blobUrls);
     const coreURL = await cdnBlobUrl(`${FFMPEG_CORE_CDN}/ffmpeg-core.js`, 'text/javascript', signal, blobUrls);
     const wasmURL = await cdnBlobUrl(`${FFMPEG_CORE_CDN}/ffmpeg-core.wasm`, 'application/wasm', signal, blobUrls,
       (p) => { setProgress(0.02 + p * 0.18); setStatus(`Chargement de FFmpeg.wasm… ${Math.round(p * 100)} %`); });
 
-    ffmpeg = new FFmpeg();
-    ffmpeg.on('log', ({ message }) => { lastLog = message; });
-    onAbort = () => { try { ffmpeg.terminate(); } catch { /* déjà fermé */ } };
+    onAbort = () => { try { ffmpeg?.terminate(); } catch { /* déjà fermé */ } };
     signal.addEventListener('abort', onAbort, { once: true });
-    await ffmpeg.load({ coreURL, wasmURL, classWorkerURL: workerURL });
-    if (signal.aborted) throw abortErr();
+
+    // Tentative 1 : cœur UMD (schéma audio-converter) ; tentative 2 : cœur enveloppé en ESM (Worker module Firefox)
+    let loaded = false, loadErr = null;
+    for (const esm of [false, true]) {
+      if (ffmpeg) { try { ffmpeg.terminate(); } catch { /* déjà fermé */ } ffmpeg = null; }
+      try {
+        const core = esm ? await cdnEsmCoreUrl(signal, blobUrls) : coreURL;
+        ffmpeg = new FFmpeg();
+        ffmpeg.on('log', ({ message }) => pushLog(message));
+        await raceLoad(ffmpeg.load({ coreURL: core, wasmURL, classWorkerURL: workerURL }), signal, LOAD_TIMEOUT_MS);
+        loaded = true;
+        break;
+      } catch (e) {
+        if (signal.aborted) throw abortErr();
+        loadErr = e;
+      }
+    }
+    if (!loaded) throw new Error(`initialisation de FFmpeg impossible : ${errMsg(loadErr)}${tail()}`);
 
     await ffmpeg.writeFile(inName, new Uint8Array(await s.file.arrayBuffer()));
     if (signal.aborted) throw abortErr();
@@ -306,13 +361,19 @@ async function convertFfmpeg(fmt, height, qi, mute, signal) {
       setStatus(`Conversion ${fmt.ext.toUpperCase()} (FFmpeg)… ${Math.round(p * 100)} %`);
     });
     setStatus(`Conversion ${fmt.ext.toUpperCase()} (FFmpeg)…`); setProgress(0.2);
-    const code = await ffmpeg.exec(ffmpegArgs(inName, outName, fmt, height, qi, mute));
-    if (signal.aborted) throw abortErr();
-    if (code !== 0) throw new Error(`FFmpeg code ${code}${lastLog ? ' — ' + lastLog : ''}`);
+    // Codecs audio testés dans l'ordre (repli automatique) ; sans audio / mute → -an
+    let code = -1;
+    for (const ac of (mute ? [null] : fmt.aCodecs)) {
+      logs.length = 0;
+      code = await ffmpeg.exec(ffmpegArgs(inName, outName, fmt, height, qi, mute, ac));
+      if (signal.aborted) throw abortErr();
+      if (code === 0) break;
+    }
+    if (code !== 0) throw new Error(`FFmpeg code ${code}${tail()}`);
     return new Blob([await ffmpeg.readFile(outName)], { type: fmt.mime });
   } catch (e) {
     if (signal.aborted) throw abortErr();
-    throw e;
+    throw e instanceof Error ? e : new Error(errMsg(e));
   } finally {
     if (onAbort) signal.removeEventListener('abort', onAbort);
     if (ffmpeg) {
@@ -344,7 +405,7 @@ async function convert() {
     if (s !== st) return;
     setProgress(false);
     if (isAbort(e)) setStatus('Conversion annulée.');
-    else setStatus(`Conversion ${fmt.ext.toUpperCase()} impossible (${e.message || 'erreur inconnue'}).`, 'error');
+    else setStatus(`Conversion ${fmt.ext.toUpperCase()} impossible (${errMsg(e)}).`, 'error');
   } finally {
     if (s === st) { st.abort = null; setBusy(false); }
   }
