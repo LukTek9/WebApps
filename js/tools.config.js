@@ -251,4 +251,12 @@ export const tools = [
     description: "Lisez et modifiez les tags ID3 de vos MP3 (titre, artiste, album, pochette…) sans ré-encodage, 100 % localement.",
     module: () => import('./tools/audio-metadata.js'),
   },
+  {
+    id: 'audio-reverser',
+    name: "Inverseur Audio (Reverse)",
+    category: 'audio',
+    icon: 'rewind',
+    description: "Lisez vos sons à l'envers : inversion instantanée, forme d'onde, comparaison A/B et export WAV, MP3 ou OGG, 100 % localement.",
+    module: () => import('./tools/audio-reverser.js'),
+  },
 ];
