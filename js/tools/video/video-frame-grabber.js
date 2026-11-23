@@ -196,15 +196,21 @@ async function captureCurrent() {
   const g = canvas.getContext('2d');
   g.drawImage(v, 0, 0, w, h);
   const quality = fmt.lossy ? clamp(Number(q('quality').value) || 0.92, 0.05, 1) : undefined;
-  const blob = await new Promise((res) => canvas.toBlob(res, fmt.mime, quality));
+  const encode = (f, qual) => new Promise((res) => canvas.toBlob(res, f.mime, qual));
+  let outFmt = fmt;
+  let blob = await encode(fmt, quality);
+  if (fmt.mime === 'image/webp' && (!blob || blob.type !== fmt.mime)) { // Safari : WebP non encodable → repli PNG
+    outFmt = FORMATS.png;
+    blob = await encode(outFmt);
+  }
   canvas.width = canvas.height = 0; // libère le buffer
   if (!blob) throw new Error('encodage impossible (image trop grande ?)');
-  if (blob.type && blob.type !== fmt.mime) throw new Error(`format ${fmt.ext.toUpperCase()} non pris en charge par ce navigateur`);
+  if (blob.type && blob.type !== outFmt.mime) throw new Error(`format ${outFmt.ext.toUpperCase()} non pris en charge par ce navigateur`);
 
   const base = `${s.base}_frame_${fileTime(time)}`;
-  let name = `${base}.${fmt.ext}`;
-  if (s.frames.some((f) => f.name === name)) name = `${base}_${s.frames.length + 1}.${fmt.ext}`; // doublon (même temps)
-  s.frames.push({ id: ++s.seq, time, w, h, blob, ext: fmt.ext, name, url: URL.createObjectURL(blob) });
+  let name = `${base}.${outFmt.ext}`;
+  if (s.frames.some((f) => f.name === name)) name = `${base}_${s.frames.length + 1}.${outFmt.ext}`; // doublon (même temps)
+  s.frames.push({ id: ++s.seq, time, w, h, blob, ext: outFmt.ext, name, url: URL.createObjectURL(blob) });
 }
 
 async function grabOne() {

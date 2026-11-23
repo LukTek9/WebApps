@@ -68,6 +68,32 @@ async function createDetector() {
   return createJsQRDetector(await loadJsQR());
 }
 
+async function loadImageSource(file) {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      const bitmap = await createImageBitmap(file);
+      return { source: bitmap, close: () => bitmap.close?.() };
+    } catch { /* repli HTMLImageElement */ }
+  }
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  try {
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = () => reject(new Error('image illisible ou format non pris en charge.'));
+      img.src = url;
+    });
+  } catch (error) {
+    img.onload = img.onerror = null;
+    URL.revokeObjectURL(url);
+    throw error;
+  }
+  return {
+    source: img,
+    close: () => { img.onload = img.onerror = null; img.removeAttribute('src'); URL.revokeObjectURL(url); },
+  };
+}
+
 function setResult(codes) {
   const text = codes.map((code) => code.rawValue).filter(Boolean).join('\n');
   result = text;
@@ -144,10 +170,10 @@ export function mount(container) {
         const fileDetector = detector || await createDetector();
         if (!activeUi.isActive()) return;
         detector = fileDetector;
-        const image = await createImageBitmap(file);
+        const image = await loadImageSource(file);
         if (!activeUi.isActive()) { image.close(); return; }
         try {
-          const codes = await fileDetector.detect(image);
+          const codes = await fileDetector.detect(image.source);
           if (activeUi.isActive()) setResult(codes);
         }
         finally { image.close(); }

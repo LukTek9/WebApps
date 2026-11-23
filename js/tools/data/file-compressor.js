@@ -99,7 +99,7 @@ function routeOf(file) {
 /* ------------------------------- Moteurs ------------------------------ */
 
 const canvasBlob = (canvas, mime, quality) =>
-  new Promise((res, rej) => canvas.toBlob((b) => (b ? res(b) : rej(new Error('Encodage image impossible.'))), mime, quality));
+  new Promise((res) => canvas.toBlob(res, mime, quality));
 
 /** Ré-encode une image dans son format d'origine, dimensions inchangées. */
 async function compressImage(file, level) {
@@ -115,10 +115,12 @@ async function compressImage(file, level) {
       g.fillRect(0, 0, canvas.width, canvas.height);
     }
     g.drawImage(bmp, 0, 0);
-    const blob = await canvasBlob(canvas, mime, level.q);
+    let blob = await canvasBlob(canvas, mime, level.q);
+    if (mime === 'image/webp' && (!blob || blob.type !== mime)) blob = await canvasBlob(canvas, 'image/png'); // Safari : repli PNG
     canvas.width = canvas.height = 0; // libère le buffer
-    // Le navigateur ne sait pas encoder ce format (ex. WebP ancien) → format non préservable
-    return blob.type === mime ? blob : null;
+    if (!blob) throw new Error('Encodage image impossible.');
+    // Le navigateur ne sait pas encoder ce format → format non préservable
+    return blob.type === mime || (mime === 'image/webp' && blob.type === 'image/png') ? blob : null;
   } finally {
     bmp.close?.();
   }
@@ -147,6 +149,9 @@ async function processItem(item, level, session) {
   } else {
     item.out = out;
     item.status = 'done';
+    if (item.route === 'image' && out.type === 'image/png' && imageMime(file) === 'image/webp') {
+      item.outName = file.name.replace(/\.[^.]+$/, '') + '.png'; // repli PNG : extension mise à jour
+    }
   }
   item.url = URL.createObjectURL(item.out);
   return true;
@@ -158,6 +163,7 @@ function releaseOutput(item) {
   if (item.url) URL.revokeObjectURL(item.url);
   item.url = null;
   item.out = null;
+  item.outName = null;
 }
 
 function releaseSrc(item) {
@@ -187,7 +193,7 @@ function render() {
       <td>${it.out ? fmtSize(it.out.size) : '—'}</td>
       <td class="gain${gain > 0 ? '' : ' none'}">${gainTxt}</td>
       <td class="st-${it.status}${it.status === 'error' ? ' status-error' : ''}" title="${esc(it.error)}">${STATUS[it.status]}${it.error ? ' : ' + esc(it.error) : ''}</td>
-      <td>${it.url ? `<a class="fcmp-btn icon-btn" href="${it.url}" download="${esc(it.file.name)}" title="Télécharger"><i data-lucide="download"></i></a>` : ''}
+      <td>${it.url ? `<a class="fcmp-btn icon-btn" href="${it.url}" download="${esc(it.outName || it.file.name)}" title="Télécharger"><i data-lucide="download"></i></a>` : ''}
           <button class="fcmp-btn icon-btn" data-remove="${it.id}" title="Retirer" ${s.busy ? 'disabled' : ''}><i data-lucide="trash-2"></i></button></td>
     </tr>`;
   }).join('');
