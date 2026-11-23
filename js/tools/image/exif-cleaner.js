@@ -6,6 +6,8 @@ import { readJpegExif } from '../shared/exif-utils.js';
 
 const EXT_MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 const SUPPORTED = new Set(Object.values(EXT_MIME));
+const STATUS_LABEL = { pending: 'En attente', busy: 'Nettoyage…', done: 'Terminé', error: 'Erreur' };
+const STATE_KEY = { busy: 'converting' }; // mappe vers data-s du design system .imgc-state
 
 let state = null;
 
@@ -182,10 +184,7 @@ export function mount(container, ctx) {
 
   state = { ac, timers, items, container };
 
-  const root = el('div', 'exif-cleaner');
-  root.style.display = 'flex';
-  root.style.flexDirection = 'column';
-  root.style.gap = 'var(--space-4)';
+  const root = el('div', 'imgc');
 
   /* Dropzone */
   const input = document.createElement('input');
@@ -194,23 +193,25 @@ export function mount(container, ctx) {
   input.multiple = true;
   input.hidden = true;
 
-  const dropzone = el('div', 'dropzone');
+  const dropzone = el('div', 'imgc-drop');
   dropzone.tabIndex = 0;
   dropzone.setAttribute('role', 'button');
   dropzone.setAttribute('aria-label', 'Ajouter des images JPG, PNG ou WEBP');
+  const dzIcon = el('i');
+  dzIcon.setAttribute('data-lucide', 'upload-cloud');
   dropzone.append(
+    dzIcon,
     el('strong', '', 'Glissez-déposez vos images ici'),
     el('span', '', 'ou cliquez pour sélectionner · JPG, PNG, WEBP (un ou plusieurs fichiers)'),
     input,
   );
 
   /* Options */
-  const options = el('div', 'exif-cleaner-options');
-  options.style.display = 'flex';
-  options.style.alignItems = 'center';
-  options.style.gap = 'var(--space-3)';
-  options.style.flexWrap = 'wrap';
-  const qLabel = el('label', '', 'Qualité JPEG / WEBP');
+  const options = el('div', 'imgc-opts');
+  const qField = el('div', 'imgc-field');
+  const qLabel = el('label', '', 'Qualité JPEG / WEBP : ');
+  const qValue = el('span', '', '92');
+  qLabel.append(qValue, ' %');
   const qInput = document.createElement('input');
   qInput.type = 'range';
   qInput.min = '50';
@@ -219,27 +220,25 @@ export function mount(container, ctx) {
   qInput.value = '92';
   qInput.id = 'exif-cleaner-quality';
   qLabel.htmlFor = qInput.id;
-  const qValue = el('span', '', '92 %');
-  options.append(qLabel, qInput, qValue);
-
-  /* Résumé + liste */
-  const summary = el('div', 'zipa-summary');
-  const list = el('div', 'zipa-list');
+  qField.append(qLabel, qInput);
+  options.append(qField);
 
   /* Actions */
-  const actions = el('div', 'exif-cleaner-actions');
-  actions.style.display = 'flex';
-  actions.style.gap = 'var(--space-3)';
-  actions.style.flexWrap = 'wrap';
-  const btnClean = el('button', 'btn btn-primary', 'Supprimer les métadonnées');
+  const actions = el('div', 'imgc-actions');
+  const btnClean = el('button', 'imgc-btn primary', 'Supprimer les métadonnées');
   btnClean.type = 'button';
-  const btnAll = el('button', 'btn btn-secondary', 'Tout télécharger');
+  const btnAll = el('button', 'imgc-btn', 'Tout télécharger');
   btnAll.type = 'button';
-  const btnClear = el('button', 'btn btn-secondary', 'Vider la liste');
+  const btnClear = el('button', 'imgc-btn', 'Vider la liste');
   btnClear.type = 'button';
   actions.append(btnClean, btnAll, btnClear);
 
-  root.append(dropzone, options, summary, list, actions);
+  /* Statut + grille */
+  const banner = el('div', 'imgc-status');
+  banner.setAttribute('role', 'status');
+  const grid = el('div', 'imgc-grid');
+
+  root.append(dropzone, options, actions, banner, grid);
   container.append(root);
 
   /* ----- helpers ----- */
@@ -267,7 +266,10 @@ export function mount(container, ctx) {
 
   const removeItem = (id) => {
     const i = items.findIndex((it) => it.id === id);
-    if (i >= 0) items.splice(i, 1);
+    if (i >= 0) {
+      if (items[i].thumbUrl) URL.revokeObjectURL(items[i].thumbUrl);
+      items.splice(i, 1);
+    }
     render();
   };
 
@@ -290,35 +292,47 @@ export function mount(container, ctx) {
   }
 
   function render() {
-    list.replaceChildren();
+    grid.replaceChildren();
     for (const it of items) {
-      const row = el('div', 'zipa-row');
-      const name = el('span', 'zipa-name', it.file.name);
+      const card = el('div', 'imgc-card');
+
+      const img = el('img', 'imgc-thumb checkerboard-bg');
+      img.src = it.thumbUrl;
+      img.alt = '';
+
+      const name = el('div', 'imgc-name', it.file.name);
       name.title = it.file.name;
-      const size = el('span', 'zipa-size', fmtSize(it.file.size));
-      row.append(name, size);
 
-      const info = el('span', 'zipa-size', metaText(it) || 'Analyse…');
-      row.append(info);
-
-      if (it.status === 'busy') row.append(el('span', 'zipa-size', 'Nettoyage…'));
-      else if (it.status === 'error') row.append(el('span', 'zipa-size', 'Erreur'));
-      else if (it.status === 'done' && it.blob) {
+      const meta = el('div', 'imgc-meta');
+      let sizeText = fmtSize(it.file.size);
+      if (it.status === 'done' && it.blob) {
         const delta = it.file.size - it.blob.size;
         const pct = it.file.size ? Math.round((delta / it.file.size) * 100) : 0;
-        row.append(el('span', 'zipa-size', `→ ${fmtSize(it.blob.size)} (${pct >= 0 ? '−' : '+'}${Math.abs(pct)} %)${it.fallback ? ' · PNG (WebP non supporté)' : ''}`));
-        const dl = el('button', 'btn btn-secondary', 'Télécharger');
+        sizeText = `${fmtSize(it.file.size)} → ${fmtSize(it.blob.size)} (${pct >= 0 ? '−' : '+'}${Math.abs(pct)} %)`;
+      }
+      const state = el('span', 'imgc-state', STATUS_LABEL[it.status]);
+      state.dataset.s = STATE_KEY[it.status] || it.status;
+      meta.append(el('span', '', sizeText), state);
+
+      card.append(img, name, meta, el('div', 'imgc-meta', metaText(it) || 'Analyse…'));
+      if (it.status === 'done' && it.fallback) card.append(el('div', 'imgc-meta', 'PNG (WebP non supporté)'));
+
+      const row = el('div', 'imgc-row');
+      if (it.status === 'done' && it.blob) {
+        const dl = el('button', 'imgc-btn primary', 'Télécharger');
         dl.type = 'button';
         dl.addEventListener('click', () => downloadItem(it), { signal });
         row.append(dl);
       }
-
-      const rm = el('button', 'btn-remove-file', '×');
+      const rm = el('button', 'imgc-btn', 'Retirer');
       rm.type = 'button';
+      rm.disabled = busy;
       rm.setAttribute('aria-label', `Retirer ${it.file.name}`);
       rm.addEventListener('click', () => removeItem(it.id), { signal });
       row.append(rm);
-      list.append(row);
+
+      card.append(row);
+      grid.append(card);
     }
 
     const total = items.reduce((s, it) => s + it.file.size, 0);
@@ -329,17 +343,14 @@ export function mount(container, ctx) {
       lines.push(`${items.length} fichier(s) · ${fmtSize(total)}${done ? ` · ${done} nettoyé(s)` : ''}${withGps ? ` · ${withGps} avec GPS` : ''}`);
     }
     if (notice) lines.push(notice);
-    summary.textContent = lines.join(' — ');
-    summary.hidden = lines.length === 0;
-    list.hidden = items.length === 0;
-    actions.hidden = items.length === 0;
-    options.hidden = items.length === 0;
+    banner.textContent = lines.join(' — ');
+    banner.classList.toggle('err', Boolean(notice) || items.some((it) => it.status === 'error'));
     btnClean.disabled = busy || items.length === 0;
     btnAll.disabled = busy || done === 0;
     btnClear.disabled = busy;
     const hasLossy = items.some((it) => it.mime !== 'image/png');
     options.hidden = items.length === 0 || !hasLossy;
-    if (ctx?.refreshIcons) ctx.refreshIcons(root);
+    window.lucide?.createIcons?.();
   }
 
   /* ----- ajout de fichiers ----- */
@@ -349,7 +360,7 @@ export function mount(container, ctx) {
     for (const file of fileList) {
       const mime = mimeOf(file);
       if (!mime) { rejected.push(file.name); continue; }
-      const item = { id: ++uid, file, mime, w: 0, h: 0, meta: null, status: 'pending', blob: null, outName: '', fallback: false };
+      const item = { id: ++uid, file, thumbUrl: URL.createObjectURL(file), mime, w: 0, h: 0, meta: null, status: 'pending', blob: null, outName: '', fallback: false };
       items.push(item);
       fresh.push(item);
     }
@@ -404,11 +415,11 @@ export function mount(container, ctx) {
   }, { signal });
   ['dragenter', 'dragover'].forEach((type) => dropzone.addEventListener(type, (e) => {
     e.preventDefault();
-    dropzone.classList.add('dragover', 'is-dragover');
+    dropzone.classList.add('is-over');
   }, { signal }));
   ['dragleave', 'drop'].forEach((type) => dropzone.addEventListener(type, (e) => {
     e.preventDefault();
-    dropzone.classList.remove('dragover', 'is-dragover');
+    dropzone.classList.remove('is-over');
   }, { signal }));
   dropzone.addEventListener('drop', (e) => {
     const files = [...(e.dataTransfer?.files || [])];
@@ -416,12 +427,17 @@ export function mount(container, ctx) {
   }, { signal });
 
   qInput.addEventListener('input', () => {
-    qValue.textContent = `${qInput.value} %`;
+    qValue.textContent = qInput.value;
   }, { signal });
   qInput.addEventListener('change', () => { if (!busy) resetResults(); }, { signal });
   btnClean.addEventListener('click', cleanAll, { signal });
   btnAll.addEventListener('click', downloadAll, { signal });
-  btnClear.addEventListener('click', () => { items.length = 0; notice = ''; render(); }, { signal });
+  btnClear.addEventListener('click', () => {
+    items.forEach((it) => it.thumbUrl && URL.revokeObjectURL(it.thumbUrl));
+    items.length = 0;
+    notice = '';
+    render();
+  }, { signal });
 
   render();
 }
@@ -431,6 +447,7 @@ export function unmount() {
   state.ac.abort();
   state.timers.forEach((id) => clearTimeout(id));
   state.timers.clear();
+  state.items.forEach((it) => it.thumbUrl && URL.revokeObjectURL(it.thumbUrl));
   state.items.length = 0;
   state.container?.replaceChildren();
   state = null;
