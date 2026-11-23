@@ -139,6 +139,14 @@ export const tools = [
     module: () => import('./tools/image/image-ocr.js'),
   },
   {
+    id: 'exif-cleaner',
+    name: "Nettoyeur de métadonnées EXIF",
+    category: 'image',
+    icon: 'shield-off',
+    description: "Supprimez toutes les métadonnées (EXIF, GPS, XMP) de vos images JPG, PNG et WEBP, un fichier ou en lot, 100 % localement.",
+    module: () => import('./tools/image/exif-cleaner.js'),
+  },
+  {
     id: 'pdf-merger',
     name: "Fusionneur de PDF",
     category: 'pdf',
