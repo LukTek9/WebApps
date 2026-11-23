@@ -38,19 +38,19 @@
   --color-error: #d93025;
 
   /* --- Couleurs par catégorie (icônes de cartes) --- */
-  --cat-pdf: var(--color-primary);
-  --cat-audio: #3b82f6;
-  --cat-video: #8b5cf6;
-  --cat-image: #10b981;
-  --cat-utility: #3b82f6;
+  --cat-pdf: #dc2640;       /* crimson */
+  --cat-audio: #06b6d4;     /* cyan */
+  --cat-video: #d946b5;     /* magenta */
+  --cat-image: #f97316;     /* orange */
+  --cat-text: #22a95a;      /* emerald */
+  --cat-dev: #2f80ed;       /* electric blue */
+  --cat-security: #eab308;  /* gold */
+  --cat-utils: #14b8a6;     /* teal */
+  --cat-color: #a855f7;     /* purple */
+  --cat-data: #4f46e5;      /* indigo */
+  --cat-calc: #84cc16;      /* lime */
+  --cat-utility: var(--cat-utils);
   --cat-default: #7a736f;
-  --cat-text: color-mix(in srgb, var(--cat-image) 72%, var(--color-text));
-  --cat-dev: color-mix(in srgb, var(--cat-audio) 72%, var(--color-text));
-  --cat-security: color-mix(in srgb, var(--cat-video) 78%, var(--color-text));
-  --cat-utils: color-mix(in srgb, var(--cat-utility) 82%, var(--color-text));
-  --cat-color: color-mix(in srgb, var(--cat-image) 48%, var(--cat-video));
-  --cat-data: color-mix(in srgb, var(--cat-pdf) 62%, var(--cat-audio));
-  --cat-calc: color-mix(in srgb, var(--cat-default) 55%, var(--cat-audio));
 
   /* --- Typographie --- */
   --font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
