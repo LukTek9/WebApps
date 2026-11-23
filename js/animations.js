@@ -93,6 +93,55 @@ export function initCategoryScrollBg(container) {
   if (currentEntry) currentEntry.activate();
 }
 
+export function initMobileHeaderAutoHide(headerEl) {
+  if (!headerEl) return;
+
+  const media = gsap.matchMedia();
+  media.add('(max-width: 640px)', () => {
+    let isHidden = false;
+    const show = () => {
+      if (!isHidden) return;
+      isHidden = false;
+      gsap.to(headerEl, {
+        yPercent: 0,
+        duration: prefersReducedMotion() ? 0 : 0.28,
+        ease: 'power2.out',
+        overwrite: true,
+      });
+    };
+    const hide = () => {
+      if (isHidden) return;
+      isHidden = true;
+      gsap.to(headerEl, {
+        yPercent: -110,
+        duration: prefersReducedMotion() ? 0 : 0.28,
+        ease: 'power2.out',
+        overwrite: true,
+      });
+    };
+
+    const trigger = ScrollTrigger.create({
+      start: 0,
+      end: 'max',
+      onUpdate: (self) => {
+        if (self.direction < 0 || self.scroll() <= 80) show();
+        else if (self.scroll() > 120) hide();
+      },
+      onLeaveBack: show,
+    });
+
+    if (window.scrollY > 120) hide();
+
+    return () => {
+      trigger.kill();
+      gsap.killTweensOf(headerEl);
+      gsap.set(headerEl, { clearProps: 'transform' });
+    };
+  });
+
+  return () => media.revert();
+}
+
 function animateGroups(groups) {
   const activeGroups = groups.filter(({ elements }) => elements.length);
   const targets = [...new Set(activeGroups.flatMap(({ elements }) => elements))];

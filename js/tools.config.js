@@ -315,6 +315,14 @@ export const tools = [
     module: () => import('./tools/audio/audio-visualizer.js'),
   },
   {
+    id: 'audio-normalizer',
+    name: "Normaliseur Audio LUFS",
+    category: 'audio',
+    icon: 'volume-2',
+    description: "Normalisez le volume de vos fichiers audio (MP3, WAV, OGG, M4A, FLAC) à une cible LUFS avec plafond true-peak, export WAV ou MP3, 100 % localement via FFmpeg.wasm.",
+    module: () => import('./tools/audio/audio-normalizer.js'),
+  },
+  {
     id: 'video-converter',
     name: "Convertisseur Vidéo local",
     category: 'video',
@@ -393,6 +401,14 @@ export const tools = [
     icon: 'monitor-dot',
     description: "Enregistrez votre écran, votre webcam ou les deux en incrustation (PiP), avec micro et audio système, export WEBM natif ou MP4, 100 % localement.",
     module: () => import('./tools/video/screen-webcam-recorder.js'),
+  },
+  {
+    id: 'subtitle-burner',
+    name: "Sous-titres & Incrustation SRT",
+    category: 'video',
+    icon: 'captions',
+    description: "Éditez ou importez des sous-titres SRT, téléchargez le .srt et incrustez-les dans votre vidéo (MP4 ou WEBM), taille et marge réglables, 100 % localement via FFmpeg.wasm.",
+    module: () => import('./tools/video/subtitle-burner.js'),
   },
 ];
 

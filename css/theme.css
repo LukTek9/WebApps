@@ -149,7 +149,7 @@ body::before {
     radial-gradient(ellipse at 12% 18%, color-mix(in srgb, var(--theme-accent) 14%, transparent), transparent 38%),
     radial-gradient(ellipse at 84% 12%, color-mix(in srgb, var(--theme-accent) 9%, transparent), transparent 34%),
     radial-gradient(ellipse at 72% 82%, color-mix(in srgb, #8b5cf6 5%, transparent), transparent 42%),
-    repeating-linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 1.2%, transparent) 0 1px, transparent 1px 72px);
+    repeating-linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 3%, transparent) 0 1px, transparent 1px 72px);
   background-size: 140% 140%, 130% 130%, 140% 140%, auto;
   animation: ambient-drift 36s ease-in-out infinite alternate;
   transition: background var(--theme-transition);
@@ -162,56 +162,56 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background-image:
-    radial-gradient(ellipse at 14% 22%, color-mix(in srgb, var(--scroll-bg-color) 12%, transparent), transparent 52%),
-    radial-gradient(ellipse at 86% 76%, color-mix(in srgb, var(--scroll-bg-color) 8%, transparent), transparent 46%),
-    var(--scroll-bg-pattern, repeating-linear-gradient(135deg, color-mix(in srgb, var(--scroll-bg-color) 3%, transparent) 0 1px, transparent 1px 76px));
+    radial-gradient(ellipse at 14% 22%, color-mix(in srgb, var(--scroll-bg-color) 18%, transparent), transparent 52%),
+    radial-gradient(ellipse at 86% 76%, color-mix(in srgb, var(--scroll-bg-color) 12%, transparent), transparent 46%),
+    var(--scroll-bg-pattern, repeating-linear-gradient(135deg, color-mix(in srgb, var(--scroll-bg-color) 8%, transparent) 0 1px, transparent 1px 76px));
   background-size: 140% 140%, 130% 130%, auto;
 }
 
 .scroll-bg[data-active-category="audio"] {
-  --scroll-bg-pattern: repeating-radial-gradient(ellipse at 20% 30%, color-mix(in srgb, var(--scroll-bg-color) 5%, transparent) 0 1px, transparent 1px 34px);
+  --scroll-bg-pattern: repeating-radial-gradient(ellipse at 20% 30%, color-mix(in srgb, var(--scroll-bg-color) 10%, transparent) 0 1px, transparent 1px 34px);
 }
 .scroll-bg[data-active-category="video"] {
-  --scroll-bg-pattern: repeating-linear-gradient(125deg, color-mix(in srgb, var(--scroll-bg-color) 4%, transparent) 0 1px, transparent 1px 42px);
+  --scroll-bg-pattern: repeating-linear-gradient(125deg, color-mix(in srgb, var(--scroll-bg-color) 9%, transparent) 0 1px, transparent 1px 42px);
 }
 .scroll-bg[data-active-category="image"] {
-  --scroll-bg-pattern: radial-gradient(color-mix(in srgb, var(--scroll-bg-color) 7%, transparent) 1px, transparent 1.5px);
+  --scroll-bg-pattern: radial-gradient(color-mix(in srgb, var(--scroll-bg-color) 12%, transparent) 1px, transparent 1.5px);
   background-size: 140% 140%, 130% 130%, 28px 28px;
 }
 .scroll-bg[data-active-category="pdf"] {
   --scroll-bg-pattern:
-    linear-gradient(color-mix(in srgb, var(--scroll-bg-color) 3%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--scroll-bg-color) 3%, transparent) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--scroll-bg-color) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--scroll-bg-color) 8%, transparent) 1px, transparent 1px);
   background-size: 140% 140%, 130% 130%, 44px 44px, 44px 44px;
 }
 .scroll-bg[data-active-category="text"] {
-  --scroll-bg-pattern: repeating-linear-gradient(0deg, color-mix(in srgb, var(--scroll-bg-color) 3%, transparent) 0 1px, transparent 1px 36px);
+  --scroll-bg-pattern: repeating-linear-gradient(0deg, color-mix(in srgb, var(--scroll-bg-color) 8%, transparent) 0 1px, transparent 1px 36px);
 }
 .scroll-bg[data-active-category="dev"] {
   --scroll-bg-pattern:
-    linear-gradient(color-mix(in srgb, var(--scroll-bg-color) 3%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--scroll-bg-color) 3%, transparent) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--scroll-bg-color) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--scroll-bg-color) 8%, transparent) 1px, transparent 1px);
   background-size: 140% 140%, 130% 130%, 24px 24px, 24px 24px;
 }
 .scroll-bg[data-active-category="security"] {
   --scroll-bg-pattern:
-    repeating-linear-gradient(45deg, color-mix(in srgb, var(--scroll-bg-color) 3%, transparent) 0 1px, transparent 1px 30px),
-    repeating-linear-gradient(-45deg, color-mix(in srgb, var(--scroll-bg-color) 3%, transparent) 0 1px, transparent 1px 30px);
+    repeating-linear-gradient(45deg, color-mix(in srgb, var(--scroll-bg-color) 8%, transparent) 0 1px, transparent 1px 30px),
+    repeating-linear-gradient(-45deg, color-mix(in srgb, var(--scroll-bg-color) 8%, transparent) 0 1px, transparent 1px 30px);
 }
 .scroll-bg[data-active-category="utils"] {
-  --scroll-bg-pattern: radial-gradient(color-mix(in srgb, var(--scroll-bg-color) 6%, transparent) 1px, transparent 1.5px);
+  --scroll-bg-pattern: radial-gradient(color-mix(in srgb, var(--scroll-bg-color) 11%, transparent) 1px, transparent 1.5px);
   background-size: 140% 140%, 130% 130%, 42px 42px;
 }
 .scroll-bg[data-active-category="color"] {
-  --scroll-bg-pattern: repeating-radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--scroll-bg-color) 4%, transparent) 0 1px, transparent 1px 28px);
+  --scroll-bg-pattern: repeating-radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--scroll-bg-color) 9%, transparent) 0 1px, transparent 1px 28px);
 }
 .scroll-bg[data-active-category="data"] {
-  --scroll-bg-pattern: repeating-linear-gradient(90deg, color-mix(in srgb, var(--scroll-bg-color) 3%, transparent) 0 1px, transparent 1px 52px);
+  --scroll-bg-pattern: repeating-linear-gradient(90deg, color-mix(in srgb, var(--scroll-bg-color) 8%, transparent) 0 1px, transparent 1px 52px);
 }
 .scroll-bg[data-active-category="calc"] {
   --scroll-bg-pattern:
-    linear-gradient(color-mix(in srgb, var(--scroll-bg-color) 3%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--scroll-bg-color) 3%, transparent) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--scroll-bg-color) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--scroll-bg-color) 8%, transparent) 1px, transparent 1px);
   background-size: 140% 140%, 130% 130%, 64px 64px, 64px 64px;
 }
 
@@ -434,7 +434,7 @@ button { font: inherit; cursor: pointer; }
 
 /* ---------- Accueil : nouvelle vitrine ---------- */
 body:has(#home-view:not([hidden])) {
-  background-color: #f7f7fa;
+  background-color: var(--color-bg);
 }
 
 .site-header {
@@ -3626,7 +3626,7 @@ select option {
 }
 
 /* ---------- Accueil animé ---------- */
-body:has(#home-view:not([hidden])) { background-color: #f7f7fa; }
+body:has(#home-view:not([hidden])) { background-color: var(--color-bg); }
 
 .site-header__inner { min-height: 76px; gap: 1.25rem; }
 .filters {
@@ -3899,3 +3899,74 @@ body:has(#home-view:not([hidden])) { background-color: #f7f7fa; }
 .pdfs-sig:hover { outline-style: solid; }
 .pdfs-sig:active { cursor: grabbing; }
 .pdfs-sig[hidden] { display: none; }
+
+/* ---------- Harmonisation du thème actif ---------- */
+.filter-btn {
+  --filter-color: var(--theme-accent);
+  border-color: transparent;
+  transition: transform var(--dur-med) var(--ease-spring), background var(--theme-transition), border-color var(--theme-transition), box-shadow var(--theme-transition), color var(--theme-transition);
+}
+
+.filter-btn:hover,
+.filter-btn:focus-visible {
+  border-color: color-mix(in srgb, var(--filter-color) 36%, transparent);
+  background: color-mix(in srgb, var(--filter-color) 13%, var(--color-surface));
+  color: color-mix(in srgb, var(--filter-color) 74%, var(--color-text));
+}
+
+.filter-btn.is-active {
+  border-color: color-mix(in srgb, var(--filter-color) 34%, transparent);
+  background: color-mix(in srgb, var(--filter-color) 15%, var(--color-surface));
+  color: color-mix(in srgb, var(--filter-color) 74%, var(--color-text));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--filter-color) 14%, transparent);
+}
+
+.filter-btn.is-active .filter-btn__count {
+  background: color-mix(in srgb, var(--filter-color) 17%, transparent);
+}
+
+.workspace {
+  --color-primary: var(--theme-accent);
+  --color-primary-hover: color-mix(in srgb, var(--theme-accent) 78%, #262433);
+  --color-primary-soft: color-mix(in srgb, var(--theme-accent) 12%, white);
+  --primary: var(--theme-accent);
+  --accent: var(--theme-accent);
+}
+
+.workspace .btn,
+.workspace .btn-primary,
+.tools-empty__reset {
+  background: color-mix(in srgb, var(--theme-accent) 78%, #262433);
+}
+
+.workspace .btn:hover:not(:disabled),
+.workspace .btn-primary:hover:not(:disabled),
+.tools-empty__reset:hover {
+  background: color-mix(in srgb, var(--theme-accent) 68%, #262433);
+}
+
+.workspace :focus-visible {
+  outline-color: color-mix(in srgb, var(--theme-accent) 62%, #262433);
+}
+
+.workspace__back:hover {
+  color: var(--theme-accent);
+}
+
+@media (max-width: 640px) {
+  .site-header {
+    transition: background var(--theme-transition), border-color var(--theme-transition), box-shadow var(--theme-transition);
+    will-change: transform;
+  }
+}
+
+@media (min-width: 1000px) {
+  .is-category-view .hero {
+    border: 1px solid color-mix(in srgb, var(--theme-accent) 24%, var(--color-border));
+    background: linear-gradient(145deg, color-mix(in srgb, var(--theme-accent) 13%, var(--color-surface)), var(--color-surface));
+    color: var(--color-text);
+  }
+
+  .is-category-view .hero .hero__eyebrow { color: var(--theme-accent); }
+  .is-category-view .hero .hero__intro { color: var(--color-text-muted); }
+}

@@ -8,6 +8,7 @@ import {
   animateToolContent,
   animateWorkspaceEnter,
   initCategoryScrollBg,
+  initMobileHeaderAutoHide,
 } from './animations.js';
 
 const $ = (id) => document.getElementById(id);
@@ -53,6 +54,7 @@ function renderFilters() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'filter-btn' + (cat.id === state.category ? ' is-active' : '');
+    btn.style.setProperty('--filter-color', cat.id === 'all' ? 'var(--color-primary)' : cat.color);
     btn.setAttribute('aria-pressed', String(cat.id === state.category));
     const icon = document.createElement('i');
     icon.className = 'filter-btn__icon';
@@ -274,6 +276,7 @@ document.addEventListener('keydown', (event) => {
 
 renderFilters();
 renderGrid();
+initMobileHeaderAutoHide(document.querySelector('.site-header'));
 
 // Deep link : index.html#<tool-id>
 const hashId = location.hash.slice(1);

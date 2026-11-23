@@ -1,6 +1,6 @@
 # WebApp Tools
 
-WebApp Tools est une boîte à outils web en français regroupant **122 outils** dans une interface responsive. Chaque outil s'ouvre dans un espace de travail dédié sans quitter la page.
+WebApp Tools est une boîte à outils web en français regroupant **124 outils** dans une interface responsive. Chaque outil s'ouvre dans un espace de travail dédié sans quitter la page.
 
 ## Fonctionnalités
 
@@ -14,7 +14,7 @@ WebApp Tools est une boîte à outils web en français regroupant **122 outils**
 
 ## Outils disponibles
 
-### Audio (10)
+### Audio (11)
 
 - Découpeur Audio
 - Enregistreur Vocal
@@ -26,8 +26,9 @@ WebApp Tools est une boîte à outils web en français regroupant **122 outils**
 - Inverseur Audio (Reverse)
 - Métronome numérique
 - Visualiseur de spectre audio
+- Normaliseur Audio LUFS
 
-### Vidéo (10)
+### Vidéo (11)
 
 - Convertisseur Vidéo local
 - Recadreur Vidéo
@@ -39,6 +40,7 @@ WebApp Tools est une boîte à outils web en français regroupant **122 outils**
 - Fusionneur de Vidéos
 - Vitesse & Inversion Vidéo
 - Enregistreur Écran & Webcam
+- Sous-titres & Incrustation SRT
 
 ### Images (12)
 
@@ -219,7 +221,7 @@ index.html              Page principale et workspace
 css/theme.css           Variables, thème et mise en page
 js/app.js               Recherche, filtres, navigation et lazy loading
 js/animations.js        Animations GSAP
-js/tools.config.js      Registre des catégories et des 122 outils
+js/tools.config.js      Registre des catégories et des 124 outils
 js/tools/               Modules indépendants et runtime partagé des outils
 update_and_push.ps1     Mise à jour de l'état du projet et synchronisation Git
 UPDATE_AND_PUSH.bat     Lanceur Windows du script PowerShell
