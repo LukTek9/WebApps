@@ -1708,6 +1708,8 @@ select option {
 .bgr-color { width: 44px; height: 38px; padding: 2px; border: 1px solid var(--color-border); border-radius: calc(var(--radius-md) / 1.5); background: var(--color-surface); cursor: pointer; }
 .bgr-color:disabled { opacity: .45; cursor: not-allowed; }
 .bgr-hint { font-size: .8rem; color: var(--color-text-muted); }
+/* Scène à la taille native : jamais agrandie, réduite si > conteneur ou 70 % de la hauteur de fenêtre (ratio conservé) */
+.imgc-cmp.bgr-stage { width: min(var(--bgr-w, 100%), 100%, calc(70vh * var(--bgr-r, 1.7778))); max-height: none; aspect-ratio: var(--bgr-r, 16 / 9); margin-inline: auto; }
 .bgr-progress { height: 8px; border-radius: var(--radius-pill); background: var(--color-border); overflow: hidden; }
 .bgr-progress[hidden] { display: none; }
 .bgr-progress > div { height: 100%; width: 0; background: var(--color-primary); transition: width .2s; }

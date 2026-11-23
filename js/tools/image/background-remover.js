@@ -62,7 +62,7 @@ const TEMPLATE = `
   <div class="imgc-status" id="bgr-status" role="status"></div>
   <div class="imgc-viewer" id="bgr-viewer" hidden>
     <div class="imgc-vtitle" id="bgr-vtitle"></div>
-    <div class="imgc-cmp checkerboard-bg" id="bgr-stage">
+    <div class="imgc-cmp bgr-stage checkerboard-bg" id="bgr-stage">
       <img id="bgr-vafter" alt="Après suppression du fond" hidden>
       <img id="bgr-vbefore" alt="Avant suppression du fond">
       <div class="imgc-handle" id="bgr-vhandle" hidden></div>
@@ -149,13 +149,52 @@ function releaseSource() {
   if (s) s.srcUrl = null;
 }
 
-function setFile(file) {
+/** Dimensions natives (naturalWidth × naturalHeight, EXIF appliqué) d'une image. */
+function loadNatural(url) {
+  return new Promise((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve({ w: im.naturalWidth, h: im.naturalHeight });
+    im.onerror = () => reject(new Error('Image illisible'));
+    im.src = url;
+  });
+}
+
+/** Ramène le détourage aux dimensions exactes de l'original (sinon inchangé). */
+async function normalizeCut(blob, w, h) {
+  const bmp = await createImageBitmap(blob);
+  if (bmp.width === w && bmp.height === h) return { blob, bmp };
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const g = c.getContext('2d');
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(bmp, 0, 0, w, h);
+  bmp.close();
+  const out = await new Promise((res) => c.toBlob(res, 'image/png'));
+  if (!out) throw new Error('Redimensionnement du résultat impossible');
+  return { blob: out, bmp: await createImageBitmap(out) };
+}
+
+async function setFile(file) {
   if (!s || s.busy || !file) return;
   if (!file.type.startsWith('image/')) { setStatus('Fichier ignoré (non image).', true); return; }
+  const seq = ++s.seq;
+  const url = URL.createObjectURL(file);
+  let dims;
+  try {
+    dims = await loadNatural(url);
+  } catch (e) {
+    URL.revokeObjectURL(url);
+    if (s && seq === s.seq) setStatus(e.message, true);
+    return;
+  }
+  if (!s || s.busy || seq !== s.seq) { URL.revokeObjectURL(url); return; }
   releaseResult();
   releaseSource();
   s.file = file;
-  s.srcUrl = URL.createObjectURL(file);
+  s.srcUrl = url;
+  s.natW = dims.w;
+  s.natH = dims.h;
   q('vrange').value = 50;
   setStatus('');
   render();
@@ -192,13 +231,16 @@ function renderViewer() {
   q('vtagr').hidden = !done;
   q('vrange').disabled = !done;
   q('vtitle').textContent = s.file.name;
-  const dims = done ? `${s.cutBitmap.width} × ${s.cutBitmap.height}` : '—';
+  // Scène à la taille native : jamais agrandie, réduite seulement si > conteneur / 70 % de la hauteur de fenêtre.
+  const stage = q('stage');
+  stage.style.setProperty('--bgr-w', s.natW + 'px');
+  stage.style.setProperty('--bgr-r', String(s.natW / s.natH));
+  const dims = `${s.natW} × ${s.natH} px`;
   const info = q('vinfo');
   info.replaceChildren();
   const rows = [
-    ['Original', extOf(s.file), fmtSize(s.file.size)],
-    ['Résultat', done ? 'PNG' : '—', done ? fmtSize(s.cutBlob.size) : '—'],
-    ['Dimensions', dims],
+    ['Original', extOf(s.file), fmtSize(s.file.size), dims],
+    ['Résultat', done ? 'PNG' : '—', done ? fmtSize(s.cutBlob.size) : '—', done ? `${s.cutBitmap.width} × ${s.cutBitmap.height} px` : '—'],
   ];
   for (const [label, ...vals] of rows) {
     const row = document.createElement('div');
@@ -285,11 +327,12 @@ async function removeBg() {
     });
     const blob = await race(work, run.signal);
     if (!s) return; // démonté pendant le traitement
-    const bmp = await createImageBitmap(blob);
-    if (!s || run.signal.aborted) { bmp.close(); throw abortErr(); }
-    s.cutBlob = blob;
-    s.cutBitmap = bmp;
-    s.cutUrl = URL.createObjectURL(blob);
+    const { natW, natH } = s;
+    const norm = await normalizeCut(blob, natW, natH);
+    if (!s || run.signal.aborted) { norm.bmp.close(); throw abortErr(); }
+    s.cutBlob = norm.blob;
+    s.cutBitmap = norm.bmp;
+    s.cutUrl = URL.createObjectURL(norm.blob);
     setStatus(`Terminé en ${((performance.now() - t0) / 1000).toFixed(1)} s.`);
   } catch (e) {
     if (!s) return;
@@ -314,13 +357,14 @@ function cancel() {
 async function exportImage() {
   if (!s?.cutBitmap) return;
   const fmt = EXPORTS.find((f) => f.id === q('format').value);
-  const { width: w, height: h } = s.cutBitmap;
+  const w = s.natW;
+  const h = s.natH;
   const c = document.createElement('canvas');
   c.width = w;
   c.height = h;
   const g = c.getContext('2d');
   if (s.bg === 'color') { g.fillStyle = q('color').value; g.fillRect(0, 0, w, h); }
-  g.drawImage(s.cutBitmap, 0, 0);
+  g.drawImage(s.cutBitmap, 0, 0, w, h);
   const blob = await new Promise((res) =>
     c.toBlob(res, fmt.mime, fmt.lossy ? Number(q('quality').value) / 100 : undefined));
   if (!s) return;
@@ -355,7 +399,7 @@ export function mount(container, ctx) {
   s = {
     root: container, ctx, ac: new AbortController(), pending: new Map(),
     file: null, srcUrl: null, cutUrl: null, cutBitmap: null, cutBlob: null,
-    run: null, busy: false, model: 'isnet_fp16', bg: 'transparent',
+    run: null, busy: false, model: 'isnet_fp16', bg: 'transparent', seq: 0, natW: 0, natH: 0,
   };
 
   q('models').innerHTML = MODELS
