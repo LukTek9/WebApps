@@ -219,6 +219,14 @@ export const tools = [
     module: () => import('./tools/pdf/pdf-unlocker.js'),
   },
   {
+    id: 'pdf-signer',
+    name: "Signataire de PDF",
+    category: 'pdf',
+    icon: 'pen-tool',
+    description: "Dessinez, tapez ou importez votre signature et placez-la sur une page de vos PDF, 100 % localement.",
+    module: () => import('./tools/pdf/pdf-signer.js'),
+  },
+  {
     id: 'audio-trimmer',
     name: "Découpeur Audio",
     category: 'audio',

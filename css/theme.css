@@ -3874,3 +3874,28 @@ body:has(#home-view:not([hidden])) { background-color: #f7f7fa; }
 .zipa-row > i, .zipa-row > svg { flex: none; width: 1.25rem; height: 1.25rem; color: var(--theme-accent); }
 .zipa-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--font-weight-medium); }
 .zipa-size { flex: none; color: var(--color-text-muted); font-size: var(--font-size-sm); }
+
+/* ===== Outil : Signataire de PDF (.pdfs-*) — token catégorie : --cat-pdf ===== */
+.pdfs { display: flex; flex-direction: column; gap: var(--space-4); max-width: 1100px; margin: 0 auto; width: 100%; color: var(--color-text); }
+.pdfs-work { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.pdfs-file { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.pdfs-file > svg, .pdfs-file > i { flex: none; width: var(--space-6); height: var(--space-6); color: var(--cat-pdf); }
+.pdfs-file-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.pdfs-file-info strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--font-weight-bold); }
+.pdfs-file-info small { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.pdfs-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--space-4); align-items: start; }
+@media (max-width: 900px) { .pdfs-layout { grid-template-columns: minmax(0, 1fr); } }
+.pdfs-pane { display: flex; flex-direction: column; gap: var(--space-3); }
+.pdfs-pane[hidden] { display: none; }
+.pdfs-pad { display: block; width: 100%; height: auto; aspect-ratio: 10 / 3; border: 2px dashed var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); cursor: crosshair; touch-action: none; transition: border-color var(--transition); }
+.pdfs-pad:hover { border-color: var(--cat-pdf); }
+.pdfs-preview { display: grid; place-items: center; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.pdfs-preview:empty { display: none; }
+.pdfs-preview canvas { display: block; max-width: 100%; max-height: calc(var(--space-12) * 2); width: auto; height: auto; }
+.pdfs-stage { display: flex; justify-content: center; max-height: 80vh; overflow: auto; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.pdfs-sheet { position: relative; width: fit-content; max-width: 100%; line-height: 0; background: var(--color-surface); box-shadow: var(--shadow-md); }
+.pdfs-sheet canvas { display: block; max-width: 100%; height: auto; cursor: crosshair; }
+.pdfs-sig { position: absolute; display: block; height: auto; outline: 1px dashed var(--cat-pdf); outline-offset: 2px; cursor: grab; touch-action: none; user-select: none; -webkit-user-drag: none; transition: outline-color var(--transition); }
+.pdfs-sig:hover { outline-style: solid; }
+.pdfs-sig:active { cursor: grabbing; }
+.pdfs-sig[hidden] { display: none; }
