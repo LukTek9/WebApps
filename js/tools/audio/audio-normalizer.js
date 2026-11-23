@@ -50,6 +50,43 @@ const q = (id) => s?.root.querySelector('#audnorm-' + id);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const isAbort = (e) => e?.name === 'AbortError';
 const abortErr = () => new DOMException('Annulé', 'AbortError');
+
+/** Texte brut d'une valeur levée (Error, string, objet {message}, autre). FFmpeg.wasm rejette souvent une simple string. */
+function rawErrText(e) {
+  if (e == null) return '';
+  if (typeof e === 'string') return e.trim();
+  if (typeof e.message === 'string' && e.message.trim()) return e.message.trim();
+  if (typeof e.error === 'string' && e.error.trim()) return e.error.trim();
+  if (typeof e.reason === 'string' && e.reason.trim()) return e.reason.trim();
+  try {
+    const t = String(e);
+    if (t && t !== '[object Object]' && t !== '[object Event]') return t.trim();
+    const j = JSON.stringify(e);
+    if (j && j !== '{}') return j.slice(0, 200);
+  } catch { /* ignoré */ }
+  return '';
+}
+
+/** Message d'erreur français explicite ; `logs` = lignes stderr FFmpeg (dernières lignes utiles ajoutées). */
+function errMsg(e, logs = []) {
+  let t = rawErrText(e).replace(/^(Uncaught\s+)?(\w*Error):\s*/i, '');
+  if (t.startsWith('Échec de la normalisation')) return t; // déjà formaté (re-lancé par runLoudnorm)
+  if (/out of memory|memory access out of bounds|Cannot enlarge memory|OOM|RangeError|Array buffer allocation/i.test(t)) {
+    t = 'mémoire insuffisante pour traiter ce fichier (essayez un fichier plus court)';
+  } else if (/not loaded/i.test(t)) {
+    t = 'FFmpeg.wasm n\'est pas chargé';
+  } else if (/FS error|ErrnoError|ENOENT|file (not found|does not exist)/i.test(t)) {
+    t = 'erreur du système de fichiers virtuel FFmpeg (' + t + ')';
+  } else if (/terminate/i.test(t)) {
+    t = 'FFmpeg a été interrompu';
+  } else if (/Failed to fetch|NetworkError|Load failed/i.test(t)) {
+    t = 'chargement de FFmpeg.wasm impossible (réseau ou CDN indisponible)';
+  }
+  const tail = (Array.isArray(logs) ? logs : []).map((l) => String(l).trim()).filter(Boolean)
+    .filter((l) => !/^(frame=|size=|video:|audio:|\[Parsed_loudnorm)/i.test(l)).slice(-3).join(' | ');
+  if (!t && !tail) return 'Échec de la normalisation (cause non précisée par FFmpeg).';
+  return `Échec de la normalisation : ${t || 'erreur FFmpeg'}${tail && !t.includes(tail) ? ` — FFmpeg : ${tail}` : ''}`;
+}
 const fmtMB = (b) => (b / 1048576).toFixed(1) + ' Mo';
 const sanitize = (n) => n.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').trim().slice(0, 120) || 'audio';
 const icons = () => { try { window.lucide?.createIcons?.(); } catch { /* ignoré */ } };
@@ -379,7 +416,7 @@ async function runLoudnorm(st, fmt, kbps, signal) {
     // Passe 1 : mesure
     setStatus('Mesure du volume (passe 1/2)…'); base = 0.2; span = 0.3; setProgress(0.2);
     let code = await ffmpeg.exec(['-i', inName, '-vn', '-af', `loudnorm=I=${I}:TP=${TP}:LRA=${LRA_TARGET}:print_format=json`, '-f', 'null', '-']);
-    if (code !== 0) throw new Error(`FFmpeg code ${code} (mesure)`);
+    if (code !== 0) throw new Error(`FFmpeg a échoué lors de la mesure (code ${code})`);
     const m = parseLoudnorm(logs);
     const meas = {
       i: parseFloat(m.input_i), tp: parseFloat(m.input_tp), lra: parseFloat(m.input_lra),
@@ -397,18 +434,20 @@ async function runLoudnorm(st, fmt, kbps, signal) {
     if (fmt.ext === 'mp3') args.push('-b:a', `${kbps}k`);
     args.push(outName);
     code = await ffmpeg.exec(args);
-    if (code !== 0) throw new Error(`FFmpeg code ${code} (normalisation)`);
+    if (code !== 0) throw new Error(`FFmpeg a échoué lors de la normalisation (code ${code})`);
     let out = null;
     try { out = parseLoudnorm(logs); } catch { /* relevé de sortie facultatif */ }
 
-    const blob = new Blob([await ffmpeg.readFile(outName)], { type: fmt.mime });
+    const data = await ffmpeg.readFile(outName);
+    if (!(data instanceof Uint8Array) || !data.length) throw new Error('fichier de sortie vide ou absent');
+    const blob = new Blob([data], { type: fmt.mime });
     return {
       blob, inLufs: meas.i, inTp: meas.tp,
       outLufs: out ? parseFloat(out.output_i) : NaN, outTp: out ? parseFloat(out.output_tp) : NaN,
     };
   } catch (e) {
     if (signal.aborted) throw abortErr();
-    throw e;
+    throw new Error(errMsg(e, logs)); // normalise string / objet / Error + dernières lignes stderr
   } finally {
     if (onAbort) signal.removeEventListener('abort', onAbort);
     if (ffmpeg) {
@@ -450,7 +489,7 @@ async function exportAudio() {
     if (s !== st) return;
     setProgress(false);
     if (isAbort(e)) setStatus('Export annulé.');
-    else setStatus(e.message || 'Erreur inconnue', 'error');
+    else setStatus(errMsg(e), 'error');
   } finally {
     if (s === st) { st.abort = null; setBusy(false); }
   }
