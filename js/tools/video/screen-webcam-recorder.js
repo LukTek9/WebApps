@@ -24,9 +24,10 @@ const FIX_DURATION_TIMEOUT_MS = 1000; // correction de durée WebM : jamais bloq
 const PIP_MIN_INTERVAL_MS = 20;   // évite un double dessin rAF + Worker
 const PIP_TICK_MS = 33;           // cadence de repli quand l'onglet est masqué (rAF suspendu)
 const LOAD_TIMEOUT_MS = 90000;    // Worker FFmpeg bloqué (Firefox) → échec explicite au lieu d'une attente infinie
-const MIME_CANDIDATES = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'];
+/* Ordre : Chromium / Firefox (WebM) d'abord, puis Safari (MP4 H.264 + AAC) en repli */
+const MIME_CANDIDATES = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4;codecs=avc1', 'video/mp4'];
 /* Flux sans piste audio : pas de codec opus dans le type MIME (Firefox ne émet aucune donnée sinon) */
-const MIME_VIDEO_ONLY = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
+const MIME_VIDEO_ONLY = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4;codecs=avc1', 'video/mp4'];
 const QUALITY = { native: null, '1080': { w: 1920, h: 1080 }, '720': { w: 1280, h: 720 } };
 const BITRATE = { native: 8_000_000, '1080': 8_000_000, '720': 4_000_000 };
 const LBL_PAUSE = '⏸ Pause';
@@ -87,7 +88,12 @@ function raceLoad(promise, signal, ms) {
 function pickMime(hasAudio = true) {
   const MR = window.MediaRecorder;
   if (!MR || typeof MR.isTypeSupported !== 'function') return '';
-  return (hasAudio ? MIME_CANDIDATES : MIME_VIDEO_ONLY).find((m) => MR.isTypeSupported(m)) || '';
+  return (hasAudio ? MIME_CANDIDATES : MIME_VIDEO_ONLY).find((m) => { try { return MR.isTypeSupported(m); } catch { return false; } }) || '';
+}
+
+/** API média absente → erreur typée (message français via mediaErrorMessage) au lieu d'un TypeError non géré. */
+function requireMediaApi(fn) {
+  if (typeof navigator.mediaDevices?.[fn] !== 'function') throw Object.assign(new Error(fn), { name: 'NotSupportedError', api: fn });
 }
 
 const extFromMime = (m) => (/mp4/i.test(m) ? 'mp4' : 'webm');
@@ -114,6 +120,8 @@ function mediaErrorMessage(e, what) {
       return 'Capture bloquée par le navigateur (contexte non sécurisé ou politique de permissions).';
     case 'AbortError':
       return 'Capture interrompue. Réessayez.';
+    case 'NotSupportedError':
+      return `Fonction indisponible : ${e?.api || 'capture'} non pris en charge par ce navigateur.`;
     case 'TypeError':
       return 'Paramètres de capture invalides pour ce navigateur : choisissez la qualité « Native ».';
     default:
@@ -459,6 +467,7 @@ async function startCapture() {
       what = 'screen';
       const dispOpts = { video: videoConstraints(cfg.quality), audio: cfg.sys };
       if (cfg.sys) dispOpts.systemAudio = 'include'; // Chrome / Edge : pré-sélectionne le partage d'audio (ignoré ailleurs)
+      requireMediaApi('getDisplayMedia');
       const d = await navigator.mediaDevices.getDisplayMedia(dispOpts);
       if (s !== st) { stopStream(d); return; }
       st.display = d;
@@ -468,6 +477,7 @@ async function startCapture() {
     }
     if (cfg.mode !== 'screen') {
       what = 'cam';
+      requireMediaApi('getUserMedia');
       const c = await navigator.mediaDevices.getUserMedia({ video: videoConstraints(cfg.quality) });
       if (s !== st) { stopStream(c); return; }
       st.cam = c;
@@ -476,6 +486,7 @@ async function startCapture() {
     }
     if (cfg.mic) {
       what = 'mic';
+      requireMediaApi('getUserMedia');
       const m = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
       if (s !== st) { stopStream(m); return; }
       st.mic = m;

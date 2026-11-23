@@ -18,7 +18,8 @@ const MAX_FREQ_HZ = 16000;       // plage utile affichée
 const REVOKE_DELAY_MS = 2000;    // délai avant révocation de l'objectURL après clic de téléchargement
 const VIDEO_BPS = 5_000_000;
 const FILE_RE = /\.(mp3|wav|ogg|oga|opus|m4a|aac|flac|webm|weba|mp4)$/i;
-const VIDEO_MIMES = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+/* Ordre : Chromium / Firefox (WebM) d'abord, puis Safari (MP4 H.264 + AAC) en repli */
+const VIDEO_MIMES = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4;codecs=avc1', 'video/mp4'];
 const LBL_PLAY = '▶ Lecture';
 const LBL_PAUSE = '⏸ Pause';
 const LBL_REC = '● Enregistrer la vidéo';
@@ -559,7 +560,7 @@ function startVideo() {
   try {
     cap = q('canvas').captureStream(30);
     const tracks = [...cap.getVideoTracks(), ...(st.dest ? st.dest.stream.getAudioTracks() : [])];
-    const mime = VIDEO_MIMES.find((m) => MediaRecorder.isTypeSupported(m)) || '';
+    const mime = VIDEO_MIMES.find((m) => { try { return MediaRecorder.isTypeSupported(m); } catch { return false; } }) || '';
     rec = new MediaRecorder(new MediaStream(tracks), mime ? { mimeType: mime, videoBitsPerSecond: VIDEO_BPS } : { videoBitsPerSecond: VIDEO_BPS });
     st.vmime = rec.mimeType || mime || 'video/webm';
   } catch (e) {
@@ -600,7 +601,7 @@ function finalizeVideo(st, rec) {
   releaseCapture();
   updateControls();
   if (!chunks.length) { setStatus('Enregistrement vide : aucune image capturée.', 'error'); return; }
-  showVideoLink(new Blob(chunks, { type: st.vmime }), `${sanitize('spectre_' + stamp())}.webm`);
+  showVideoLink(new Blob(chunks, { type: st.vmime }), `${sanitize('spectre_' + stamp())}.${/mp4/i.test(st.vmime) ? 'mp4' : 'webm'}`);
 }
 
 /** Abandon brutal (reset / unmount) : aucun résultat produit. */
@@ -746,6 +747,7 @@ export function mount(container, ctx) {
   let micMsg = '';
   if (!window.isSecureContext) micMsg = 'Micro indisponible : la page doit être servie en HTTPS (ou localhost).';
   else if (!navigator.mediaDevices?.getUserMedia) micMsg = 'Micro indisponible : API getUserMedia non prise en charge par ce navigateur.';
+  else if (!(window.AudioContext || window.webkitAudioContext)) micMsg = 'Micro indisponible : AudioContext non pris en charge par ce navigateur.';
 
   s = {
     root: container, ctx,

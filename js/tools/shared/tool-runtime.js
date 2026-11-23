@@ -56,6 +56,26 @@ const download = (blob, name, urls) => {
   a.href = url; a.download = name; a.click();
   setTimeout(() => { URL.revokeObjectURL(url); urls.delete(url); }, 1000);
 };
+/** Copie : `navigator.clipboard.writeText` d'abord, repli <textarea> hors écran + `execCommand('copy')` (Safari, HTTP, file://). Rejette si échec. */
+const copyText = async (text) => {
+  const value = String(text ?? '');
+  if (navigator.clipboard?.writeText) {
+    try { await navigator.clipboard.writeText(value); return; } catch { /* repli execCommand ci-dessous */ }
+  }
+  const field = document.createElement('textarea');
+  field.value = value;
+  field.setAttribute('readonly', '');
+  field.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
+  document.body.append(field);
+  let ok = false;
+  try {
+    field.focus({ preventScroll: true });
+    field.select();
+    field.setSelectionRange?.(0, value.length);
+    ok = document.execCommand('copy');
+  } catch { ok = false; } finally { field.remove(); }
+  if (!ok) throw new Error('Copie impossible');
+};
 const sha = async (algo, data) => bytesToHex(new Uint8Array(await crypto.subtle.digest(algo, data)));
 const normalize = (text) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const lines = (text) => text.split(/\r?\n/);
@@ -465,7 +485,7 @@ export function createToolModule(id) {
       }
       if(button.hasAttribute('data-sort')){const column=Number(button.dataset.sort),tbody=preview.querySelector('tbody'),sorted=[...tbody.rows].sort((a,b)=>a.cells[column].textContent.localeCompare(b.cells[column].textContent,'fr',{numeric:true}));sorted.forEach(row=>tbody.appendChild(row));return;}
       if(button.hasAttribute('data-run'))perform();
-      if(button.hasAttribute('data-copy'))navigator.clipboard?.writeText(state.output).then(()=>{status.className='status-success';status.textContent='Résultat copié.';}).catch(()=>{status.className='status-error';status.textContent='Copie impossible.';});
+      if(button.hasAttribute('data-copy'))copyText(state.output).then(()=>{status.className='status-success';status.textContent='Résultat copié.';}).catch(()=>{status.className='status-error';status.textContent='Copie impossible.';});
       if(button.hasAttribute('data-download'))download(new Blob([state.output],{type:'text/plain;charset=utf-8'}),`${id}.txt`,state.urls);
     }, { signal: abort.signal });
     root.querySelector('[data-filter]')?.addEventListener('input',(event)=>{const query=event.target.value.toLocaleLowerCase('fr');preview.querySelectorAll('tbody tr').forEach(row=>{row.hidden=!row.textContent.toLocaleLowerCase('fr').includes(query);});},{signal:abort.signal});

@@ -33,6 +33,7 @@ export function createSecurityUI(container, { content }) {
     async copy(value, success = 'Résultat copié.') {
       let copied = false;
       try {
+        if (!navigator.clipboard?.writeText) throw new Error('Clipboard API indisponible');
         await navigator.clipboard.writeText(String(value));
         copied = true;
       } catch {
@@ -45,7 +46,9 @@ export function createSecurityUI(container, { content }) {
         field.style.position = 'fixed';
         field.style.opacity = '0';
         root.append(field);
+        try { field.focus({ preventScroll: true }); } catch { /* ignoré */ }
         field.select();
+        field.setSelectionRange?.(0, field.value.length);
         try { copied = document.execCommand('copy'); } catch { copied = false; } finally { field.remove(); }
       }
       if (active && copied) this.setStatus(success, 'success');

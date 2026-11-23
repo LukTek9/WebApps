@@ -16,7 +16,8 @@
 const FFT_SIZE = 2048;          // taille de fenêtre de l'AnalyserNode
 const TIMESLICE_MS = 1000;      // fragmentation du MediaRecorder
 const REVOKE_DELAY_MS = 2000;   // délai avant révocation de l'objectURL après clic de téléchargement
-const MIME_CANDIDATES = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/webm', 'audio/ogg', 'audio/mp4'];
+/* Ordre : Chromium / Firefox (WebM, OGG) d'abord, puis Safari (MP4 / AAC) en repli */
+const MIME_CANDIDATES = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/ogg', 'audio/mp4;codecs=mp4a.40.2', 'audio/mp4', 'audio/aac'];
 const LBL_REC = '● Enregistrer';
 const LBL_PAUSE = '⏸ Pause';
 const LBL_RESUME = '▶ Reprendre';
@@ -64,7 +65,7 @@ function extFromMime(m) {
 function pickMime() {
   const MR = window.MediaRecorder;
   if (!MR || typeof MR.isTypeSupported !== 'function') return '';
-  return MIME_CANDIDATES.find((m) => MR.isTypeSupported(m)) || '';
+  return MIME_CANDIDATES.find((m) => { try { return MR.isTypeSupported(m); } catch { return false; } }) || '';
 }
 
 /** Erreur getUserMedia → message clair en français. */

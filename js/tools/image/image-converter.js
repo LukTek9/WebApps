@@ -164,8 +164,13 @@ async function convertFile(file, fmt, quality) {
     g.drawImage(src, 0, 0, w, h);
     if (fmt.id === 'bmp') return encodeBmp(c);
     if (fmt.id === 'ico') return await encodeIco(c);
-    const blob = await toBlob(c, fmt.mime, fmt.lossy ? quality : undefined);
-    if (blob.type !== fmt.mime) throw new Error(`${fmt.label} non supporté par ce navigateur`);
+    let blob = null, encErr = null;
+    try { blob = await toBlob(c, fmt.mime, fmt.lossy ? quality : undefined); } catch (e) { encErr = e; }
+    if (!blob || blob.type !== fmt.mime) {
+      if (fmt.id === 'webp') blob = await toBlob(c, 'image/png'); // Safari : WebP non encodable → repli PNG (.png)
+      else if (encErr) throw encErr;
+      else throw new Error(`${fmt.label} non supporté par ce navigateur`);
+    }
     return blob;
   } finally {
     src.close?.(); // libère l'ImageBitmap
@@ -341,7 +346,7 @@ async function convertAll() {
   s.cancel = false;
   syncButtons();
 
-  let done = 0, failed = 0;
+  let done = 0, failed = 0, fellBack = 0;
   const total = s.items.length;
   for (const it of s.items) {
     if (s.cancel) break;
@@ -353,10 +358,12 @@ async function convertAll() {
     try {
       const blob = await convertFile(it.file, fmt, quality);
       if (!s) return; // démonté pendant la conversion
+      const eff = FORMATS.find((f) => f.mime === blob.type) || fmt; // format réellement produit (repli PNG Safari)
+      if (eff !== fmt) fellBack++;
       it.outUrl = URL.createObjectURL(blob);
       it.outSize = blob.size;
-      it.outName = `${baseName(it.file.name)}.${fmt.ext}`;
-      it.outFmt = fmt.label;
+      it.outName = `${baseName(it.file.name)}.${eff.ext}`;
+      it.outFmt = eff.label;
       it.status = 'done';
       done++;
     } catch (e) {
@@ -374,7 +381,7 @@ async function convertAll() {
   s.cancel = false;
   render();
   setStatus(
-    `${canceled ? 'Annulé — ' : ''}${done} converti(s)${failed ? `, ${failed} erreur(s)` : ''} sur ${total}.`,
+    `${canceled ? 'Annulé — ' : ''}${done} converti(s)${failed ? `, ${failed} erreur(s)` : ''} sur ${total}.${fellBack ? ` ${fmt.label} non pris en charge par ce navigateur : ${fellBack} fichier(s) généré(s) en PNG.` : ''}`,
     failed > 0 && !done,
   );
 }

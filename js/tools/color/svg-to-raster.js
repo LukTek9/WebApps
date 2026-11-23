@@ -71,7 +71,8 @@ async function rasterize() {
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Le navigateur ne permet pas de créer une image raster.');
     context.drawImage(image, 0, 0, width, height);
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, requestedType, 0.92));
+    let blob = await new Promise((resolve) => canvas.toBlob(resolve, requestedType, 0.92));
+    if (!blob && requestedType !== 'image/png') blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png')); // encodage WebP échoué (null) → repli PNG
     if (!blob) throw new Error('La création de l’image a échoué.');
     if (!activeUi.isActive() || currentGeneration !== generation) return;
     resultBlob = blob;
