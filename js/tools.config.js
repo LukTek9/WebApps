@@ -34,6 +34,14 @@ export const tools = [
     module: () => import('./tools/image/image-converter.js'),
   },
   {
+    id: 'background-remover',
+    name: "Suppresseur d'arrière-plan",
+    category: 'image',
+    icon: 'eraser',
+    description: "Supprimez l'arrière-plan de vos images par IA (PNG/WEBP, fond transparent ou coloré) 100 % localement dans votre navigateur.",
+    module: () => import('./tools/image/background-remover.js'),
+  },
+  {
     id: 'qr-generator',
     name: 'Générateur QR Code', // clé `name` = convention existante
     label: 'Générateur QR Code',
