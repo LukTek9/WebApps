@@ -59,6 +59,14 @@ export const tools = [
     module: () => import('./tools/data/file-compressor.js'),
   },
   {
+    id: 'zip-archiver',
+    name: 'Créateur & Extracteur ZIP',
+    category: 'data',
+    icon: 'file-archive',
+    description: 'Créez une archive ZIP (niveau de compression au choix) ou extrayez les fichiers d\'un ZIP existant, 100 % localement dans votre navigateur.',
+    module: () => import('./tools/data/zip-archiver.js'),
+  },
+  {
     id: 'image-resizer',
     name: "Redimensionneur d'images",
     category: 'image',

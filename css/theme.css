@@ -3859,3 +3859,18 @@ body:has(#home-view:not([hidden])) { background-color: #f7f7fa; }
   .filters { grid-template-columns: repeat(auto-fit, minmax(min(100%, 135px), 1fr)); gap: 0.25rem; }
   .filter-btn { padding: 0.38rem 0.45rem; font-size: 0.75rem; }
 }
+
+/* ===== Onglets segmentés + liste de fichiers (ZIP archiver, réutilisables) ===== */
+.zipa-tabs { display: inline-flex; gap: var(--space-1); width: fit-content; max-width: 100%; padding: var(--space-1); border: 1px solid var(--color-border); border-radius: var(--radius-pill); background: var(--color-surface-alt); }
+.zipa-tab { padding: var(--space-2) var(--space-4); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--color-text-muted); font: inherit; font-weight: var(--font-weight-medium); cursor: pointer; transition: background 0.2s, color 0.2s; }
+.zipa-tab:hover { color: var(--color-primary); }
+.zipa-tab[aria-selected="true"] { background: var(--theme-accent); color: var(--color-text-on-primary); }
+.zipa-tab:focus-visible { outline: 2px solid var(--theme-accent); outline-offset: 2px; }
+.zipa-panel[hidden], .zipa-panel [hidden] { display: none; }
+.zipa-summary { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3); color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.zipa-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); max-height: 24rem; overflow: auto; }
+.zipa-list:empty { display: none; }
+.zipa-row { display: flex; align-items: center; gap: var(--space-3); min-width: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.zipa-row > i, .zipa-row > svg { flex: none; width: 1.25rem; height: 1.25rem; color: var(--theme-accent); }
+.zipa-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--font-weight-medium); }
+.zipa-size { flex: none; color: var(--color-text-muted); font-size: var(--font-size-sm); }
