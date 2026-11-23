@@ -69,7 +69,7 @@ const TEMPLATE = `
       <span class="imgc-tag l">Avant</span>
       <span class="imgc-tag r" id="bgr-vtagr" hidden>Après</span>
     </div>
-    <input type="range" id="bgr-vrange" min="0" max="100" value="50" aria-label="Curseur de comparaison avant / après">
+    <input type="range" class="bgr-vrange" id="bgr-vrange" min="0" max="100" value="50" aria-label="Curseur de comparaison avant / après">
     <div class="imgc-vinfo" id="bgr-vinfo"></div>
   </div>
 </div>`;
@@ -233,8 +233,9 @@ function renderViewer() {
   q('vtitle').textContent = s.file.name;
   // Scène à la taille native : jamais agrandie, réduite seulement si > conteneur / 70 % de la hauteur de fenêtre.
   const stage = q('stage');
-  stage.style.setProperty('--bgr-w', s.natW + 'px');
-  stage.style.setProperty('--bgr-r', String(s.natW / s.natH));
+  const vw = q('viewer');
+  vw.style.setProperty('--bgr-w', s.natW + 'px');
+  vw.style.setProperty('--bgr-r', String(s.natW / s.natH));
   const dims = `${s.natW} × ${s.natH} px`;
   const info = q('vinfo');
   info.replaceChildren();
