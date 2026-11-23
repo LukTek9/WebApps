@@ -340,14 +340,19 @@ let ffmpegLibPromise = null;
 /** Injecte le script UMD de FFmpeg une seule fois. */
 function loadFfmpegLib() {
   if (window.FFmpegWASM?.FFmpeg) return Promise.resolve(window.FFmpegWASM.FFmpeg);
-  ffmpegLibPromise ??= new Promise((resolve, reject) => {
-    const sc = document.createElement('script');
-    sc.src = `${FFMPEG_CDN}/ffmpeg.js`;
-    sc.async = true;
-    sc.onload = () => (window.FFmpegWASM?.FFmpeg ? resolve(window.FFmpegWASM.FFmpeg) : reject(new Error('FFmpeg UMD introuvable')));
-    sc.onerror = () => { ffmpegLibPromise = null; sc.remove(); reject(new Error('chargement CDN impossible')); };
-    document.head.appendChild(sc);
-  });
+  if (!ffmpegLibPromise) {
+    ffmpegLibPromise = new Promise((resolve, reject) => {
+      const sc = document.createElement('script');
+      sc.src = `${FFMPEG_CDN}/ffmpeg.js`;
+      sc.async = true;
+      sc.onload = () => {
+        if (window.FFmpegWASM?.FFmpeg) resolve(window.FFmpegWASM.FFmpeg);
+        else { sc.remove(); reject(new Error('FFmpeg UMD introuvable')); }
+      };
+      sc.onerror = () => { sc.remove(); reject(new Error('chargement CDN impossible')); };
+      document.head.appendChild(sc);
+    }).catch((e) => { ffmpegLibPromise = null; throw e; }); // tout échec → nouvelle tentative possible
+  }
   return ffmpegLibPromise;
 }
 
@@ -402,12 +407,30 @@ async function runLoudnorm(st, fmt, kbps, signal) {
     const wasmURL = await cdnBlobUrl(`${FFMPEG_CORE_CDN}/ffmpeg-core.wasm`, 'application/wasm', signal, blobUrls,
       (p) => { setProgress(0.02 + p * 0.18); setStatus(`Chargement de FFmpeg.wasm… ${Math.round(p * 100)} %`); });
 
-    ffmpeg = new FFmpeg();
-    ffmpeg.on('log', ({ message }) => { logs.push(message); });
-    ffmpeg.on('progress', ({ progress }) => { if (span) setProgress(base + span * clamp(Number(progress) || 0, 0, 1)); });
-    onAbort = () => { try { ffmpeg.terminate(); } catch { /* déjà fermé */ } };
+    onAbort = () => { try { ffmpeg?.terminate(); } catch { /* déjà fermé */ } };
     signal.addEventListener('abort', onAbort, { once: true });
-    await ffmpeg.load({ coreURL, wasmURL, classWorkerURL: workerURL });
+    // Tentative 1 : blob: URLs (schéma du convertisseur) ; tentative 2 : URLs CDN directes (importScripts cross-origin).
+    const attempts = [
+      { coreURL, wasmURL },
+      { coreURL: `${FFMPEG_CORE_CDN}/ffmpeg-core.js`, wasmURL: `${FFMPEG_CORE_CDN}/ffmpeg-core.wasm` },
+    ];
+    let loadErr = null;
+    for (const cfg of attempts) {
+      ffmpeg = new FFmpeg();
+      ffmpeg.on('log', ({ message }) => { logs.push(message); });
+      ffmpeg.on('progress', ({ progress }) => { if (span) setProgress(base + span * clamp(Number(progress) || 0, 0, 1)); });
+      try {
+        await ffmpeg.load({ ...cfg, classWorkerURL: workerURL });
+        loadErr = null;
+        break;
+      } catch (e) {
+        loadErr = e;
+        try { ffmpeg.terminate(); } catch { /* déjà fermé */ }
+        ffmpeg = null;
+        if (signal.aborted) throw abortErr();
+      }
+    }
+    if (!ffmpeg) throw loadErr || new Error('chargement de FFmpeg.wasm impossible');
     if (signal.aborted) throw abortErr();
 
     await ffmpeg.writeFile(inName, new Uint8Array(await st.file.arrayBuffer()));
