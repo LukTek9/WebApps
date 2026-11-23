@@ -1,6 +1,6 @@
 # WebApp Tools
 
-WebApp Tools est une boîte à outils web en français regroupant **110 outils** dans une interface responsive. Chaque outil s'ouvre dans un espace de travail dédié sans quitter la page.
+WebApp Tools est une boîte à outils web en français regroupant **121 outils** dans une interface responsive. Chaque outil s'ouvre dans un espace de travail dédié sans quitter la page.
 
 ## Fonctionnalités
 
@@ -14,61 +14,63 @@ WebApp Tools est une boîte à outils web en français regroupant **110 outils**
 
 ## Outils disponibles
 
-### Image (10)
-
-- Convertisseur d'images
-- Redimensionneur d'images
-- Rognage d'images
-- Masqueur et flouteur de zones
-- Convertisseur image vers SVG
-- Générateur de favicon
-- Pipette et extracteur de couleurs
-- Ajout de filigrane
-- Rotateur et inverseur d'images
-- Extracteur de texte OCR
-
-### PDF & Documents (10)
-
-- Fusionneur de PDF
-- Diviseur de PDF
-- Rotateur et réorganisateur de PDF
-- Compresseur de PDF
-- PDF vers images
-- Images vers PDF
-- Numéroteur de pages PDF
-- Rotation de pages PDF
-- Protecteur de PDF
-- Suppresseur de mot de passe PDF
-
 ### Audio (10)
 
-- Découpeur audio
-- Enregistreur vocal
-- Convertisseur audio
-- Fusionneur audio
-- Générateur de bruits et fréquences
-- Égaliseur et amplificateur
+- Découpeur Audio
+- Enregistreur Vocal
+- Convertisseur Audio
+- Fusionneur Audio
+- Générateur de bruits & fréquences
+- Égaliseur & Amplificateur
 - Éditeur de métadonnées ID3
-- Inverseur audio
+- Inverseur Audio (Reverse)
 - Métronome numérique
 - Visualiseur de spectre audio
 
 ### Vidéo (10)
 
-- Convertisseur vidéo local
-- Recadreur vidéo
-- Découpeur vidéo
-- Compresseur de vidéo
-- Extracteur audio depuis une vidéo
+- Convertisseur Vidéo local
+- Recadreur Vidéo
+- Découpeur Vidéo
+- Compresseur de Vidéo
+- Extracteur Audio
 - Vidéo vers GIF
-- Capture d'images depuis une vidéo
-- Fusionneur de vidéos
-- Contrôle de vitesse et inversion vidéo
-- Enregistreur d'écran et webcam
+- Capture d
+- Fusionneur de Vidéos
+- Vitesse & Inversion Vidéo
+- Enregistreur Écran & Webcam
 
-### Texte & Rédaction (14)
+### Images (11)
 
-- Compteur de mots et caractères
+- Convertisseur d
+- Suppresseur d
+- Redimensionneur d
+- Rognage d
+- Masqueur & Flouteur de zones
+- Convertisseur Image vers SVG
+- Générateur de Favicon
+- Pipette & Extracteur de couleurs
+- Ajout de filigrane (Watermark)
+- Rotateur & Inverseur d
+- Extracteur de texte OCR
+
+### PDF (11)
+
+- Fusionneur de PDF
+- Diviseur de PDF
+- Rotateur & Réorganisateur de PDF
+- Compresseur de PDF
+- PDF vers Images
+- Images vers PDF
+- Numéroteur de pages PDF
+- Rotation de pages PDF
+- Protecteur de PDF
+- Suppresseur de mots de passe PDF
+- Signataire de PDF
+
+### Texte (14)
+
+- Compteur de mots & caractères
 - Comparateur de texte
 - Convertisseur de casse
 - Suppresseur de doublons
@@ -79,83 +81,93 @@ WebApp Tools est une boîte à outils web en français regroupant **110 outils**
 - Inverseur de texte
 - Trieur de listes
 - Générateur de slug
-- Convertisseur d'encodage texte
+- Convertisseur d’encodage texte
 - Numéroteur de lignes
 - Analyseur de fréquence des mots
 
-### Développement & Web (12)
+### Développement (13)
 
 - Formateur JSON
-- Convertisseur JSON vers CSV/XML
+- JSON vers CSV / XML
 - Convertisseur CSV vers JSON
-- Encodeur et décodeur Base64
-- Encodeur URL et HTML
-- Testeur d'expressions régulières
-- Minificateur CSS et JavaScript
+- Convertisseur YAML / JSON / TOML
+- Encodeur / Décodeur Base64
+- Encodeur URL / HTML
+- Testeur d’expressions régulières
+- Minificateur CSS / JavaScript
 - Générateur de meta tags SEO
-- Générateur .gitignore et .env
-- Formateur SQL, HTML et XML
+- Générateur .gitignore / .env
+- Formateur SQL / HTML / XML
 - Convertisseur de timestamps
 - Vérificateur HTML
 
-### Sécurité & Crypto (11)
+### Sécurité (10)
 
 - Générateur de mots de passe
 - Générateur de hash
-- Testeur de force de mot de passe
-- Générateur UUID/GUID
-- Chiffreur et déchiffreur AES
+- Testeur de mot de passe
+- Générateur UUID / GUID
+- Chiffreur / Déchiffreur AES
 - Décodeur JWT
-- Convertisseur ASCII, hexadécimal et binaire
-- Générateur de clés RSA/ECDSA
-- Calculateur de checksum
+- Convertisseur ASCII / Hex / Binaire
+- Générateur de clés RSA / ECDSA
+- Checksum de fichier
 - Générateur de codes TOTP
-- Générateur aléatoire sécurisé
 
-### Utilitaires & Productivité (11, avec le générateur QR)
+### Utilitaires (11)
 
-- Lecteur et scanneur QR
-- Générateur de codes-barres
-- Chronomètre et minuteur
-- Calculateur de différence de dates
+- Générateur QR Code
+- Lecteur / Scanneur QR
+- Générateur de code-barres
+- Chronomètre & Minuteur
+- Calculateur de dates
 - Horloges mondiales
 - Bloc-notes local
 - Tableau Kanban
 - Inspecteur système
 - Test de vitesse de frappe
 - Minuteur Pomodoro
-- Générateur QR Code (outil existant)
 
-### Couleur & Design (10)
+### Couleurs & Design (10)
 
 - Convertisseur de couleurs
 - Générateur de dégradés CSS
-- Générateur d'ombres CSS
+- Générateur d’ombres CSS
 - Vérificateur de contraste WCAG
 - Générateur de motifs CSS
 - Générateur de border-radius
 - Simulateur de daltonisme
 - Générateur de palettes
-- Convertisseur SVG vers PNG/WebP
+- Convertisseur SVG vers PNG / WebP
 - Optimiseur SVG
 
-### Données & Fichiers (5, avec le compresseur existant)
+### Données (11)
 
-- Déduplicateur de listes et fichiers
+- Compresseur d
+- Créateur & Extracteur ZIP
+- Déduplicateur de listes
 - Visualiseur et analyseur CSV
 - Lecteur de métadonnées EXIF
 - Découpeur de fichiers
-- Compresseur d'images et minificateur JSON (outil existant)
+- Fusionneur de fichiers
+- Extracteur d’URL
+- Extracteur d’e-mails
+- HTML (tableau) vers CSV
+- Éditeur de diagrammes Mermaid
 
-### Calculs & Conversions (7)
+### Calculateurs (10)
 
-- Convertisseur d'unités
+- Convertisseur d’unités
+- Convertisseur d’unités de données
 - Calculateur de pourcentages
-- Règle de trois
 - Calculateur de prêt
-- Calculateur IMC
-- Calculateur d'âge
-- Convertisseur de bases numériques
+- Calculateur de TVA
+- Convertisseur de bases
+- Calculateur IMC & calories
+- Générateur aléatoire sécurisé
+- Calculateur de temps de téléchargement
+- Calculateur de ratio d’aspect
+
 
 ## Confidentialité et connexion
 
@@ -206,7 +218,7 @@ index.html              Page principale et workspace
 css/theme.css           Variables, thème et mise en page
 js/app.js               Recherche, filtres, navigation et lazy loading
 js/animations.js        Animations GSAP
-js/tools.config.js      Registre des catégories et des 110 outils
+js/tools.config.js      Registre des catégories et des 121 outils
 js/tools/               Modules indépendants et runtime partagé des outils
 update_and_push.ps1     Mise à jour de l'état du projet et synchronisation Git
 UPDATE_AND_PUSH.bat     Lanceur Windows du script PowerShell
