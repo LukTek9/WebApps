@@ -113,6 +113,106 @@ function createToolCard(tool) {
   return card;
 }
 
+/* ---------- Recherche floue ---------- */
+const STOP_WORDS = new Set(['de', 'du', 'des', 'le', 'la', 'les', 'un', 'une', 'et', 'en', 'au', 'aux', 'vos', 'votre', 'pour', 'a', 'l', 'd']);
+
+/** Synonymes de catégories (sans accents, minuscules). */
+const CATEGORY_SYNONYMS = {
+  audio: 'son sons musique music sound mp3 voix micro wav',
+  video: 'film clip mp4 movie webm',
+  image: 'photo photos picture img png jpg jpeg webp illustration',
+  pdf: 'document documents doc fichier papier',
+  text: 'texte redaction ecriture mot mots writing article',
+  dev: 'developpement developpeur code programmation web developer programming html css javascript',
+  security: 'securite crypto chiffrement cryptage password protection confidentialite',
+  utils: 'utilitaire utilitaires productivite outil tools productivity',
+  color: 'couleur couleurs design palette graphisme',
+  data: 'donnees fichiers base tableur csv json',
+  calc: 'calcul calculs conversion conversions calculatrice math convertir',
+};
+
+const fold = (value) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr');
+const toWords = (value) => fold(value).split(/[^a-z0-9]+/).filter(Boolean);
+
+/** Levenshtein borné : renvoie max + 1 dès que la distance dépasse `max`. */
+function levenshtein(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const curr = [i];
+    let rowMin = i;
+    for (let j = 1; j <= b.length; j++) {
+      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (curr[j] < rowMin) rowMin = curr[j];
+    }
+    if (rowMin > max) return max + 1;
+    prev = curr;
+  }
+  return prev[b.length];
+}
+
+/** Score d'un token de requête contre un mot (0 = aucun match). */
+function wordScore(token, word) {
+  if (word === token) return 1;
+  if (word.startsWith(token)) return 0.85;
+  if (token.length >= 3 && word.includes(token)) return 0.6;
+  if (token.length < 4) return 0;
+  const max = token.length >= 8 ? 3 : token.length >= 5 ? 2 : 1;
+  const dist = Math.min(levenshtein(token, word, max), levenshtein(token, word.slice(0, token.length), max));
+  return dist <= max ? 0.55 - 0.1 * dist : 0;
+}
+
+const searchIndex = new Map();
+function getSearchIndex(tool) {
+  let idx = searchIndex.get(tool.id);
+  if (idx) return idx;
+  const category = categories.find((cat) => cat.id === tool.category);
+  const catText = `${category?.label ?? ''} ${CATEGORY_SYNONYMS[tool.category] ?? ''}`;
+  const keywords = Array.isArray(tool.keywords) ? tool.keywords.join(' ') : (tool.tags ?? tool.keywords ?? '');
+  idx = {
+    nameFold: fold(tool.name),
+    hayFold: fold(`${tool.name} ${tool.description} ${category?.label ?? ''} ${keywords}`),
+    fields: [
+      [toWords(tool.name), 10],
+      [toWords(`${tool.id} ${keywords}`), 6],
+      [toWords(catText), 5],
+      [toWords(tool.description), 2],
+    ],
+  };
+  searchIndex.set(tool.id, idx);
+  return idx;
+}
+
+/** Prépare la requête ; null si vide. */
+function buildQuery(raw) {
+  const folded = fold(raw).trim();
+  if (!folded) return null;
+  const all = toWords(folded);
+  const tokens = all.filter((word) => !STOP_WORDS.has(word));
+  return { fold: folded, tokens: tokens.length ? tokens : all };
+}
+
+/** Score de pertinence d'un outil (0 = exclu). Sous-chaîne exacte > préfixe/mot > fuzzy. */
+function scoreTool(tool, q) {
+  if (!q.tokens.length) return 0;
+  const idx = getSearchIndex(tool);
+  let total = 0;
+  for (const token of q.tokens) {
+    let best = 0;
+    for (const [words, weight] of idx.fields) {
+      for (const word of words) {
+        const score = wordScore(token, word) * weight;
+        if (score > best) best = score;
+      }
+    }
+    if (!best) return 0;
+    total += best;
+  }
+  if (idx.nameFold.includes(q.fold)) total += idx.nameFold.startsWith(q.fold) ? 120 : 100;
+  else if (idx.hayFold.includes(q.fold)) total += 50;
+  return total;
+}
+
 /* ---------- Grille ---------- */
 function renderGrid() {
   els.grid.innerHTML = '';
@@ -121,26 +221,30 @@ function renderGrid() {
   els.catalogTitle.textContent = state.category === 'all'
     ? 'Explorez les outils'
     : `Outils ${activeCategory?.label ?? ''}`.trim();
-  const normalize = (value) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr');
-  const query = normalize(state.query.trim());
+  const q = buildQuery(state.query);
+  const scores = new Map();
   // Tri stable par ordre des catégories (config) ; ordre relatif conservé dans chaque catégorie
   const catRank = (id) => {
     const idx = categories.findIndex((c) => c.id === id);
     return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
   };
   const visible = tools
-    .filter((tool) => {
-      const inCategory = state.category === 'all' || tool.category === state.category;
-      const category = categories.find((cat) => cat.id === tool.category)?.label ?? '';
-      const matchesQuery = !query || normalize(`${tool.name} ${tool.description} ${category}`).includes(query);
-      return inCategory && matchesQuery;
-    })
-    .map((t, i) => ({ t, i }))
-    .sort((a, b) => catRank(a.t.category) - catRank(b.t.category) || a.i - b.i)
-    .map(({ t }) => t);
+    .map((t, i) => ({ t, i, s: q ? scoreTool(t, q) : 1 }))
+    .filter(({ t, s }) => (state.category === 'all' || t.category === state.category) && s > 0)
+    .sort(q
+      ? (a, b) => b.s - a.s || a.i - b.i
+      : (a, b) => catRank(a.t.category) - catRank(b.t.category) || a.i - b.i)
+    .map(({ t, s }) => { scores.set(t.id, s); return t; });
+  // Sections triées par meilleur score quand une requête est active (tri stable sinon)
+  const orderedCats = categories.filter(({ id }) => id !== 'all');
+  if (q) {
+    const bestByCat = new Map();
+    for (const tool of visible) bestByCat.set(tool.category, Math.max(bestByCat.get(tool.category) ?? 0, scores.get(tool.id)));
+    orderedCats.sort((a, b) => (bestByCat.get(b.id) ?? 0) - (bestByCat.get(a.id) ?? 0));
+  }
 
   if (state.category === 'all') {
-    for (const category of categories.filter(({ id }) => id !== 'all')) {
+    for (const category of orderedCats) {
       const categoryTools = visible.filter((tool) => tool.category === category.id);
       if (!categoryTools.length) continue;
 
@@ -173,7 +277,7 @@ function renderGrid() {
   }
   const resultLabel = visible.length === 1 ? 'outil' : 'outils';
   els.resultsCount.textContent = `${visible.length} ${resultLabel}`;
-  els.heroToolCount.textContent = state.category === 'all' && !query
+  els.heroToolCount.textContent = state.category === 'all' && !q
     ? `${tools.length} outils gratuits`
     : `${visible.length} ${resultLabel} ${state.category === 'all' ? 'trouvés' : 'dans cette catégorie'}`;
   els.empty.hidden = visible.length > 0;
