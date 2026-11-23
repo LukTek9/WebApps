@@ -36,9 +36,10 @@ const FORMATS = {
 /* FFmpeg.wasm : mêmes versions / schéma de chargement que audio-equalizer. */
 const FFMPEG_VERSION = '0.12.10';
 const FFMPEG_CORE_VERSION = '0.12.6';
-const FFMPEG_CDN = `https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@${FFMPEG_VERSION}/dist/umd`;
-const FFMPEG_CORE_CDN = `https://cdn.jsdelivr.net/npm/@ffmpeg/core@${FFMPEG_CORE_VERSION}/dist/umd`;
-const FFMPEG_WORKER_FILE = '814.ffmpeg.js';
+/* Build ESM (Worker module + import() dynamique du cœur) : fiable sous Firefox et Chromium. */
+const FFMPEG_CDN = `https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@${FFMPEG_VERSION}/dist/esm`;
+const FFMPEG_CORE_CDN = `https://cdn.jsdelivr.net/npm/@ffmpeg/core@${FFMPEG_CORE_VERSION}/dist/esm`;
+const FFMPEG_WORKER_FILE = 'worker.js';
 
 /* ---------- État du module (null quand démonté) ---------- */
 let s = null;
@@ -337,21 +338,18 @@ function wasmSupported() {
 }
 
 let ffmpegLibPromise = null;
-/** Injecte le script UMD de FFmpeg une seule fois. */
+/** Importe le module ESM de FFmpeg une seule fois (import() dynamique, aucune balise <script>). */
 function loadFfmpegLib() {
-  if (window.FFmpegWASM?.FFmpeg) return Promise.resolve(window.FFmpegWASM.FFmpeg);
   if (!ffmpegLibPromise) {
-    ffmpegLibPromise = new Promise((resolve, reject) => {
-      const sc = document.createElement('script');
-      sc.src = `${FFMPEG_CDN}/ffmpeg.js`;
-      sc.async = true;
-      sc.onload = () => {
-        if (window.FFmpegWASM?.FFmpeg) resolve(window.FFmpegWASM.FFmpeg);
-        else { sc.remove(); reject(new Error('FFmpeg UMD introuvable')); }
-      };
-      sc.onerror = () => { sc.remove(); reject(new Error('chargement CDN impossible')); };
-      document.head.appendChild(sc);
-    }).catch((e) => { ffmpegLibPromise = null; throw e; }); // tout échec → nouvelle tentative possible
+    ffmpegLibPromise = import(/* @vite-ignore */ `${FFMPEG_CDN}/index.js`)
+      .then((mod) => {
+        if (!mod?.FFmpeg) throw new Error('classe FFmpeg introuvable dans le module ESM');
+        return mod.FFmpeg;
+      })
+      .catch((e) => {
+        ffmpegLibPromise = null; // tout échec → nouvelle tentative possible
+        throw new Error(`chargement de FFmpeg impossible (${rawErrText(e) || 'CDN indisponible'})`);
+      });
   }
   return ffmpegLibPromise;
 }
@@ -372,6 +370,19 @@ async function cdnBlobUrl(url, mime, signal, bag, onProgress) {
     if (onProgress && total) onProgress(Math.min(1, got / total));
   }
   const u = URL.createObjectURL(new Blob(chunks, { type: mime }));
+  bag.push(u);
+  return u;
+}
+
+/**
+ * worker.js (ESM) → blob: URL. Le Worker cross-origin est interdit ; les imports relatifs (./const.js, ./errors.js)
+ * sont réécrits en URLs CDN absolues car ils ne se résolvent pas depuis une blob: URL.
+ */
+async function workerBlobUrl(signal, bag) {
+  const res = await fetch(`${FFMPEG_CDN}/${FFMPEG_WORKER_FILE}`, { signal });
+  if (!res.ok) throw new Error(`HTTP ${res.status} (${FFMPEG_WORKER_FILE})`);
+  const src = (await res.text()).replace(/(\b(?:from|import)\s*\(?\s*)(["'])\.\//g, `$1$2${FFMPEG_CDN}/`);
+  const u = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
   bag.push(u);
   return u;
 }
@@ -402,14 +413,14 @@ async function runLoudnorm(st, fmt, kbps, signal) {
   let ffmpeg = null, onAbort = null, base = 0, span = 0;
   const logs = [];
   try {
-    const workerURL = await cdnBlobUrl(`${FFMPEG_CDN}/${FFMPEG_WORKER_FILE}`, 'text/javascript', signal, blobUrls);
+    const workerURL = await workerBlobUrl(signal, blobUrls);
     const coreURL = await cdnBlobUrl(`${FFMPEG_CORE_CDN}/ffmpeg-core.js`, 'text/javascript', signal, blobUrls);
     const wasmURL = await cdnBlobUrl(`${FFMPEG_CORE_CDN}/ffmpeg-core.wasm`, 'application/wasm', signal, blobUrls,
       (p) => { setProgress(0.02 + p * 0.18); setStatus(`Chargement de FFmpeg.wasm… ${Math.round(p * 100)} %`); });
 
     onAbort = () => { try { ffmpeg?.terminate(); } catch { /* déjà fermé */ } };
     signal.addEventListener('abort', onAbort, { once: true });
-    // Tentative 1 : blob: URLs (schéma du convertisseur) ; tentative 2 : URLs CDN directes (importScripts cross-origin).
+    // Tentative 1 : blob: URLs ; tentative 2 : URLs CDN directes (import() dynamique dans le Worker module).
     const attempts = [
       { coreURL, wasmURL },
       { coreURL: `${FFMPEG_CORE_CDN}/ffmpeg-core.js`, wasmURL: `${FFMPEG_CORE_CDN}/ffmpeg-core.wasm` },
