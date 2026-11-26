@@ -235,6 +235,14 @@ export const tools = [
     module: () => import('./tools/pdf/pdf-signer.js'),
   },
   {
+    id: 'word-to-pdf',
+    name: "Word vers PDF",
+    category: 'pdf',
+    icon: 'file-type',
+    description: "Convertissez vos documents Word (.docx) en PDF avec mise en page fidèle, 100 % localement.",
+    module: () => import('./tools/pdf/word-to-pdf.js'),
+  },
+  {
     id: 'audio-trimmer',
     name: "Découpeur Audio",
     category: 'audio',

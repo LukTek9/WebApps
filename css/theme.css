@@ -1469,6 +1469,29 @@ select option {
 .img2pdf-convert:disabled { opacity: .5; cursor: not-allowed; }
 .img2pdf-error { color: var(--color-error); font-size: .85rem; min-height: 1.2em; }
 
+/* ===== Outil : Word vers PDF (.doc2pdf*) ===== */
+.doc2pdf { display: flex; flex-direction: column; gap: var(--space-4); }
+.doc2pdf-file { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+.doc2pdf-file[hidden] { display: none; }
+.doc2pdf-file > svg, .doc2pdf-file > i[data-lucide] { flex: none; width: 28px; height: 28px; color: var(--cat-pdf); }
+.doc2pdf-file-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.doc2pdf-file-name { font-weight: var(--font-weight-bold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc2pdf-file-sub { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.doc2pdf-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-3); }
+.doc2pdf-options .tool-field { font-size: var(--font-size-sm); }
+.doc2pdf-options select { padding: var(--space-2); border-radius: var(--radius-md); }
+.doc2pdf-convert { width: 100%; padding: var(--space-4); background: var(--cat-pdf); }
+.doc2pdf-convert:hover:not(:disabled) { background: color-mix(in srgb, var(--cat-pdf) 85%, var(--color-text)); }
+.doc2pdf-preview { height: 420px; overflow-y: auto; padding: var(--space-4); border-radius: var(--radius-md); background: var(--color-surface-alt); box-sizing: border-box; }
+.doc2pdf-empty { height: 100%; display: flex; align-items: center; justify-content: center; color: var(--color-text-muted); font-size: var(--font-size-sm); text-align: center; }
+.doc2pdf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); /* = THUMB_WIDTH (JS) */ gap: var(--space-3); }
+.doc2pdf-page { margin: 0; display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+.doc2pdf-page img { width: 100%; height: auto; border: 1px solid var(--color-border); border-radius: var(--radius-sm); box-shadow: var(--shadow-md); }
+.doc2pdf-page figcaption { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.doc2pdf-note { margin: 0; font-size: var(--font-size-sm); }
+/* Scène de rendu hors écran (capture html2canvas) : non display:none pour conserver la mise en page */
+.doc2pdf-stage { position: absolute; top: 0; left: -100000px; pointer-events: none; }
+
 /* ===== Outil : Compresseur PDF (.pdfc*, .compressor-preview-box) ===== */
 .pdfc { display: flex; flex-direction: column; gap: 16px; max-width: 900px; margin: 0 auto; }
 .pdfc-drop { border: 2px dashed var(--color-border); border-radius: var(--radius-md); padding: 56px 24px; text-align: center; cursor: pointer; transition: background .2s, border-color .2s; }
