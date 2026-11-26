@@ -10,7 +10,7 @@ const CASES = [
   ['kebab', 'kebab-case', (s) => words(s).map((w) => w.toLocaleLowerCase('fr')).join('-')],
   ['constant', 'CONSTANT_CASE', (s) => words(s).map((w) => w.toLocaleUpperCase('fr')).join('_')],
 ];
-const TEMPLATE = `<section class="text-tools"><header class="text-tools__heading"><div><span class="text-tools__eyebrow">9 formats instantanés</span><h2>Convertisseur de casse</h2><p>Écrivez une fois, copiez le format dont vous avez besoin.</p></div></header><label class="tool-field">Votre texte<textarea class="tool-textarea" data-input rows="6" placeholder="Saisissez ou collez votre texte…"></textarea></label><div class="text-tools__card-grid" data-cards></div><p class="text-tools__status" data-status role="status" aria-live="polite"></p></section>`;
+const TEMPLATE = `<section class="text-tools"><header class="text-tools__heading"><div><span class="text-tools__eyebrow">9 formats instantanés</span><p>Écrivez une fois, copiez le format dont vous avez besoin.</p></div></header><label class="tool-field">Votre texte<textarea class="tool-textarea" data-input rows="6" placeholder="Saisissez ou collez votre texte…"></textarea></label><div class="text-tools__card-grid" data-cards></div><p class="text-tools__status" data-status role="status" aria-live="polite"></p></section>`;
 function words(s) { return s.trim().match(/[\p{L}\p{N}]+/gu) || []; }
 function capitalize(s) { return s ? s[0].toLocaleUpperCase('fr') + s.slice(1).toLocaleLowerCase('fr') : ''; }
 function escapeHtml(text) { return text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }

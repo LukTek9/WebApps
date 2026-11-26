@@ -80,6 +80,7 @@
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
+  --space-5: 1.25rem;
   --space-6: 1.5rem;
   --space-8: 2rem;
   --space-12: 3rem;
@@ -1137,7 +1138,6 @@ select option {
   flex-wrap: wrap;
   gap: var(--space-3);
 }
-.text-tools__heading h2,
 .text-tools__section-head h3,
 .text-tools .tool-panel h3 { margin: 0; }
 .text-tools__heading p,
@@ -1181,8 +1181,6 @@ select option {
 .text-tools__empty,
 .text-tools__status { color: var(--color-text-muted); }
 .text-tools__status { min-height: 1.5em; margin: 0; }
-.text-tools__drop.is-dragging { border-color: var(--theme-accent); background: var(--color-surface-alt); }
-.text-tools__drop span { color: var(--theme-accent); text-decoration: underline; }
 .text-tools__card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--space-3); }
 .text-tools__output-card { display: grid; align-content: start; gap: var(--space-3); min-width: 0; padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
 .text-tools__output-card output { display: block; min-height: 3rem; overflow-wrap: anywhere; white-space: pre-wrap; color: var(--color-text); }
@@ -1206,7 +1204,6 @@ select option {
 .text-tools__rendered { min-height: 18rem; color: var(--color-text); }
 .text-tools__rendered > :first-child { margin-top: 0; }
 .text-tools__rendered > :last-child { margin-bottom: 0; }
-.text-tools__file input { max-width: 100%; }
 @media (max-width: 700px) {
   .text-tools__heading { align-items: flex-start; }
   .text-tools__section-head { align-items: flex-start; }
@@ -1395,7 +1392,6 @@ select option {
 .dev-tools__heading,
 .dev-tools__section-head,
 .dev-tools__actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3); }
-.dev-tools__heading h2,
 .dev-tools__section-head h3 { margin: 0; }
 .dev-tools__heading p,
 .dev-tools__section-head p { margin: var(--space-1) 0 0; color: var(--color-text-muted); }

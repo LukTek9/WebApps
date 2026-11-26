@@ -255,12 +255,13 @@ export function createToolModule(id) {
     cancelAnimationFrame(state.animationFrame);
     state.stream?.getTracks().forEach((track) => track.stop());
     state.urls.forEach(URL.revokeObjectURL);
+    if (state.container) state.container.innerHTML = '';
     state = null;
   };
   const mount = (container, ctx) => {
     unmount();
     const abort = new AbortController();
-    state = { abort, urls: new Set(), interval: null, stream: null, file: null, output: '', toolId: id };
+    state = { abort, urls: new Set(), interval: null, stream: null, file: null, output: '', toolId: id, container };
     container.innerHTML = buildUI(id, ctx.tool.name);
     const root = container.querySelector(`[data-tool="${id}"]`);
     const input = root.querySelector('[data-input]');

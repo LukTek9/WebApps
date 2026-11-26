@@ -107,7 +107,11 @@ export function createSecurityUI(container, { content }) {
   };
 }
 
-/** Markup dropzone unifiée (DA pdf-merger). Appeler bindDropzone(ui, ...) après insertion. */
+/**
+ * Markup dropzone unifiée (DA pdf-merger). Appeler bindDropzone(ui, ...) après insertion.
+ * `inputData` ajoute un attribut data-* à l'<input> (ex. 'file' → data-file) pour les outils
+ * qui écoutent déjà l'événement change de cet input (voir bindDropzone sans onFiles).
+ */
 export function createDropzone({
   id = 'dropzone',
   title = 'Glissez-déposez vos fichiers ici',
@@ -115,13 +119,14 @@ export function createDropzone({
   accept = '',
   multiple = false,
   label = 'Ajouter des fichiers',
+  inputData = '',
 } = {}) {
   return `
     <div class="dropzone" data-dropzone="${escapeHtml(id)}" tabindex="0" role="button" aria-label="${escapeHtml(label)}">
       <i data-lucide="cloud-upload"></i>
       <strong>${escapeHtml(title)}</strong>
       <small>${escapeHtml(hint)}</small>
-      <input type="file" ${accept ? `accept="${escapeHtml(accept)}"` : ''} ${multiple ? 'multiple' : ''} hidden />
+      <input type="file" ${inputData ? `data-${escapeHtml(inputData)}` : ''} ${accept ? `accept="${escapeHtml(accept)}"` : ''} ${multiple ? 'multiple' : ''} hidden />
     </div>`;
 }
 
@@ -136,6 +141,8 @@ const matchesAccept = (file, accept) => {
 /**
  * Branche click/clavier/input/drag&drop. Listeners liés à ui.signal (nettoyés par ui.destroy()).
  * onFiles(File[]) reçoit uniquement les fichiers conformes à `accept`. Retourne { setDisabled }.
+ * Sans onFiles (mode relais) : les fichiers déposés sont affectés à l'<input> puis un événement
+ * change (bouillonnant) est émis ; l'outil garde son propre écouteur change.
  */
 export function bindDropzone(ui, { id = 'dropzone', onFiles, accept, multiple } = {}) {
   const zone = ui.root.querySelector(`[data-dropzone="${id}"]`);
@@ -145,22 +152,31 @@ export function bindDropzone(ui, { id = 'dropzone', onFiles, accept, multiple } 
   const many = multiple ?? input.multiple;
   const opts = { signal: ui.signal };
   let disabled = false;
+  const relay = typeof onFiles !== 'function';
   const handle = (list) => {
     const all = [...list];
     const files = all.filter((f) => matchesAccept(f, rules));
-    if (all.length > files.length) ui.setStatus(`${all.length - files.length} fichier(s) ignoré(s) (format non accepté).`, 'error');
-    if (files.length && !disabled) onFiles?.(many ? files : files.slice(0, 1));
+    if (all.length > files.length) ui.setStatus?.(`${all.length - files.length} fichier(s) ignoré(s) (format non accepté).`, 'error');
+    if (!files.length || disabled) return;
+    const picked = many ? files : files.slice(0, 1);
+    if (!relay) { onFiles(picked); return; }
+    const dt = new DataTransfer();
+    picked.forEach((f) => dt.items.add(f));
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
   };
   zone.addEventListener('click', () => !disabled && input.click(), opts);
   zone.addEventListener('keydown', (e) => {
     if ((e.key === 'Enter' || e.key === ' ') && !disabled) { e.preventDefault(); input.click(); }
   }, opts);
   input.addEventListener('click', (e) => e.stopPropagation(), opts);
-  input.addEventListener('change', () => {
-    const files = [...input.files];
-    input.value = '';
-    handle(files);
-  }, opts);
+  if (!relay) {
+    input.addEventListener('change', () => {
+      const files = [...input.files];
+      input.value = '';
+      handle(files);
+    }, opts);
+  }
   ['dragenter', 'dragover'].forEach((ev) => zone.addEventListener(ev, (e) => { e.preventDefault(); if (!disabled) zone.classList.add('is-over'); }, opts));
   ['dragleave', 'drop'].forEach((ev) => zone.addEventListener(ev, (e) => { e.preventDefault(); zone.classList.remove('is-over'); }, opts));
   zone.addEventListener('drop', (e) => handle(e.dataTransfer?.files ?? []), opts);

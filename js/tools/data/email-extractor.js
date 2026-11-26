@@ -1,4 +1,4 @@
-import { createSecurityUI, escapeHtml } from '../shared/security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI, escapeHtml } from '../shared/security-tool-ui.js';
 
 const MAX_SOURCE_LENGTH = 5000000;
 const MAX_ROWS_PREVIEW = 200;
@@ -10,7 +10,7 @@ let fileName = 'emails';
 
 const CONTENT = `
   <div class="security-tools__panel">
-    <label class="security-tools__field">Importer un fichier (.txt, .csv, .html, .eml…)<input data-file type="file" accept=".txt,.csv,.html,.htm,.eml,.json,.xml,.md,text/*"></label>
+    ${createDropzone({ id: 'file', title: 'Glissez-déposez un fichier ici', hint: 'ou cliquez pour parcourir · .txt, .csv, .html, .eml…', accept: '.txt,.csv,.html,.htm,.eml,.json,.xml,.md,text/*', label: 'Importer un fichier', inputData: 'file' })}
     <label class="security-tools__field">Texte ou données<textarea class="security-tools__textarea" data-source rows="10" spellcheck="false" placeholder="Collez un texte, un export CSV, un e-mail, une page HTML…"></textarea></label>
     <div class="security-tools__controls">
       <label class="security-tools__field">Filtrer par domaine<input data-domain type="search" placeholder="ex. gmail.com"></label>
@@ -153,6 +153,7 @@ export function mount(container) {
   ui.on('input', (event) => {
     if (event.target.matches('[data-source], [data-domain], [data-exclude]')) safeRender(activeUi);
   });
+  bindDropzone(ui, { id: 'file' });
   ui.on('change', async (event) => {
     if (event.target.matches('[data-sort], [data-unique], [data-lower]')) {
       safeRender(activeUi);

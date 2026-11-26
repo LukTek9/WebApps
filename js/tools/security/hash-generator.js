@@ -1,4 +1,4 @@
-import { createSecurityUI, showError } from '../shared/security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI, showError } from '../shared/security-tool-ui.js';
 
 let ui;
 let file = null;
@@ -47,7 +47,7 @@ const CONTENT = `
         <label class="security-tools__field">Comparer à une empreinte<input data-expected type="text" placeholder="Facultatif"></label>
       </div>
       <label class="security-tools__field">Texte à hacher<textarea class="tool-textarea security-tools__textarea" data-text rows="7" placeholder="Saisissez ou collez votre texte…"></textarea></label>
-      <label class="tool-dropzone security-tools__drop">Ou choisissez un fichier local<input data-file type="file"></label>
+      ${createDropzone({ id: 'file', title: 'Ou glissez-déposez un fichier ici', hint: 'ou cliquez pour parcourir · tout format', accept: '', label: 'Choisir un fichier à hacher', inputData: 'file' })}
       <div class="security-tools__actions"><button class="btn-secondary" data-action="copy" type="button">Copier l’empreinte</button><button class="btn-secondary" data-action="download" type="button">Télécharger le rapport</button></div>
     </section>
     <section class="security-tools__panel">
@@ -119,6 +119,7 @@ export function mount(container) {
     if (event.target.matches('[data-text]')) { file = null; update(); }
     if (event.target.matches('[data-expected]')) compare();
   });
+  bindDropzone(ui, { id: 'file' });
   ui.on('change', (event) => {
     if (event.target.matches('[data-algorithm]')) update();
     if (event.target.matches('[data-file]')) {

@@ -5,7 +5,7 @@ const MODES = [
   ['each-word', 'Inverser chaque mot individuellement', (text) => text.replace(/\S+/g, (word) => Array.from(word).reverse().join(''))],
   ['lines', 'Inverser l’ordre des lignes', (text) => text.split(/\r\n|\r|\n/).reverse().join('\n')],
 ];
-const TEMPLATE = `<section class="text-tools"><header class="text-tools__heading"><div><span class="text-tools__eyebrow">Transformations instantanées</span><h2>Inverseur de texte</h2><p>Chaque carte présente une inversion différente.</p></div></header><label class="tool-field">Votre texte<textarea class="tool-textarea" data-input rows="7" placeholder="Saisissez le texte à inverser…"></textarea></label><div class="text-tools__card-grid text-tools__reverse-grid" data-cards></div><p class="text-tools__status" data-status role="status" aria-live="polite"></p></section>`;
+const TEMPLATE = `<section class="text-tools"><header class="text-tools__heading"><div><span class="text-tools__eyebrow">Transformations instantanées</span><p>Chaque carte présente une inversion différente.</p></div></header><label class="tool-field">Votre texte<textarea class="tool-textarea" data-input rows="7" placeholder="Saisissez le texte à inverser…"></textarea></label><div class="text-tools__card-grid text-tools__reverse-grid" data-cards></div><p class="text-tools__status" data-status role="status" aria-live="polite"></p></section>`;
 const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 function render() {
   const text = state.root.querySelector('[data-input]').value;

@@ -1,4 +1,4 @@
-import { createSecurityUI, escapeHtml } from '../shared/security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI, escapeHtml } from '../shared/security-tool-ui.js';
 
 const MAX_SOURCE_LENGTH = 5000000;
 const MAX_ROWS_PREVIEW = 200;
@@ -12,7 +12,7 @@ let fileName = 'urls';
 
 const CONTENT = `
   <div class="security-tools__panel">
-    <label class="security-tools__field">Importer un fichier (.txt, .html, .md, .csv…)<input data-file type="file" accept=".txt,.html,.htm,.md,.csv,.json,.xml,text/*"></label>
+    ${createDropzone({ id: 'file', title: 'Glissez-déposez un fichier ici', hint: 'ou cliquez pour parcourir · .txt, .html, .md, .csv…', accept: '.txt,.html,.htm,.md,.csv,.json,.xml,text/*', label: 'Importer un fichier', inputData: 'file' })}
     <label class="security-tools__field">Texte ou code source<textarea class="security-tools__textarea" data-source rows="10" spellcheck="false" placeholder="Collez un texte, une page HTML, un e-mail, un journal…"></textarea></label>
     <div class="security-tools__controls">
       <label class="security-tools__field">Protocole
@@ -172,6 +172,7 @@ export function mount(container) {
   ui.on('input', (event) => {
     if (event.target.matches('[data-source], [data-domain]')) safeRender(activeUi);
   });
+  bindDropzone(ui, { id: 'file' });
   ui.on('change', async (event) => {
     if (event.target.matches('[data-protocol], [data-sort], [data-unique], [data-attrs], [data-strip]')) {
       safeRender(activeUi);

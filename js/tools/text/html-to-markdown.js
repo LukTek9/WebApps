@@ -1,7 +1,8 @@
+import { bindDropzone, createDropzone } from '../shared/security-tool-ui.js';
 let state;
-const TEMPLATE = `<section class="text-tools"><header class="text-tools__heading"><div><span class="text-tools__eyebrow">Conversion locale</span><h2>Convertisseur HTML vers Markdown</h2><p>Collez du HTML ou importez un fichier .html.</p></div><div class="tool-copy-bar"><button class="btn-secondary" type="button" data-action="copy">Copier Markdown</button><button class="btn" type="button" data-action="download">Télécharger .md</button></div></header><label class="tool-dropzone text-tools__file">Importer un fichier HTML<input type="file" accept=".html,.htm,text/html" data-file></label><div class="tool-split"><label class="tool-field">HTML<textarea class="tool-textarea" data-html rows="18" placeholder="Collez votre code HTML…"></textarea></label><label class="tool-field">Markdown<textarea class="tool-textarea" data-markdown rows="18" readonly></textarea></label></div><p class="text-tools__status" data-status role="status" aria-live="polite"></p></section>`;
+const TEMPLATE = `<section class="text-tools"><header class="text-tools__heading"><div><span class="text-tools__eyebrow">Conversion locale</span><p>Collez du HTML ou importez un fichier .html.</p></div><div class="tool-copy-bar"><button class="btn-secondary" type="button" data-action="copy">Copier Markdown</button><button class="btn" type="button" data-action="download">Télécharger .md</button></div></header>${createDropzone({ id: 'file', title: 'Glissez-déposez un fichier HTML ici', hint: 'ou cliquez pour parcourir · .html, .htm', accept: '.html,.htm,text/html', label: 'Importer un fichier HTML', inputData: 'file' })}<div class="tool-split"><label class="tool-field">HTML<textarea class="tool-textarea" data-html rows="18" placeholder="Collez votre code HTML…"></textarea></label><label class="tool-field">Markdown<textarea class="tool-textarea" data-markdown rows="18" readonly></textarea></label></div><p class="text-tools__status" data-status role="status" aria-live="polite"></p></section>`;
 const text = (node) => Array.from(node.childNodes).map((child) => {
-  if (child.nodeType === Node.TEXT_NODE) return child.nodeValue;
+  if (child.nodeType === Node.TEXT_NODE) return child.nodeValue.replace(/\s+/g, ' ');
   if (child.nodeType !== Node.ELEMENT_NODE) return '';
   const tag = child.tagName.toLowerCase(), inner = text(child);
   if (tag === 'strong' || tag === 'b') return `**${inner}**`;
@@ -32,7 +33,11 @@ function tableMarkdown(table) {
   return [cells(rows[0]), cells(Array(width).fill('---')), ...rows.slice(1).map(cells)].join('\n');
 }
 
-function blocks(root) {
+const BLOCK_TAGS = new Set(['p', 'div', 'section', 'article', 'main', 'header', 'footer', 'pre', 'ul', 'ol', 'blockquote', 'table', 'hr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
+const hasBlockChild = (node) => Array.from(node.children).some((child) => BLOCK_TAGS.has(child.tagName.toLowerCase()));
+
+/** Liste des blocs Markdown d'un nœud (tableau ; blocks() renvoie la chaîne finale). */
+function blockList(root) {
   const result = [];
   for (const node of root.childNodes) {
     if (node.nodeType === Node.TEXT_NODE) {
@@ -44,19 +49,28 @@ function blocks(root) {
     if (/^h[1-6]$/.test(tag)) result.push(`${'#'.repeat(Number(tag[1]))} ${text(node).trim()}`);
     else if (tag === 'pre') result.push(`\`\`\`\n${node.textContent.replace(/\n$/, '')}\n\`\`\``);
     else if (tag === 'ul' || tag === 'ol') result.push(listMarkdown(node));
-    else if (tag === 'blockquote') result.push(blocks(node).map((line) => line.split('\n').map((part) => `> ${part}`).join('\n')).join('\n'));
+    else if (tag === 'blockquote') result.push(blockList(node).map((line) => line.split('\n').map((part) => `> ${part}`).join('\n')).join('\n'));
     else if (tag === 'table') result.push(tableMarkdown(node));
     else if (tag === 'hr') result.push('---');
     else if (['p', 'div', 'section', 'article', 'main', 'header', 'footer'].includes(tag)) {
-      const nested = blocks(node);
-      if (nested.length) result.push(nested.join('\n\n'));
-      else if (text(node).trim()) result.push(text(node).trim());
+      // Conteneur de blocs : récursion ; paragraphe simple : texte en ligne (gras, liens…) d'un seul tenant.
+      if (hasBlockChild(node)) {
+        const nested = blockList(node);
+        if (nested.length) result.push(nested.join('\n\n'));
+      } else {
+        const content = text(node).trim();
+        if (content) result.push(content);
+      }
     } else {
       const content = text(node).trim();
       if (content) result.push(content);
     }
   }
-  return result.filter(Boolean).join('\n\n');
+  return result.filter(Boolean);
+}
+
+function blocks(root) {
+  return blockList(root).join('\n\n');
 }
 
 function convert(html) {
@@ -69,7 +83,8 @@ function save() {
   const timer = setTimeout(() => { URL.revokeObjectURL(url); state?.urls.delete(url); state?.timers.delete(timer); }, 1000); state.timers.add(timer);
 }
 export function mount(container) {
-  container.innerHTML = TEMPLATE; state = { root: container, urls: new Set(), timers: new Set() };
+  container.innerHTML = TEMPLATE; state = { root: container, urls: new Set(), timers: new Set(), abort: new AbortController() };
+  bindDropzone({ root: container, signal: state.abort.signal, setStatus: (msg) => { container.querySelector('[data-status]').textContent = msg; } }, { id: 'file' });
   state.render = () => { state.root.querySelector('[data-markdown]').value = convert(state.root.querySelector('[data-html]').value); };
   state.onInput = (event) => { if (event.target.matches('[data-html]')) state.render(); };
   state.onChange = async (event) => {
@@ -97,5 +112,5 @@ export function mount(container) {
 export function unmount() {
   if (!state) return;
   state.root.removeEventListener('input', state.onInput); state.root.removeEventListener('change', state.onChange); state.root.removeEventListener('click', state.onClick);
-  state.timers.forEach(clearTimeout); state.urls.forEach(URL.revokeObjectURL); state.root.innerHTML = ''; state = null;
+  state.abort.abort(); state.timers.forEach(clearTimeout); state.urls.forEach(URL.revokeObjectURL); state.root.innerHTML = ''; state = null;
 }

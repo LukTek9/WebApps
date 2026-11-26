@@ -1,12 +1,13 @@
+import { bindDropzone, createDropzone } from '../shared/security-tool-ui.js';
 const STOP_FR = new Set('alors au aucun aussi autre avant avec avoir bon car ce cela ces ceux chaque ci comme comment dans des du dedans dehors depuis deux elle elles en encore entre est et été être eu fait faites fois font hors ici il ils je juste leur là ma maintenant mais mes moins mon même ni notre nous ou où par parce pas peut peu plupart pour pourquoi quand que quel quelle quels quelles qui sa sans ses seulement si sien son sont sous sur ta tandis tels tes ton tous tout très tu un une vos votre vous y d dont'.split(' '));
 const STOP_EN = new Set('a an and are as at be been but by can for from had has have he her hers him his i if in into is it its me my no not of on or our she so than that the their them then there these they this those to too up us was we were what when where which who will with would you your'.split(' '));
 let state;
 
 const TEMPLATE = `
 <section class="text-tools">
-  <header class="text-tools__heading"><div><span class="text-tools__eyebrow">Analyse en direct</span><h2>Compteur de mots & caractères</h2><p>Collez votre texte ou déposez un fichier .txt / .md.</p></div><button class="btn-secondary" type="button" data-action="copy-stats">Copier les statistiques</button></header>
+  <header class="text-tools__heading"><div><span class="text-tools__eyebrow">Analyse en direct</span><p>Collez votre texte ou déposez un fichier .txt / .md.</p></div><button class="btn-secondary" type="button" data-action="copy-stats">Copier les statistiques</button></header>
   <label class="tool-field">Votre texte<textarea class="tool-textarea text-tools__editor" data-text rows="10" placeholder="Commencez à écrire ou collez votre texte…"></textarea></label>
-  <label class="tool-dropzone text-tools__drop" data-drop>Déposez un fichier texte ici ou <span>parcourir</span><input type="file" accept=".txt,.md,text/plain,text/markdown" data-file hidden></label>
+  ${createDropzone({ id: 'file', title: 'Glissez-déposez un fichier texte ici', hint: 'ou cliquez pour parcourir · .txt, .md', accept: '.txt,.md,text/plain,text/markdown', label: 'Importer un fichier texte', inputData: 'file' })}
   <div class="tool-stats-grid text-tools__stats" data-stats></div>
   <section class="tool-panel"><header class="text-tools__section-head"><div><h3>Mots-clés fréquents</h3><p>Les mots courants sont exclus de l’analyse.</p></div><label class="text-tools__check"><input type="checkbox" data-stop checked> Exclure les mots vides français et anglais</label></header><div class="tool-preview-box"><table class="tool-table"><thead><tr><th>Mot</th><th>Fréquence</th><th>Part du texte</th></tr></thead><tbody data-keywords></tbody></table><p class="text-tools__empty" data-key-empty>Saisissez du texte pour afficher les mots-clés.</p></div></section>
   <p class="text-tools__status" data-status role="status" aria-live="polite"></p>
@@ -85,13 +86,16 @@ async function loadFile(file) {
 
 export function mount(container) {
   container.innerHTML = TEMPLATE;
-  state = { root: container, urls: new Set(), timers: new Set() };
+  state = { root: container, urls: new Set(), timers: new Set(), abort: new AbortController() };
+  const status = container.querySelector('[data-status]');
+  bindDropzone({ root: container, signal: state.abort.signal, setStatus: (msg) => { status.textContent = msg; } }, { id: 'file' });
   state.onInput = (event) => { if (event.target.matches('[data-text], [data-stop]')) render(); };
   state.onClick = (event) => { if (event.target.closest('[data-action="copy-stats"]')) copyStats(); };
   state.onChange = (event) => { if (event.target.matches('[data-file]') && event.target.files?.[0]) loadFile(event.target.files[0]); };
+  // Dépôt hors de la zone dédiée (ex. sur la zone de texte) : chargement du fichier plutôt qu'ouverture par le navigateur.
   state.onDrag = (event) => {
-    if (event.type === 'dragover') { event.preventDefault(); event.currentTarget.classList.add('is-dragging'); return; }
-    event.currentTarget.classList.remove('is-dragging');
+    if (event.target.closest('.dropzone')) return; // géré par bindDropzone
+    if (event.type === 'dragover') { event.preventDefault(); return; }
     if (event.type === 'drop') {
       event.preventDefault();
       if (event.dataTransfer.files[0]) loadFile(event.dataTransfer.files[0]);
@@ -116,6 +120,7 @@ export function unmount() {
   state.root.removeEventListener('dragover', state.onDrag);
   state.root.removeEventListener('dragleave', state.onDrag);
   state.root.removeEventListener('drop', state.onDrag);
+  state.abort.abort();
   state.timers.forEach(clearTimeout);
   state.urls.forEach(URL.revokeObjectURL);
   state.root.innerHTML = '';

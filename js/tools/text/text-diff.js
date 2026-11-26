@@ -1,7 +1,7 @@
 let state;
 const TEMPLATE = `
 <section class="text-tools">
-  <header class="text-tools__heading"><div><span class="text-tools__eyebrow">Comparaison en direct</span><h2>Comparateur de texte</h2><p>Repérez immédiatement les ajouts et suppressions.</p></div></header>
+  <header class="text-tools__heading"><div><span class="text-tools__eyebrow">Comparaison en direct</span><p>Repérez immédiatement les ajouts et suppressions.</p></div></header>
   <div class="tool-split"><label class="tool-field">Texte original<textarea class="tool-textarea" data-original rows="9" placeholder="Texte de départ…"></textarea></label><label class="tool-field">Texte modifié<textarea class="tool-textarea" data-modified rows="9" placeholder="Texte modifié…"></textarea></label></div>
   <div class="text-tools__controls"><label class="tool-field">Mode de comparaison<select data-mode><option value="line">Ligne par ligne</option><option value="word">Mot par mot</option></select></label><label class="text-tools__check"><input type="checkbox" data-ignore-case> Ignorer la casse</label><label class="text-tools__check"><input type="checkbox" data-ignore-space> Ignorer les espaces</label></div>
   <div class="text-tools__summary"><span class="tool-badge" data-added>0 ajout</span><span class="tool-badge text-tools__badge--removed" data-removed>0 suppression</span></div>

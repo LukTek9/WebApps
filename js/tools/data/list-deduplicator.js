@@ -1,4 +1,4 @@
-import { createSecurityUI } from '../shared/security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI } from '../shared/security-tool-ui.js';
 
 let ui;
 let output = '';
@@ -8,7 +8,7 @@ let fileName = 'liste-deduplication.txt';
 const CONTENT = `
   <div class="security-tools__layout">
     <section class="security-tools__panel">
-      <label class="security-tools__field">Importer une liste<input data-file type="file" accept=".txt,.csv,text/plain,text/csv"></label>
+      ${createDropzone({ id: 'file', title: 'Glissez-déposez une liste ici', hint: 'ou cliquez pour parcourir · .txt, .csv', accept: '.txt,.csv,text/plain,text/csv', label: 'Importer une liste', inputData: 'file' })}
       <label class="security-tools__field">Lignes à traiter<textarea class="security-tools__textarea" data-source rows="14" placeholder="Une valeur par ligne…"></textarea></label>
       <div class="security-tools__controls">
         <label class="security-tools__field">Comparaison
@@ -99,6 +99,7 @@ export function mount(container) {
   ui.on('input', (event) => {
     if (event.target.matches('[data-source]')) analyze();
   });
+  bindDropzone(ui, { id: 'file' });
   ui.on('change', async (event) => {
     if (event.target.matches('[data-mode], [data-keep-empty]')) analyze();
     if (!event.target.matches('[data-file]')) return;

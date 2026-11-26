@@ -2,7 +2,7 @@ export function createWorkspace(container, { title, description, sourceLabel, ou
   container.innerHTML = `
     <section class="dev-tools">
       <header class="dev-tools__heading">
-        <div><span class="dev-tools__eyebrow">Traitement local · en direct</span><h2>${title}</h2><p>${description}</p></div>
+        <div><span class="dev-tools__eyebrow">Traitement local · en direct</span><p>${description}</p></div>
       </header>
       <div class="dev-tools__controls">${controls}</div>
       <div class="dev-tools__workspace">

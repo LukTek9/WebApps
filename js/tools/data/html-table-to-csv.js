@@ -1,4 +1,4 @@
-import { createSecurityUI, escapeHtml } from '../shared/security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI, escapeHtml } from '../shared/security-tool-ui.js';
 
 const MAX_SOURCE_LENGTH = 5000000;
 const MAX_TABLES = 100;
@@ -11,7 +11,7 @@ let fileName = 'tableau';
 
 const CONTENT = `
   <div class="security-tools__panel">
-    <label class="security-tools__field">Importer un fichier HTML<input data-file type="file" accept=".html,.htm,.xhtml,text/html,text/plain"></label>
+    ${createDropzone({ id: 'file', title: 'Glissez-déposez un fichier HTML ici', hint: 'ou cliquez pour parcourir · .html, .htm', accept: '.html,.htm,.xhtml,text/html,text/plain', label: 'Importer un fichier HTML', inputData: 'file' })}
     <label class="security-tools__field">Code HTML contenant un ou plusieurs &lt;table&gt;<textarea class="security-tools__textarea" data-source rows="10" spellcheck="false" placeholder="Collez ici le HTML (copié depuis l’inspecteur du navigateur ou un fichier enregistré)…"></textarea></label>
     <div class="security-tools__controls">
       <label class="security-tools__field">Tableau à exporter<select data-table-index disabled><option value="0">Aucun tableau</option></select></label>
@@ -198,6 +198,7 @@ export function mount(container) {
   ui.on('input', (event) => {
     if (event.target.matches('[data-source]')) safeRender(activeUi);
   });
+  bindDropzone(ui, { id: 'file' });
   ui.on('change', async (event) => {
     if (event.target.matches('[data-table-index], [data-delimiter], [data-bom], [data-trim], [data-header]')) {
       safeRender(activeUi);

@@ -1,4 +1,4 @@
-import { createSecurityUI } from '../shared/security-tool-ui.js';
+import { bindDropzone, createDropzone, createSecurityUI } from '../shared/security-tool-ui.js';
 
 const MAX_SOURCE_LENGTH = 100000;
 const RENDER_DELAY_MS = 350;
@@ -58,7 +58,7 @@ let mountId = 0;
 
 const CONTENT = `
   <div class="security-tools__panel">
-    <label class="security-tools__field">Importer un fichier (.mmd, .mermaid, .txt)<input data-file type="file" accept=".mmd,.mermaid,.txt,text/plain"></label>
+    ${createDropzone({ id: 'file', title: 'Glissez-déposez un fichier Mermaid ici', hint: 'ou cliquez pour parcourir · .mmd, .mermaid, .txt', accept: '.mmd,.mermaid,.txt,text/plain', label: 'Importer un fichier Mermaid', inputData: 'file' })}
     <div class="security-tools__controls">
       <label class="security-tools__field">Exemple
         <select data-example>
@@ -289,6 +289,7 @@ export function mount(container) {
   ui.on('input', (event) => {
     if (event.target.matches('[data-source]')) scheduleRender();
   });
+  bindDropzone(ui, { id: 'file' });
   ui.on('change', async (event) => {
     if (event.target.matches('[data-example]')) {
       const code = EXAMPLES[event.target.value];
