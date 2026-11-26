@@ -2,63 +2,38 @@
  * word-to-pdf.js — Outil « Word vers PDF » (100 % client).
  * Contrat : export mount(container, ctx) / unmount().
  * Moteur : docx-preview (+ JSZip) rend le .docx en HTML paginé hors écran,
- * html2canvas capture chaque page, jsPDF assemble le PDF (pages = format Word).
+ * puis shared/dom-to-pdf.js produit le PDF :
+ *  - mode « Texte modifiable » (défaut) : texte réel sélectionnable/éditable, polices embarquées ;
+ *  - mode « Image » : pages capturées (html2canvas), fidélité visuelle maximale.
  * Libs chargées à la demande depuis CDN, avec fallback de sources.
  */
 import { bindDropzone, createDropzone, createSecurityUI, showError } from '../shared/security-tool-ui.js';
+import { loadScriptLib, paginateOverflow, renderPagesToPdf } from '../shared/dom-to-pdf.js';
 
-const LIBS = {
-  jszip: { global: () => window.JSZip, sources: [
+const JSZIP_LIB = {
+  key: 'jszip',
+  global: () => window.JSZip,
+  sources: [
     'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
     'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js',
-  ] },
-  docx: { global: () => window.docx?.renderAsync && window.docx, sources: [
+  ],
+};
+const DOCX_LIB = {
+  key: 'docx-preview',
+  global: () => window.docx?.renderAsync && window.docx,
+  sources: [
     'https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js',
     'https://unpkg.com/docx-preview@0.3.6/dist/docx-preview.min.js',
-  ] },
-  html2canvas: { global: () => window.html2canvas, sources: [
-    'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
-    'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js',
-  ] },
-  jspdf: { global: () => window.jspdf?.jsPDF, sources: [
-    'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
-    'https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js',
-  ] },
+  ],
 };
-/** Promesses de chargement partagées entre montages (les scripts restent en cache global). */
-const libPromises = {};
 
-/** Échelle de rendu html2canvas (netteté vs poids). */
+/** Échelle de rendu html2canvas (mode image : netteté vs poids). */
 const QUALITY = { standard: 1.5, high: 2, max: 3 };
-/** Couleur de fond des pages PDF (papier), indépendante du thème de l'interface. */
-const PAPER = '#ffffff';
-const PX_TO_PT = 0.75;
-const THUMB_WIDTH = 140;
-
-let state = null;
-
-function loadLib(key) {
-  const lib = LIBS[key];
-  if (lib.global()) return Promise.resolve(lib.global());
-  if (libPromises[key]) return libPromises[key];
-  libPromises[key] = (async () => {
-    for (const src of lib.sources) {
-      try {
-        await new Promise((resolve, reject) => {
-          const s = document.createElement('script');
-          s.src = src;
-          s.onload = resolve;
-          s.onerror = () => { s.remove(); reject(new Error('load')); };
-          document.head.appendChild(s);
-        });
-        if (lib.global()) return lib.global();
-      } catch (_) { /* source suivante */ }
-    }
-    delete libPromises[key];
-    throw new Error(`Impossible de charger ${key} (réseau).`);
-  })();
-  return libPromises[key];
-}
+const NOTES = {
+  vector: 'Texte réel : sélectionnable, copiable et modifiable dans un éditeur PDF. Polices remplacées par des équivalents libres (Carlito, Tinos, Cousine). Format .doc (Word 97-2003) non pris en charge : enregistrez-le d\'abord en .docx.',
+  image: 'Pages rendues en images : fidélité visuelle maximale, mais texte non sélectionnable ni modifiable. Format .doc (Word 97-2003) non pris en charge : enregistrez-le d\'abord en .docx.',
+};
+const EMPTY_PREVIEW = '<div class="doc2pdf-empty">L\'aperçu des pages apparaîtra après conversion</div>';
 
 const fmtSize = (b) => {
   if (b < 1024) return `${b} o`;
@@ -67,56 +42,7 @@ const fmtSize = (b) => {
 };
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
 
-/**
- * Pagination DOM : docx-preview ne coupe qu'aux sauts explicites/mémorisés par Word.
- * Une section qui dépasse sa hauteur de page est scindée en sections clones (en-tête/pied
- * dupliqués), en déplaçant les blocs (paragraphes, tableaux…) de fin d'<article> vers la suivante.
- */
-function paginateSection(sec) {
-  const limit = parseFloat(getComputedStyle(sec).minHeight);
-  if (!limit) return;
-  let cur = sec;
-  while (cur.offsetHeight > limit + 1) {
-    const art = cur.querySelector(':scope > article');
-    if (!art || art.children.length < 2) return; // bloc unique trop haut : repli découpe canvas
-    const next = cur.cloneNode(false);
-    let nextArt = null;
-    for (const child of cur.children) {
-      if (child === art) { nextArt = art.cloneNode(false); next.appendChild(nextArt); }
-      else next.appendChild(child.cloneNode(true));
-    }
-    cur.after(next);
-    while (cur.offsetHeight > limit + 1 && art.children.length > 1) nextArt.prepend(art.lastElementChild);
-    cur = next;
-  }
-}
-
-/** Découpe un canvas de page trop haut en plusieurs pages de hauteur `pageH` (px canvas). */
-function sliceCanvas(canvas, pageH) {
-  if (canvas.height <= pageH * 1.02) return [canvas];
-  const out = [];
-  for (let y = 0; y < canvas.height - pageH * 0.02; y += pageH) {
-    const c = document.createElement('canvas');
-    c.width = canvas.width;
-    c.height = pageH;
-    const g = c.getContext('2d');
-    g.fillStyle = PAPER;
-    g.fillRect(0, 0, c.width, c.height);
-    g.drawImage(canvas, 0, y, canvas.width, Math.min(pageH, canvas.height - y), 0, 0, canvas.width, Math.min(pageH, canvas.height - y));
-    out.push(c);
-  }
-  return out;
-}
-
-function makeThumb(canvas) {
-  const t = document.createElement('canvas');
-  t.width = THUMB_WIDTH;
-  t.height = Math.round(canvas.height * (THUMB_WIDTH / canvas.width));
-  t.getContext('2d').drawImage(canvas, 0, 0, t.width, t.height);
-  const url = t.toDataURL('image/jpeg', 0.8);
-  t.width = t.height = 0;
-  return url;
-}
+let state = null;
 
 export function mount(container, ctx) {
   const ui = createSecurityUI(container, {
@@ -132,6 +58,12 @@ export function mount(container, ctx) {
           <button type="button" class="btn-remove-file" data-role="clear"><i data-lucide="trash-2"></i> Retirer</button>
         </div>
         <div class="doc2pdf-options">
+          <label class="tool-field">Type de PDF
+            <select data-role="mode">
+              <option value="vector" selected>Texte modifiable (recommandé)</option>
+              <option value="image">Image (fidélité maximale)</option>
+            </select>
+          </label>
           <label class="tool-field">Qualité de rendu
             <select data-role="quality">
               <option value="standard">Standard (léger)</option>
@@ -155,19 +87,20 @@ export function mount(container, ctx) {
         <button type="button" class="btn-primary doc2pdf-convert" data-role="convert" disabled>
           <i data-lucide="download"></i><span>Convertir et télécharger le PDF</span>
         </button>
-        <div class="doc2pdf-preview" data-role="preview">
-          <div class="doc2pdf-empty">L'aperçu des pages apparaîtra après conversion</div>
-        </div>
-        <p class="doc2pdf-note status-muted">Les pages sont rendues en images : mise en page fidèle, mais texte non sélectionnable. Format .doc (Word 97-2003) non pris en charge : enregistrez-le d'abord en .docx.</p>
+        <div class="doc2pdf-preview" data-role="preview">${EMPTY_PREVIEW}</div>
+        <p class="doc2pdf-note status-muted" data-role="note"></p>
       </div>`,
   });
 
   state = { ui, file: null, busy: false, stage: null, mounted: true };
   const $ = (r) => ui.query(`[data-role="${r}"]`);
   const fileBox = $('file'), convertBtn = $('convert'), clearBtn = $('clear'), preview = $('preview');
+  const modeSel = $('mode'), qualitySel = $('quality'), formatSel = $('format');
+  let dz = null;
 
   const render = () => {
     const has = Boolean(state.file);
+    const image = modeSel.value === 'image';
     fileBox.hidden = !has;
     if (has) {
       $('name').textContent = state.file.name;
@@ -175,20 +108,20 @@ export function mount(container, ctx) {
     }
     convertBtn.disabled = !has || state.busy;
     clearBtn.disabled = state.busy;
-    dz.setDisabled(state.busy);
+    modeSel.disabled = state.busy;
+    qualitySel.disabled = state.busy || !image; // options propres au mode image
+    formatSel.disabled = state.busy || !image;
+    $('note').textContent = NOTES[modeSel.value];
+    dz?.setDisabled(state.busy);
   };
 
-  const resetPreview = () => {
-    preview.innerHTML = '<div class="doc2pdf-empty">L\'aperçu des pages apparaîtra après conversion</div>';
-  };
-
-  const dz = bindDropzone(ui, {
+  dz = bindDropzone(ui, {
     id: 'docx',
     multiple: false,
     onFiles: ([file]) => {
       state.file = file;
       ui.setStatus('');
-      resetPreview();
+      preview.innerHTML = EMPTY_PREVIEW;
       render();
     },
   });
@@ -196,9 +129,10 @@ export function mount(container, ctx) {
   clearBtn.addEventListener('click', () => {
     state.file = null;
     ui.setStatus('');
-    resetPreview();
+    preview.innerHTML = EMPTY_PREVIEW;
     render();
   }, { signal: ui.signal });
+  modeSel.addEventListener('change', render, { signal: ui.signal });
 
   const removeStage = () => {
     state?.stage?.remove();
@@ -211,14 +145,13 @@ export function mount(container, ctx) {
     render();
     const label = convertBtn.querySelector('span');
     const original = label.textContent;
-    const scale = QUALITY[$('quality').value];
-    const usePng = $('format').value === 'png';
+    const mode = modeSel.value;
     const withHeaders = $('headers').value === '1';
     const file = state.file;
     try {
       label.textContent = 'Chargement des moteurs…';
-      await loadLib('jszip');
-      const [docx, html2canvas, jsPDF] = await Promise.all([loadLib('docx'), loadLib('html2canvas'), loadLib('jspdf')]);
+      await loadScriptLib(JSZIP_LIB);
+      const docx = await loadScriptLib(DOCX_LIB);
       if (!state?.mounted) return;
 
       label.textContent = 'Lecture du document…';
@@ -244,45 +177,27 @@ export function mount(container, ctx) {
       await nextFrame();
 
       label.textContent = 'Mise en page…';
-      [...stage.querySelectorAll('section.docx')].forEach(paginateSection);
+      [...stage.querySelectorAll('section.docx')].forEach((sec) => paginateOverflow(sec));
       const sections = [...stage.querySelectorAll('section.docx')];
       if (!sections.length) throw new Error('Document vide ou illisible.');
 
-      let pdf = null;
-      let count = 0;
-      const thumbs = [];
-      for (let i = 0; i < sections.length; i++) {
-        label.textContent = `Rendu de la page ${i + 1}/${sections.length}…`;
-        const sec = sections[i];
-        const cs = getComputedStyle(sec);
-        const wPx = sec.offsetWidth;
-        const hPx = parseFloat(cs.minHeight) || sec.offsetHeight;
-        const canvas = await html2canvas(sec, { scale, backgroundColor: PAPER, useCORS: true, logging: false });
-        if (!state?.mounted) return;
-        const pageHCanvas = Math.round(hPx * (canvas.width / wPx));
-        const wPt = wPx * PX_TO_PT, hPt = hPx * PX_TO_PT;
-        const orientation = wPt > hPt ? 'l' : 'p';
-        for (const page of sliceCanvas(canvas, pageHCanvas)) {
-          if (!pdf) pdf = new jsPDF({ unit: 'pt', format: [wPt, hPt], orientation, compress: true });
-          else pdf.addPage([wPt, hPt], orientation);
-          const data = usePng ? page.toDataURL('image/png') : page.toDataURL('image/jpeg', 0.92);
-          pdf.addImage(data, usePng ? 'PNG' : 'JPEG', 0, 0, wPt, hPt, undefined, 'FAST');
-          thumbs.push(makeThumb(page));
-          count++;
-          if (page !== canvas) page.width = page.height = 0;
-        }
-        canvas.width = canvas.height = 0;
-        await nextFrame();
-      }
+      const result = await renderPagesToPdf(sections, {
+        mode,
+        root: stage,
+        scale: QUALITY[qualitySel.value],
+        imageFormat: formatSel.value,
+        onProgress: (msg) => { label.textContent = msg; },
+        isActive: () => Boolean(state?.mounted),
+      });
+      if (!result || !state?.mounted) return;
       removeStage();
 
-      label.textContent = 'Génération du PDF…';
-      const blob = pdf.output('blob');
       const outName = `${file.name.replace(/\.docx$/i, '') || 'document'}.pdf`;
-      ui.download(blob, outName, 'application/pdf');
-      preview.innerHTML = `<div class="doc2pdf-grid">${thumbs.map((src, i) => `
+      ui.download(result.blob, outName, 'application/pdf');
+      preview.innerHTML = `<div class="doc2pdf-grid">${result.thumbs.map((src, i) => `
         <figure class="doc2pdf-page"><img src="${src}" alt="Page ${i + 1}"><figcaption>${i + 1}</figcaption></figure>`).join('')}</div>`;
-      ui.setStatus(`${outName} : ${count} page${count > 1 ? 's' : ''} · ${fmtSize(blob.size)}.`, 'success');
+      const n = result.pageCount;
+      ui.setStatus(`${outName} : ${n} page${n > 1 ? 's' : ''} · ${fmtSize(result.blob.size)}${mode === 'vector' ? ' · texte modifiable' : ''}.`, 'success');
       ctx?.toast?.('PDF généré.');
     } catch (err) {
       showError(ui, err instanceof Error ? new Error(`Erreur : ${err.message}`) : err, 'Conversion impossible.');

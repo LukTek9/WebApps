@@ -239,8 +239,16 @@ export const tools = [
     name: "Word vers PDF",
     category: 'pdf',
     icon: 'file-type',
-    description: "Convertissez vos documents Word (.docx) en PDF avec mise en page fidèle, 100 % localement.",
+    description: "Convertissez vos documents Word (.docx) en PDF modifiable (texte réel) ou en images, mise en page fidèle, 100 % localement.",
     module: () => import('./tools/pdf/word-to-pdf.js'),
+  },
+  {
+    id: 'pdf-to-word',
+    name: "PDF vers Word",
+    category: 'pdf',
+    icon: 'file-output',
+    description: "Convertissez vos PDF en documents Word (.docx) modifiables : texte, styles, alignements et images, 100 % localement.",
+    module: () => import('./tools/pdf/pdf-to-word.js'),
   },
   {
     id: 'audio-trimmer',
