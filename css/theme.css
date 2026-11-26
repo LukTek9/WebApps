@@ -1480,6 +1480,8 @@ select option {
 .doc2pdf-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-3); }
 .doc2pdf-options .tool-field { font-size: var(--font-size-sm); }
 .doc2pdf-options select { padding: var(--space-2); border-radius: var(--radius-md); }
+.doc2pdf-options select:disabled { opacity: .45; cursor: not-allowed; background: var(--color-surface-alt); }
+.doc2pdf-options .tool-field:has(select:disabled) { color: var(--color-text-muted); }
 .doc2pdf-convert { width: 100%; padding: var(--space-4); background: var(--cat-pdf); }
 .doc2pdf-convert:hover:not(:disabled) { background: color-mix(in srgb, var(--cat-pdf) 85%, var(--color-text)); }
 .doc2pdf-preview { height: 420px; overflow-y: auto; padding: var(--space-4); border-radius: var(--radius-md); background: var(--color-surface-alt); box-sizing: border-box; }
