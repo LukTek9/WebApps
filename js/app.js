@@ -1,7 +1,7 @@
 /**
  * app.js — Pilotage UI : grille de cartes, filtres, workspace, lazy loading des outils.
  */
-import { categories, tools } from './tools.config.js';
+import { categories, relatedTools, tools } from './tools.config.js';
 import {
   animateHeroAndGrid,
   animateHomeEnter,
@@ -20,6 +20,8 @@ const els = {
   title: $('workspace-title'),
   body: $('workspace-body'),
   back: $('workspace-back'),
+  related: $('related-tools'),
+  relatedList: $('related-tools-list'),
   brand: $('brand-home'),
   search: $('tool-search'),
   searchInput: $('tool-search-input'),
@@ -296,10 +298,68 @@ function showStatus(message, isError = false) {
   els.body.appendChild(p);
 }
 
+/* ---------- Outils associés (panneau droit, version PC) ---------- */
+const RELATED_MAX = 6;
+/** Relations curées rendues symétriques : A → B implique B → A. */
+const relatedMap = (() => {
+  const map = new Map(tools.map((t) => [t.id, []]));
+  const link = (a, b) => { if (map.has(a) && map.has(b) && a !== b && !map.get(a).includes(b)) map.get(a).push(b); };
+  Object.entries(relatedTools).forEach(([id, list]) => list.forEach((other) => link(id, other)));
+  Object.entries(relatedTools).forEach(([id, list]) => list.forEach((other) => link(other, id)));
+  return map;
+})();
+
+function getRelated(tool) {
+  const ids = [...(relatedMap.get(tool.id) || [])];
+  for (const t of tools) { // complément : même catégorie
+    if (ids.length >= RELATED_MAX) break;
+    if (t.category === tool.category && t.id !== tool.id && !ids.includes(t.id)) ids.push(t.id);
+  }
+  return ids.slice(0, RELATED_MAX).map((rid) => tools.find((t) => t.id === rid)).filter(Boolean);
+}
+
+function renderRelated(tool) {
+  const list = getRelated(tool);
+  els.relatedList.replaceChildren(...list.map((t) => {
+    const li = document.createElement('li');
+    const link = document.createElement('a');
+    link.className = 'related-tools__link';
+    link.href = `#${t.id}`;
+    link.dataset.toolId = t.id;
+    link.style.setProperty('--tool-color', catColor(t.category));
+    const icon = document.createElement('span');
+    icon.className = 'related-tools__icon';
+    icon.setAttribute('aria-hidden', 'true');
+    const i = document.createElement('i');
+    i.setAttribute('data-lucide', t.icon);
+    icon.appendChild(i);
+    const label = document.createElement('span');
+    label.className = 'related-tools__label';
+    label.textContent = t.name;
+    link.setAttribute('aria-label', t.name);
+    link.append(icon, label);
+    li.appendChild(link);
+    return li;
+  }));
+  els.related.hidden = !list.length;
+}
+
+els.relatedList.addEventListener('click', (event) => {
+  const link = event.target.closest('[data-tool-id]');
+  if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return; // nouvel onglet : comportement natif
+  event.preventDefault();
+  if (link.dataset.toolId === state.activeToolId) return;
+  try { state.activeModule?.unmount?.(); } catch (err) { console.error(err); }
+  state.activeModule = null;
+  openTool(link.dataset.toolId);
+});
+
 async function openTool(id) {
   const tool = tools.find((t) => t.id === id);
   if (!tool) return;
 
+  state.activeToolId = id;
+  renderRelated(tool);
   setActiveThemeColor(tool.category);
   els.home.hidden = true;
   els.workspace.hidden = false;
@@ -329,6 +389,8 @@ async function openTool(id) {
 function closeTool() {
   try { state.activeModule?.unmount?.(); } catch (err) { console.error(err); }
   state.activeModule = null;
+  state.activeToolId = null;
+  els.related.hidden = true;
   setActiveThemeColor(state.category);
   els.body.innerHTML = '';
   els.workspace.hidden = true;

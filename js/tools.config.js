@@ -604,6 +604,113 @@ const dedicatedCalcModules = {
   'aspect-ratio-calculator': () => import('./tools/calc/aspect-ratio-calculator.js'),
 };
 
+/**
+ * Outils associés (panneau « Outils associés » à droite du workspace, version PC).
+ * Paires curées : la relation est rendue symétrique par app.js (A → B implique B → A).
+ * Les places restantes sont complétées par des outils de la même catégorie.
+ */
+export const relatedTools = {
+  // PDF & Documents
+  'pdf-merger': ['pdf-splitter', 'pdf-organizer', 'pdf-compressor', 'pdf-page-numbers', 'img-to-pdf'],
+  'pdf-splitter': ['pdf-organizer', 'pdf-rotator', 'pdf-to-img'],
+  'pdf-organizer': ['pdf-rotator', 'pdf-page-numbers'],
+  'pdf-compressor': ['file-compressor', 'zip-archiver', 'image-resizer'],
+  'pdf-to-img': ['img-to-pdf', 'image-converter', 'image-ocr', 'image-cropper'],
+  'img-to-pdf': ['image-converter', 'image-resizer', 'image-rotator', 'image-cropper'],
+  'pdf-protector': ['pdf-unlocker', 'pdf-signer', 'aes-encryptor', 'password-generator'],
+  'pdf-unlocker': ['pdf-compressor', 'pdf-to-word'],
+  'pdf-signer': ['pdf-page-numbers', 'word-to-pdf'],
+  'word-to-pdf': ['pdf-to-word', 'pdf-merger', 'pdf-compressor', 'pdf-protector', 'markdown-to-html'],
+  'pdf-to-word': ['pdf-to-img', 'image-ocr', 'word-counter'],
+  // Images
+  'image-converter': ['image-resizer', 'file-compressor', 'svg-to-raster', 'image-to-svg'],
+  'image-resizer': ['image-cropper', 'file-compressor', 'aspect-ratio-calculator', 'favicon-generator'],
+  'image-cropper': ['image-rotator', 'image-redactor', 'aspect-ratio-calculator'],
+  'background-remover': ['image-cropper', 'image-converter', 'image-watermark'],
+  'image-redactor': ['exif-cleaner', 'image-watermark'],
+  'image-to-svg': ['svg-optimizer', 'svg-to-raster'],
+  'favicon-generator': ['image-converter', 'svg-to-raster', 'seo-meta-generator'],
+  'color-extractor': ['palette-generator', 'color-converter', 'wcag-contrast-checker'],
+  'image-ocr': ['text-cleaner', 'word-counter', 'qr-scanner'],
+  'exif-cleaner': ['exif-reader', 'file-compressor'],
+  // Audio & Vidéo
+  'audio-trimmer': ['audio-merger', 'audio-converter', 'audio-normalizer', 'video-to-audio'],
+  'voice-recorder': ['audio-trimmer', 'audio-normalizer', 'audio-equalizer', 'screen-webcam-recorder'],
+  'audio-converter': ['audio-metadata', 'video-to-audio', 'audio-normalizer'],
+  'audio-merger': ['audio-normalizer', 'video-merger'],
+  'audio-equalizer': ['audio-normalizer', 'audio-visualizer'],
+  'audio-reverser': ['video-speed-reverse', 'audio-visualizer'],
+  'sound-generator': ['metronome', 'audio-visualizer'],
+  'metronome': ['pomodoro-timer', 'stopwatch-timer'],
+  'video-converter': ['video-compressor', 'video-to-gif', 'audio-converter'],
+  'video-trimmer': ['video-merger', 'video-cropper', 'video-compressor', 'video-to-gif', 'audio-trimmer'],
+  'video-cropper': ['video-speed-reverse', 'aspect-ratio-calculator'],
+  'video-compressor': ['file-compressor', 'download-time-calculator'],
+  'video-to-audio': ['audio-metadata', 'audio-equalizer'],
+  'video-to-gif': ['video-frame-grabber', 'video-speed-reverse'],
+  'video-frame-grabber': ['image-converter', 'image-cropper'],
+  'screen-webcam-recorder': ['video-trimmer', 'video-compressor', 'subtitle-burner'],
+  'subtitle-burner': ['video-trimmer', 'video-converter'],
+  // Texte
+  'word-counter': ['word-frequency', 'text-cleaner', 'case-converter', 'typing-speed-test'],
+  'text-diff': ['duplicate-line-remover', 'list-sorter', 'text-cleaner'],
+  'case-converter': ['text-to-slug', 'text-cleaner', 'text-reverser'],
+  'duplicate-line-remover': ['list-deduplicator', 'list-sorter', 'line-numberer'],
+  'text-cleaner': ['duplicate-line-remover', 'text-to-slug', 'html-to-markdown'],
+  'lorem-ipsum': ['word-counter', 'markdown-to-html', 'seo-meta-generator'],
+  'markdown-to-html': ['html-to-markdown', 'html-validator', 'code-formatter'],
+  'html-to-markdown': ['html-table-to-csv', 'url-extractor'],
+  'list-sorter': ['list-deduplicator', 'line-numberer', 'random-generator'],
+  'text-to-slug': ['url-html-codec', 'seo-meta-generator'],
+  'text-encoding': ['base-ascii-converter', 'base64-codec', 'url-html-codec'],
+  'word-frequency': ['email-extractor', 'url-extractor'],
+  // Développement
+  'json-formatter': ['json-to-csv-xml', 'csv-to-json', 'yaml-json-toml', 'code-formatter', 'file-compressor'],
+  'json-to-csv-xml': ['csv-to-json', 'csv-viewer'],
+  'csv-to-json': ['csv-viewer', 'html-table-to-csv'],
+  'yaml-json-toml': ['gitignore-env-generator'],
+  'base64-codec': ['url-html-codec', 'base-ascii-converter', 'jwt-decoder', 'hash-generator'],
+  'url-html-codec': ['url-extractor', 'html-validator'],
+  'regex-tester': ['email-extractor', 'url-extractor', 'text-cleaner'],
+  'css-js-minifier': ['code-formatter', 'css-gradient-generator', 'css-shadow-generator'],
+  'seo-meta-generator': ['html-validator', 'favicon-generator'],
+  'code-formatter': ['html-validator', 'mermaid-diagram'],
+  'timestamp-converter': ['date-diff-calculator', 'world-clock', 'uuid-generator'],
+  // Sécurité
+  'password-generator': ['password-strength', 'hash-generator', 'aes-encryptor', 'totp-generator'],
+  'hash-generator': ['file-checksum', 'password-strength'],
+  'uuid-generator': ['random-generator', 'password-generator'],
+  'aes-encryptor': ['rsa-key-generator', 'secure-notepad', 'zip-archiver'],
+  'jwt-decoder': ['timestamp-converter', 'rsa-key-generator'],
+  'file-checksum': ['file-splitter', 'file-merger'],
+  'totp-generator': ['qr-scanner', 'qr-generator'],
+  // Couleur & Design
+  'color-converter': ['palette-generator', 'wcag-contrast-checker', 'css-gradient-generator'],
+  'css-gradient-generator': ['css-pattern-generator', 'palette-generator', 'css-shadow-generator'],
+  'css-shadow-generator': ['css-border-radius', 'css-pattern-generator'],
+  'wcag-contrast-checker': ['colorblind-simulator', 'palette-generator'],
+  'svg-optimizer': ['svg-to-raster', 'css-js-minifier'],
+  // Données & Fichiers
+  'file-compressor': ['zip-archiver', 'image-resizer', 'json-formatter'],
+  'zip-archiver': ['file-splitter', 'file-merger'],
+  'csv-viewer': ['html-table-to-csv', 'list-deduplicator'],
+  'file-splitter': ['file-merger'],
+  'email-extractor': ['url-extractor', 'list-deduplicator'],
+  'mermaid-diagram': ['svg-to-raster', 'kanban-board'],
+  // Utilitaires & Calculs
+  'qr-generator': ['qr-scanner', 'barcode-generator', 'url-html-codec'],
+  'stopwatch-timer': ['pomodoro-timer', 'world-clock'],
+  'date-diff-calculator': ['world-clock', 'loan-calculator'],
+  'secure-notepad': ['kanban-board', 'pomodoro-timer'],
+  'system-inspector': ['download-time-calculator', 'data-unit-converter'],
+  'unit-converter': ['data-unit-converter', 'percentage-calculator', 'number-base-converter'],
+  'data-unit-converter': ['download-time-calculator', 'number-base-converter'],
+  'percentage-calculator': ['vat-calculator', 'loan-calculator'],
+  'loan-calculator': ['vat-calculator'],
+  'number-base-converter': ['base-ascii-converter'],
+  'random-generator': ['password-generator'],
+};
+
 for (const [id, name, category, icon, description] of additions) {
   tools.push({ id, name, category, icon, description: `${description} Traitement 100 % local.`, module: dedicatedTextModules[id] || dedicatedCalcModules[id] || dedicatedDataModules[id] || dedicatedDesignModules[id] || dedicatedUtilityModules[id] || dedicatedSecurityModules[id] || dedicatedDevModules[id] || (() => import(`./tools/${id}.js`)) });
 }

@@ -34,8 +34,8 @@ const STATUS = {
 
 const TEMPLATE = `
 <div class="fcmp">
-  <label class="fcmp-drop" id="fcmp-drop">
-    <i data-lucide="archive" class="fcmp-drop-icon"></i>
+  <label class="dropzone fcmp-drop" id="fcmp-drop">
+    <i data-lucide="archive"></i>
     <strong>Glissez vos images (JPEG, PNG, WebP) ou fichiers JSON ici, ou cliquez pour parcourir</strong>
     <small>Optimisation d'images · minification JSON · format d'origine conservé · traitement 100 % local</small>
     <input type="file" id="fcmp-input" accept="image/jpeg,image/png,image/webp,application/json,.json,.jpg,.jpeg,.png,.webp" multiple>
