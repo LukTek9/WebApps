@@ -444,6 +444,16 @@ renderFilters();
 renderGrid();
 initMobileHeaderAutoHide(document.querySelector('.site-header'));
 
+/* Hauteur du header sticky → --site-header-h (position sticky du panneau « Outils associés »). */
+{
+  const siteHeader = document.querySelector('.site-header');
+  const syncHeaderHeight = () => document.documentElement.style.setProperty('--site-header-h', `${siteHeader.offsetHeight}px`);
+  if (siteHeader) {
+    syncHeaderHeight();
+    new ResizeObserver(syncHeaderHeight).observe(siteHeader);
+  }
+}
+
 // Deep link : index.html#<tool-id>
 const hashId = location.hash.slice(1);
 if (hashId) openTool(hashId);

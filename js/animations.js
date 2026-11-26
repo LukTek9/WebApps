@@ -4,6 +4,10 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 let categoryScrollEntries = [];
+let categoryResizeObserver = null;
+let categoryRefreshCall = null;
+/** Ligne de référence (part de la hauteur d'écran) qui décide de la catégorie active du fond. */
+const CATEGORY_BG_LINE = '45%';
 
 function prefersReducedMotion() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -44,6 +48,8 @@ function resetCategoryScrollBg(background) {
 export function initCategoryScrollBg(container) {
   categoryScrollEntries.forEach(({ trigger }) => trigger.kill());
   categoryScrollEntries = [];
+  categoryResizeObserver?.disconnect();
+  categoryResizeObserver = null;
 
   const background = document.getElementById('scroll-bg');
   if (!background) {
@@ -75,12 +81,17 @@ export function initCategoryScrollBg(container) {
       });
     };
 
+    // Même ligne de référence à la descente et à la remontée : la catégorie active est celle
+    // qui traverse CATEGORY_BG_LINE (entre le haut et le bas de sa section).
     const trigger = ScrollTrigger.create({
       trigger: section,
-      start: 'top 68%',
+      start: `top ${CATEGORY_BG_LINE}`,
+      end: `bottom ${CATEGORY_BG_LINE}`,
       onEnter: activate,
       onEnterBack: activate,
-      onLeaveBack: index === 0 ? () => resetCategoryScrollBg(background) : undefined,
+      // Remontée au-dessus du haut de la section : retour à la catégorie précédente (même si la
+      // ligne se trouve dans l'espace entre deux sections) ou fond neutre avant la première.
+      onLeaveBack: index === 0 ? () => resetCategoryScrollBg(background) : () => categoryScrollEntries[index - 1]?.activate(),
     });
     categoryScrollEntries.push({ trigger, activate });
   });
@@ -91,6 +102,22 @@ export function initCategoryScrollBg(container) {
     if (entry.trigger.start <= window.scrollY) currentEntry = entry;
   });
   if (currentEntry) currentEntry.activate();
+
+  // Retour à l'accueil : animateHomeEnter décale la vue (y: 16) pendant ~0,4 s, ce qui fausse les
+  // positions mesurées ; nouveau calcul une fois l'animation terminée.
+  categoryRefreshCall?.kill();
+  categoryRefreshCall = sections.length ? gsap.delayedCall(0.6, () => ScrollTrigger.refresh()) : null;
+
+  // Les hauteurs de sections bougent après coup (animations d'entrée, polices, icônes) :
+  // recalcul des positions de déclenchement à chaque changement de taille du catalogue.
+  if (sections.length && 'ResizeObserver' in window) {
+    let pending = 0;
+    categoryResizeObserver = new ResizeObserver(() => {
+      cancelAnimationFrame(pending);
+      pending = requestAnimationFrame(() => ScrollTrigger.refresh());
+    });
+    categoryResizeObserver.observe(sections[0].parentElement);
+  }
 }
 
 export function initMobileHeaderAutoHide(headerEl) {
