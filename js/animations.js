@@ -14,7 +14,11 @@ function prefersReducedMotion() {
 }
 
 function getCategoryColor(section) {
-  const color = getComputedStyle(section).getPropertyValue('--category-color').trim();
+  return resolveColor(getComputedStyle(section).getPropertyValue('--category-color').trim());
+}
+
+/** Résout une couleur CSS (variable, color-mix…) en valeur interpolable par GSAP. */
+function resolveColor(color) {
   const probe = document.createElement('span');
   probe.style.color = color;
   probe.style.position = 'fixed';
@@ -45,7 +49,11 @@ function resetCategoryScrollBg(background) {
   });
 }
 
-export function initCategoryScrollBg(container) {
+/**
+ * Fond de catégorie. `container` : sections à suivre au scroll (accueil « Tout »).
+ * `fixedCategory` ({ id, color }) : fond fixe d'une page catégorie, identique à sa section sur l'accueil.
+ */
+export function initCategoryScrollBg(container, fixedCategory = null) {
   categoryScrollEntries.forEach(({ trigger }) => trigger.kill());
   categoryScrollEntries = [];
   categoryResizeObserver?.disconnect();
@@ -60,6 +68,16 @@ export function initCategoryScrollBg(container) {
   background.classList.remove('is-active');
   delete background.dataset.activeCategory;
   gsap.set(background, { '--scroll-bg-color': 'transparent' });
+
+  if (fixedCategory) {
+    background.classList.add('is-active');
+    background.dataset.activeCategory = fixedCategory.id;
+    const color = resolveColor(fixedCategory.color);
+    if (prefersReducedMotion()) gsap.set(background, { '--scroll-bg-color': color });
+    else gsap.to(background, { '--scroll-bg-color': color, duration: 0.75, ease: 'power2.out', overwrite: true });
+    ScrollTrigger.refresh();
+    return;
+  }
 
   const sections = [...(container?.querySelectorAll('.category-section[data-category]') ?? [])];
   sections.forEach((section, index) => {

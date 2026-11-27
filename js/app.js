@@ -220,10 +220,12 @@ function renderGrid() {
   els.grid.innerHTML = '';
   const activeCategory = categories.find((cat) => cat.id === state.category);
   els.home.classList.toggle('is-category-view', state.category !== 'all');
+  const q = buildQuery(state.query);
+  // Requête active : recherche sur tous les outils, quelle que soit la catégorie sélectionnée
+  const showAll = state.category === 'all' || Boolean(q);
   els.catalogTitle.textContent = state.category === 'all'
     ? 'Explorez les outils'
-    : `Outils ${activeCategory?.label ?? ''}`.trim();
-  const q = buildQuery(state.query);
+    : q ? 'Résultats de la recherche' : `Outils ${activeCategory?.label ?? ''}`.trim();
   const scores = new Map();
   // Tri stable par ordre des catégories (config) ; ordre relatif conservé dans chaque catégorie
   const catRank = (id) => {
@@ -232,7 +234,7 @@ function renderGrid() {
   };
   const visible = tools
     .map((t, i) => ({ t, i, s: q ? scoreTool(t, q) : 1 }))
-    .filter(({ t, s }) => (state.category === 'all' || t.category === state.category) && s > 0)
+    .filter(({ t, s }) => (showAll || t.category === state.category) && s > 0)
     .sort(q
       ? (a, b) => b.s - a.s || a.i - b.i
       : (a, b) => catRank(a.t.category) - catRank(b.t.category) || a.i - b.i)
@@ -245,7 +247,7 @@ function renderGrid() {
     orderedCats.sort((a, b) => (bestByCat.get(b.id) ?? 0) - (bestByCat.get(a.id) ?? 0));
   }
 
-  if (state.category === 'all') {
+  if (showAll) {
     for (const category of orderedCats) {
       const categoryTools = visible.filter((tool) => tool.category === category.id);
       if (!categoryTools.length) continue;
@@ -281,12 +283,17 @@ function renderGrid() {
   els.resultsCount.textContent = `${visible.length} ${resultLabel}`;
   els.heroToolCount.textContent = state.category === 'all' && !q
     ? `${tools.length} outils gratuits`
-    : `${visible.length} ${resultLabel} ${state.category === 'all' ? 'trouvés' : 'dans cette catégorie'}`;
+    : `${visible.length} ${resultLabel} ${showAll ? 'trouvés' : 'dans cette catégorie'}`;
   els.empty.hidden = visible.length > 0;
   els.grid.hidden = visible.length === 0;
   refreshIcons();
   animateHeroAndGrid(els.home);
-  initCategoryScrollBg(state.category === 'all' ? els.home : null);
+  syncCategoryBg(showAll);
+}
+
+/** Fond : suivi au scroll en vue sectionnée, fond fixe de la catégorie sinon. */
+function syncCategoryBg(sectioned = state.category === 'all' || Boolean(buildQuery(state.query))) {
+  initCategoryScrollBg(sectioned ? els.home : null, sectioned ? null : categories.find((c) => c.id === state.category));
 }
 
 /* ---------- Workspace ---------- */
@@ -396,7 +403,7 @@ function closeTool() {
   els.workspace.hidden = true;
   els.home.hidden = false;
   animateHomeEnter(els.home);
-  initCategoryScrollBg(state.category === 'all' ? els.home : null);
+  syncCategoryBg();
   history.replaceState(null, '', location.pathname);
 }
 
